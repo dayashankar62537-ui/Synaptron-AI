@@ -5,5 +5,8 @@
   "type": "module",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
   }
 }
