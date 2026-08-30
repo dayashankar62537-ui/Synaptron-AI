@@ -1502,6 +1502,33 @@
     return data.reply;
   }
 
+  // Real image generation via OpenAI (separate from the Gemini text chat)
+  function detectImageIntent(raw){
+    return /\b(generate|create|make|draw|design)\b.*\b(image|photo|picture|logo|poster|artwork|thumbnail|illustration)\b/i.test(raw)
+      || /\b(image|photo|picture)\s+of\b/i.test(raw);
+  }
+
+  async function generateImage(prompt){
+    const res = await fetch('/api/generate-image', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(data && data.error ? data.error : 'Image generation failed');
+    }
+    return data.image;
+  }
+
+  function addAiImage(dataUrl, caption){
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><img class="attached-img" src="${dataUrl}" alt="generated image">${caption}</div></div></div>`;
+    body.appendChild(div);
+    scrollBottom();
+  }
+
   function handleSend(text){
     const hasImage = !!pendingImage;
     if((!text || !text.trim()) && !hasImage) return;
@@ -1516,8 +1543,22 @@
       attachPreview.style.display = 'none';
       attachBtn.classList.remove('has-file');
     }
-    addTyping();
 
+    // If the user is asking to generate an image (and hasn't attached their
+    // own photo), route to the real OpenAI image endpoint instead of chat.
+    if(!imageToSend && trimmed && detectImageIntent(trimmed)){
+      addTyping();
+      generateImage(trimmed).then(dataUrl=>{
+        removeTyping();
+        addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
+      }).catch(err=>{
+        removeTyping();
+        addAiMsg("I couldn't generate that image (" + err.message + "). Make sure OPENAI_API_KEY is set in your Vercel project, and that your OpenAI account has access to gpt-image-1.");
+      });
+      return;
+    }
+
+    addTyping();
     askSynaptron(trimmed, imageToSend).then(reply=>{
       removeTyping();
       addAiMsg(reply);
