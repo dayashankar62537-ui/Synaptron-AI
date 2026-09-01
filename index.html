@@ -124,6 +124,26 @@
     50%{box-shadow:0 4px 30px rgba(37,99,235,0.55);}
   }
   .nav-cta:hover{transform:translateY(-2px);}
+
+  .profile-pill{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 8px 6px 6px; border-radius:100px; margin-left:10px;
+    background:var(--surface-2); border:1px solid var(--border);
+  }
+  .profile-avatar{
+    width:30px; height:30px; border-radius:50%; flex:none;
+    background:var(--grad-brand); color:#fff; font-weight:700; font-size:13px;
+    display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk';
+  }
+  .profile-info{display:flex; flex-direction:column; line-height:1.2;}
+  .profile-name{font-size:12.5px; font-weight:600; color:var(--text);}
+  .profile-badge{font-size:10px; font-family:'JetBrains Mono'; color:var(--mint);}
+  .profile-badge.unverified{color:#d97706;}
+  .profile-logout{
+    width:24px; height:24px; border-radius:50%; border:none; cursor:pointer;
+    background:transparent; color:var(--muted-2); font-size:13px; margin-left:2px;
+  }
+  .profile-logout:hover{background:rgba(15,23,42,0.08); color:var(--text);}
   .nav-mobile-toggle{display:none;}
 
   /* ---------- hero ---------- */
@@ -754,6 +774,7 @@
     .nav-links{order:3; display:flex; width:100%; justify-content:center; flex-wrap:wrap; gap:16px 22px;}
     .nav-cta{order:2; padding:9px 14px; font-size:12.5px;}
     .signup-nav-btn{margin-left:0 !important;}
+    .profile-pill{order:2; margin-left:0 !important;}
     .hero{padding-top:170px;}
     .hero-stats{flex-wrap:wrap; gap:22px 30px;}
     .core-stage{overflow:hidden; height:340px;}
@@ -827,6 +848,14 @@
     </div>
     <a href="#try-ai" class="nav-cta" id="navGetAccess">Get Early Access</a>
     <button class="nav-cta signup-nav-btn" id="navSignupBtn" type="button" style="margin-left:10px; background:transparent; border:1.5px solid var(--border-hi); color:var(--text); box-shadow:none; animation:none;">Sign Up Now</button>
+    <div class="profile-pill" id="profilePill" style="display:none;">
+      <div class="profile-avatar" id="profileAvatar">S</div>
+      <div class="profile-info">
+        <span class="profile-name" id="profileName">Name</span>
+        <span class="profile-badge" id="profileBadge">Verified</span>
+      </div>
+      <button class="profile-logout" id="profileLogout" type="button" title="Log out">⎋</button>
+    </div>
   </nav>
 </header>
 
@@ -1448,7 +1477,66 @@
   const suTitle = document.getElementById('suTitle');
   const suSubtitle = document.getElementById('suSubtitle');
   const navSignupBtn = document.getElementById('navSignupBtn');
+  const navGetAccess = document.getElementById('navGetAccess');
+  const profilePill = document.getElementById('profilePill');
+  const profileAvatar = document.getElementById('profileAvatar');
+  const profileName = document.getElementById('profileName');
+  const profileBadge = document.getElementById('profileBadge');
+  const profileLogout = document.getElementById('profileLogout');
   const firstMsg = document.getElementById('firstMsg');
+
+  // --- Profile pill (remembers the signed-up user on THIS browser only —
+  // this is not secure cross-device login, just a local convenience) ---
+  const STORAGE_KEY = 'synaptron_user';
+
+  function showProfile(user){
+    navSignupBtn.style.display = 'none';
+    if(navGetAccess) navGetAccess.style.display = 'none';
+    profilePill.style.display = 'flex';
+    profileAvatar.textContent = (user.name || '?').trim().charAt(0).toUpperCase();
+    profileName.textContent = user.name || user.email;
+    if(user.verified){
+      profileBadge.textContent = '✓ Verified';
+      profileBadge.classList.remove('unverified');
+    } else {
+      profileBadge.textContent = 'Check email to verify';
+      profileBadge.classList.add('unverified');
+    }
+  }
+
+  function hideProfile(){
+    navSignupBtn.style.display = '';
+    if(navGetAccess) navGetAccess.style.display = '';
+    profilePill.style.display = 'none';
+  }
+
+  function saveLocalUser(user){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); } catch(e){}
+    showProfile(user);
+  }
+
+  async function refreshProfileFromServer(){
+    let stored;
+    try { stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch(e){ stored = null; }
+    if(!stored || !stored.email) return;
+    showProfile(stored); // show immediately from cache, then refresh
+    try {
+      const res = await fetch('/api/me?email=' + encodeURIComponent(stored.email));
+      if(res.ok){
+        const data = await res.json();
+        if(data && data.user){
+          saveLocalUser(data.user);
+        }
+      }
+    } catch(e){ /* offline or backend not ready — keep cached view */ }
+  }
+
+  profileLogout.addEventListener('click', ()=>{
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+    hideProfile();
+  });
+
+  refreshProfileFromServer();
 
   let isSignedUp = false; // resets each visit — no data is persisted client-side
   let pendingMessage = null;
@@ -1519,14 +1607,18 @@
     suSubmit.textContent = 'Signing up...';
 
     try {
-      await saveSignup(name, email, 'free');
+      const result = await saveSignup(name, email, 'free');
+      if(result && result.signup){ saveLocalUser(result.signup); }
       if(standaloneMode){
         suName.closest('.signup-field').style.display = 'none';
         suEmail.closest('.signup-field').style.display = 'none';
         suSubmit.style.display = 'none';
         suNote.style.display = 'none';
         suSuccess.style.display = 'block';
-        setTimeout(closeSignup, 2200);
+        if(result && result.emailSent){
+          suSuccess.querySelector('span').textContent = "We've saved your details and sent a verification link to your email.";
+        }
+        setTimeout(closeSignup, 2600);
       } else {
         completeChatSignup(name);
       }
