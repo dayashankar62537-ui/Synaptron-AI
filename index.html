@@ -1294,11 +1294,15 @@
     <div class="terms-list reveal">
       <div class="term-item">
         <button class="term-head" type="button"><span>Is the AI chat really working, or is it a demo?</span><span class="term-arrow">+</span></button>
-        <div class="term-body"><p>The AI chat is real — it's powered by Groq, so you get genuine AI responses to whatever you ask.</p></div>
+        <div class="term-body"><p>The AI chat is real — it's powered by Synaptron AI, so you get genuine AI responses to whatever you ask.</p></div>
       </div>
       <div class="term-item">
         <button class="term-head" type="button"><span>Can Synaptron actually generate images?</span><span class="term-arrow">+</span></button>
-        <div class="term-body"><p>Yes — image generation is real and powered by OpenAI. Just ask for an image in the chat, like "generate an image of a sunset over mountains."</p></div>
+        <div class="term-body"><p>Yes — image generation is real and powered by Synaptron AI. Just ask for an image in the chat, like "generate an image of a sunset over mountains."</p></div>
+      </div>
+      <div class="term-item">
+        <button class="term-head" type="button"><span>What about video generation?</span><span class="term-arrow">+</span></button>
+        <div class="term-body"><p>Video generation is real and available on the Monthly plan (3 videos/month). Ask for a video in the chat — it usually takes 30-90 seconds to render.</p></div>
       </div>
       <div class="term-item">
         <button class="term-head" type="button"><span>What about website building, app building, study tools, and the personal assistant?</span><span class="term-arrow">+</span></button>
@@ -1383,8 +1387,8 @@
         <div class="price-amount">$0<span>/ 7 days</span></div>
         <p class="price-desc">Try real AI chat and image generation, no commitment.</p>
         <ul class="price-list">
-          <li>AI chat (real, powered by Groq)</li>
-          <li>AI image generation (real, powered by OpenAI)</li>
+          <li>AI chat (real, powered by Synaptron AI)</li>
+          <li>AI image generation (real, powered by Synaptron AI)</li>
           <li>Limited daily generations</li>
           <li>Community support</li>
         </ul>
@@ -1399,10 +1403,11 @@
         <ul class="price-list">
           <li>Everything in Free Trial</li>
           <li>Higher generation limits</li>
+          <li>3 AI-generated videos / month</li>
           <li>Priority workspace access</li>
           <li>Email support</li>
         </ul>
-        <a href="#waitlist" class="price-btn">Join the Waitlist</a>
+        <a href="https://rzp.io/rzp/t5EBP6iZ" target="_blank" rel="noopener" class="price-btn">Pay &amp; Subscribe</a>
       </div>
 
       <div class="price-card reveal">
@@ -1414,7 +1419,7 @@
           <li>Two months free vs. monthly</li>
           <li>Early access to new capabilities as they launch</li>
         </ul>
-        <a href="#waitlist" class="price-btn ghost">Join the Waitlist</a>
+        <a href="https://rzp.io/rzp/YzsVdYq1" target="_blank" rel="noopener" class="price-btn ghost">Pay &amp; Subscribe</a>
       </div>
 
       <div class="price-card reveal">
@@ -1426,11 +1431,11 @@
           <li>Locked-in lifetime pricing</li>
           <li>Founding member badge</li>
         </ul>
-        <a href="#waitlist" class="price-btn ghost">Join the Waitlist</a>
+        <a href="https://rzp.io/rzp/CuFKsmEV" target="_blank" rel="noopener" class="price-btn ghost">Pay &amp; Subscribe</a>
       </div>
     </div>
     <p style="color:var(--muted-2); font-size:13px; margin-top:22px; text-align:center; max-width:640px; margin-left:auto; margin-right:auto; line-height:1.6;">
-      <strong>What's included now:</strong> AI chat and AI image generation are live and working.
+      <strong>What's included now:</strong> AI chat, AI image generation, and AI video generation (Monthly plan) are live and working.
       <strong>Not included yet:</strong> website building, app building, study tools, and the personal assistant are still in development — they are not part of any paid plan until they're real, and we'll announce it clearly when they launch.
     </p>
   </section>
@@ -1902,6 +1907,42 @@
     scrollBottom();
   }
 
+  // Real video generation via Luma AI — this is a slow, async job:
+  // start it, then poll until it's ready.
+  function detectVideoIntent(raw){
+    return /\b(generate|create|make)\b.*\bvideo\b/i.test(raw) || /\bvideo\s+of\b/i.test(raw);
+  }
+
+  async function startVideo(prompt){
+    const res = await fetch('/api/video-start', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data && data.error ? data.error : 'Could not start video generation');
+    return data.id;
+  }
+
+  async function pollVideo(id){
+    for(let i=0; i<40; i++){ // up to ~3.3 minutes
+      await new Promise(r=>setTimeout(r, 5000));
+      const res = await fetch('/api/video-status?id=' + encodeURIComponent(id));
+      const data = await res.json();
+      if(!res.ok) throw new Error(data && data.error ? data.error : 'Could not check video status');
+      if(data.state === 'completed' && data.video) return data.video;
+      if(data.state === 'failed') throw new Error(data.failure_reason || 'Video generation failed');
+    }
+    throw new Error('Video is taking longer than expected — please check back later');
+  }
+
+  function addAiVideo(videoUrl, caption){
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><video src="${videoUrl}" controls style="display:block; max-width:220px; border-radius:10px; margin-bottom:8px;"></video>${caption}</div></div></div>`;
+    body.appendChild(div);
+    scrollBottom();
+  }
+
   function handleSend(text){
     const hasImage = !!pendingImage;
     if((!text || !text.trim()) && !hasImage) return;
@@ -1926,7 +1967,21 @@
         addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
       }).catch(err=>{
         removeTyping();
-        addAiMsg("I couldn't generate that image (" + err.message + "). Make sure OPENAI_API_KEY is set in your Vercel project, and that your OpenAI account has access to gpt-image-1.");
+        addAiMsg("I couldn't generate that image right now (" + err.message + "). Please try again in a moment.");
+      });
+      return;
+    }
+
+    // If the user is asking to generate a video, start the job and poll
+    // until it's ready — this can take a minute or two.
+    if(!imageToSend && trimmed && detectVideoIntent(trimmed)){
+      addAiMsg("On it — generating your video. This usually takes 30-90 seconds, hang tight...");
+      startVideo(trimmed).then(id=>{
+        return pollVideo(id);
+      }).then(videoUrl=>{
+        addAiVideo(videoUrl, 'Here\'s your video! Want a different style or scene?');
+      }).catch(err=>{
+        addAiMsg("I couldn't generate that video (" + err.message + "). Please try again in a moment.");
       });
       return;
     }
@@ -1937,7 +1992,7 @@
       addAiMsg(reply);
     }).catch(err=>{
       removeTyping();
-      addAiMsg("I couldn't reach the AI backend just now (" + err.message + "). If you're testing this locally, make sure GEMINI_API_KEY is set in your Vercel project and the site is deployed with the /api/chat function.");
+      addAiMsg("I couldn't reach the AI backend just now (" + err.message + "). Please try again in a moment.");
     });
   }
 
