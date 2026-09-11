@@ -20,7 +20,7 @@ function htmlPage(title, message, ok) {
     <div class="icon">${ok ? '✓' : '✕'}</div>
     <h2>${title}</h2>
     <p>${message}</p>
-    <p><a href="/">Return to Synaptron AI</a></p>
+    <p><a href="/">Return to Aviqo AI</a></p>
   </div>
 </body></html>`;
 }
