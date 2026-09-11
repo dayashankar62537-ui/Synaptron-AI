@@ -1,54 +1,104 @@
-# Synaptron AI — Deploy Guide (10 minute setup)
+# Aviqo AI — Project Guide
 
-Ye project 2 hisso mein hai:
-- `index.html` — full website (frontend)
-- `api/chat.js` — secure backend jo Gemini API call karta hai
+Aviqo AI ki full website + backend. Isme ye sab real hai: AI chat, real image
+generation, real video generation, email signup with verification, aur
+Postgres database.
 
-**Zaroori: aap ne pehle jo API key chat mein paste ki thi, wo ab compromised hai.**
-Deploy karne se pehle:
-1. https://aistudio.google.com/app/apikey pe jao
-2. Purani key **delete** karo
-3. **Naya key generate** karo — isi naye key ko neeche steps mein use karna hai (kisi ko bhi mat dena — mujhe bhi nahi)
+## Files
+
+- `index.html` — poori website (frontend)
+- `api/chat.js` — AI chat + photo understanding (Groq)
+- `api/generate-image.js` — real image generation (OpenAI)
+- `api/video-start.js` + `api/video-status.js` — real video generation (Pixazo, free tier)
+- `api/signup.js` — signup save + verification email bhejta hai (Postgres + Resend)
+- `api/verify.js` — verification link click handle karta hai
+- `api/me.js` — profile status check karta hai (verified ya nahi)
+- `package.json` — dependencies (`pg` — Postgres ke liye)
 
 ---
 
-## Step-by-step: Vercel pe deploy karna (free)
+## Environment Variables (Vercel Settings → Environment Variables)
 
-1. **Vercel account banao** — https://vercel.com (GitHub se sign up kar sakte ho)
+In sabko exactly inhi naamo se add karna hai:
 
-2. **Ye project GitHub pe upload karo:**
-   - GitHub pe ek naya repository banao (e.g. `synaptron-ai`)
-   - Is folder (`index.html`, `api/chat.js`, `package.json`) ko us repo mein upload/push karo
+| Key | Kis liye | Kaha se milegi |
+|---|---|---|
+| `GROQ_API_KEY` | AI chat | console.groq.com |
+| `OPENAI_API_KEY` | Image generation | platform.openai.com |
+| `PIXAZO_API_KEY` | Video generation | pixazo.ai |
+| `RESEND_API_KEY` | Verification email | resend.com |
+| `POSTGRES_URL` ya `DATABASE_URL` | Signup database | Vercel Storage se auto-add hoti hai jab Postgres connect karte ho |
 
-3. **Vercel mein "Add New Project" karo:**
-   - Apna GitHub repo select karo
-   - Framework: "Other" ya "No Framework" select karo (kuch configure karne ki zarurat nahi)
+⚠️ **Koi bhi API key chat mein kabhi paste mat karna** — sirf Vercel ke
+Environment Variables mein daalni hai. Agar galti se paste ho jaye, turant
+us provider ki site pe jaake key delete/regenerate kar dena.
 
-4. **Environment Variable add karo (SABSE IMPORTANT STEP):**
-   - Project settings mein "Environment Variables" section mein jao
-   - Key: `GEMINI_API_KEY`
-   - Value: apni **nayi** Gemini API key paste karo
-   - Save karo
+---
 
-5. **Deploy** button dabao. 1-2 minute mein live ho jayega.
+## Database Setup (ek baar karna hai)
 
-6. Aapko ek URL milega jaisa `https://synaptron-ai.vercel.app` — yehi aapki live website hai.
+Vercel dashboard → project → **Storage** tab → Postgres database create karo
+(free tier). Connect hone ke baad, **Query** tab mein ye run karo:
+
+```sql
+CREATE TABLE signups (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  plan TEXT DEFAULT 'free',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE signups ADD COLUMN verified BOOLEAN DEFAULT false;
+ALTER TABLE signups ADD COLUMN verify_token TEXT;
+```
+
+---
+
+## Deploy karne ke steps
+
+1. **GitHub** pe ek repository banao, ye saari files upload karo
+2. **Vercel** pe jao → "Add New Project" → apna GitHub repo import karo
+3. Upar diye saare **Environment Variables** add karo
+4. **Deploy** dabao
+5. Har baar jab bhi files update karo (GitHub pe), Vercel → Deployments →
+   latest deployment → `...` → **Redeploy** karna mat bhoolna
 
 ---
 
 ## Ye kaise kaam karta hai (security)
 
-- Aapki API key sirf Vercel ke server pe, environment variable ke andar rehti hai
-- Website (jo browser mein chalti hai) us key ko **kabhi nahi dekhti**
-- Jab user chatbox mein type karta hai, browser `/api/chat` ko call karta hai
-- `/api/chat` (jo server pe chalta hai) key use karke Gemini ko call karta hai, aur jawab wapas bhej deta hai
-- Isliye "View Page Source" karne se bhi koi key nahi dikhegi
+- Saari API keys sirf Vercel ke server pe rehti hain, environment variables
+  ke andar — browser/website inhe kabhi nahi dekhti
+- Jab user chatbox use karta hai, browser `/api/chat`, `/api/generate-image`,
+  ya `/api/video-start` ko call karta hai — wahi (server pe) asli key use
+  hoti hai
+- Isliye "View Page Source" karne se bhi koi key kahin nahi dikhegi
 
-## Important — abhi bhi kya real nahi hai
+---
 
-- **Chat/Q&A ab real hai** — Gemini se actual jawab aayega
-- **Image, video, website, app "generation"** abhi bhi real nahi hai — Gemini ka text API sirf text jawab de sakta hai, real image/video/app files nahi banata. Agar user "image bana do" bole, AI text mein jawab dega ki abhi wo capability connect ho rahi hai
-- Real image generation ke liye alag se Google Imagen API chahiye hogi, real video ke liye Veo API — dono ki alag setup aur billing hoti hai
+## Abhi kya real hai, kya nahi
+
+✅ **Real hai:**
+- AI Chat (Groq) — koi bhi sawaal poocho, asli jawab milega
+- Photo samajhna (attach karke poochne pe)
+- Image generation (OpenAI)
+- Video generation (Pixazo free model — 30-90 second lagte hain)
+- Signup + email verification (real email jaata hai)
+
+❌ **Abhi real nahi hai (website/pricing mein clearly likha hai):**
+- Website building
+- App building
+- Study tools
+- Personal assistant
+
+❌ **Payment automatic nahi hai:**
+- Razorpay Payment Links se payment le sakte ho, lekin payment hone ke baad
+  user ka plan **database mein manually update** karna padta hai abhi —
+  automatic nahi hai (uske liye Razorpay Webhook integrate karna padega,
+  jo ek future step hai)
+
+---
 
 ## Local testing (optional, agar Node.js installed hai)
 
@@ -56,4 +106,5 @@ Deploy karne se pehle:
 npm install -g vercel
 vercel dev
 ```
-Fir browser mein `http://localhost:3000` khol ke test kar sakte ho (isse pehle `.env` file mein `GEMINI_API_KEY=your_new_key` daalna hoga, ya terminal mein export karna hoga).
+Fir `http://localhost:3000` khol ke test kar sakte ho — isse pehle `.env`
+file mein saari upar wali keys daalni hongi.
