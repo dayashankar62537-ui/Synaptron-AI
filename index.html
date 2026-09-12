@@ -94,12 +94,35 @@
   }
   .bg-glow-a{
     position:absolute; top:-10%; left:-10%; width:60vw; height:60vw;
-    background:radial-gradient(circle, rgba(37,99,235,0.10), transparent 65%);
+    background:radial-gradient(circle, rgba(37,99,235,0.14), transparent 65%);
     filter:blur(10px);
+    animation:blobFloatA 16s ease-in-out infinite;
   }
   .bg-glow-b{
     position:absolute; bottom:-20%; right:-10%; width:55vw; height:55vw;
-    background:radial-gradient(circle, rgba(13,148,136,0.07), transparent 65%);
+    background:radial-gradient(circle, rgba(13,148,136,0.10), transparent 65%);
+    animation:blobFloatB 20s ease-in-out infinite;
+  }
+  .bg-glow-c{
+    position:absolute; top:35%; left:38%; width:42vw; height:42vw;
+    background:radial-gradient(circle, rgba(168,85,247,0.10), transparent 65%);
+    filter:blur(6px);
+    animation:blobFloatC 24s ease-in-out infinite;
+  }
+  @keyframes blobFloatA{
+    0%,100%{transform:scale(1) translate(0,0);}
+    50%{transform:scale(0.72) translate(4vw,3vw);}
+  }
+  @keyframes blobFloatB{
+    0%,100%{transform:scale(1) translate(0,0);}
+    50%{transform:scale(0.78) translate(-3vw,-4vw);}
+  }
+  @keyframes blobFloatC{
+    0%,100%{transform:scale(0.85) translate(0,0);}
+    50%{transform:scale(1.15) translate(-2vw,3vw);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bg-glow-a, .bg-glow-b, .bg-glow-c{animation:none;}
   }
 
   .wrap{max-width:1180px; margin:0 auto; padding:0 32px; position:relative; z-index:2;}
@@ -710,12 +733,15 @@
   .msg .av img{width:100%; height:100%; object-fit:cover;}
   .msg .av.user-av{background:var(--grad-brand);}
   .bubble{
-    font-size:13.5px; line-height:1.6; padding:11px 14px; border-radius:12px;
+    font-size:14px; line-height:1.65; padding:12px 16px; border-radius:12px;
     background:var(--surface); border:1px solid var(--border); color:var(--text);
-    max-width:250px;
+    font-weight:500;
+    max-width:min(520px, 78%);
   }
+  .bubble ul{margin:6px 0 2px 18px; padding:0;}
+  .bubble li{margin-bottom:5px;}
   .msg.user{flex-direction:row-reverse; margin-left:auto;}
-  .msg.user .bubble{background:var(--grad-brand); color:#fff; border:none;}
+  .msg.user .bubble{background:var(--grad-brand); color:#fff; border:none; max-width:min(420px, 78%);}
 
   .gen-card{
     margin-top:8px; border-radius:12px; overflow:hidden; border:1px solid var(--border-hi);
@@ -955,6 +981,7 @@
   <div class="bg-grid"></div>
   <div class="bg-glow-a"></div>
   <div class="bg-glow-b"></div>
+  <div class="bg-glow-c"></div>
 </div>
 
 <header>
@@ -1942,6 +1969,28 @@
     if(t) t.remove();
   }
 
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatMessage(raw){
+    const lines = escapeHtml(raw).split(/\n+/).map(l=>l.trim()).filter(l=>l.length);
+    let html = '';
+    let inList = false;
+    lines.forEach(line=>{
+      const isBullet = /^[-•]\s+/.test(line);
+      if(isBullet){
+        if(!inList){ html += '<ul>'; inList = true; }
+        html += `<li>${line.replace(/^[-•]\s+/, '')}</li>`;
+      } else {
+        if(inList){ html += '</ul>'; inList = false; }
+        html += (html ? '<br>' : '') + line;
+      }
+    });
+    if(inList) html += '</ul>';
+    return html;
+  }
+
   function addAiMsg(text, cardType, cardMeta){
     const div = document.createElement('div');
     div.className = 'msg';
@@ -1955,7 +2004,7 @@
       };
       cardHtml = `<div class="gen-card"><div class="art">${icons[cardType]}</div><div class="meta"><b>${cardMeta.title}</b>${cardMeta.sub}</div></div>`;
     }
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble">${text}</div>${cardHtml}</div>`;
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble">${formatMessage(text)}</div>${cardHtml}</div>`;
     body.appendChild(div);
     scrollBottom();
   }
