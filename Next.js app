@@ -1,0 +1,2 @@
+npm create next-app@latest clerk-nextjs -- --yes
+cd clerk-nextjs
