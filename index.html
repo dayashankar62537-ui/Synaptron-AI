@@ -972,9 +972,125 @@
     .price-amount{font-size:26px;}
     .signup-card{padding:22px 16px;}
   }
+
+  /* ================= INTRO LOGO ANIMATION ================= */
+  #introOverlay{
+    position:fixed; inset:0; z-index:9999;
+    background:radial-gradient(circle at 50% 45%, #1b1712 0%, #0a0806 70%, #050403 100%);
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .7s ease, visibility .7s ease;
+  }
+  #introOverlay.hide{opacity:0; visibility:hidden; pointer-events:none;}
+  #introOverlay .intro-logo-wrap{
+    position:relative; width:180px; height:180px;
+    display:flex; align-items:center; justify-content:center;
+    animation:introEntrance 2.1s cubic-bezier(.2,.9,.25,1) forwards;
+  }
+  #introOverlay .intro-logo-wrap img{
+    width:100%; height:100%; object-fit:cover; border-radius:32px;
+    box-shadow:0 0 90px rgba(255,150,60,0.55), 0 25px 70px rgba(0,0,0,0.6);
+  }
+  #introOverlay .intro-ring{
+    position:absolute; inset:-26px; border-radius:50%;
+    border:2px solid rgba(255,170,70,0.35);
+    animation:introRingSpin 2.1s linear forwards, introFade 2.1s ease forwards;
+  }
+  #introOverlay .intro-text{
+    position:absolute; bottom:-46px; left:50%; transform:translateX(-50%);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.15em;
+    color:var(--mint); opacity:0; white-space:nowrap;
+    animation:introTextIn .6s ease .9s forwards;
+  }
+  @keyframes introEntrance{
+    0%{transform:scale(0.2) rotate(-35deg) translateY(40px); opacity:0;}
+    35%{opacity:1;}
+    55%{transform:scale(1.18) rotate(6deg) translateY(0);}
+    68%{transform:scale(0.94) rotate(-3deg);}
+    80%{transform:scale(1.04) rotate(1.5deg);}
+    100%{transform:scale(1) rotate(0deg);}
+  }
+  @keyframes introRingSpin{
+    0%{transform:rotate(0deg) scale(0.6); opacity:0;}
+    30%{opacity:1;}
+    100%{transform:rotate(320deg) scale(1);}
+  }
+  @keyframes introFade{ 0%,75%{opacity:1;} 100%{opacity:0;} }
+  @keyframes introTextIn{ from{opacity:0; transform:translateX(-50%) translateY(8px);} to{opacity:1; transform:translateX(-50%) translateY(0);} }
+
+  /* ================= SITE-WIDE BACKGROUND MEDIA ================= */
+  #siteBgMedia{
+    position:fixed; inset:0; z-index:-2; overflow:hidden;
+    background:#0a0806;
+  }
+  #siteBgMedia video, #siteBgMedia img{
+    position:absolute; top:50%; left:50%;
+    width:100%; height:100%; object-fit:cover;
+    transform:translate(-50%,-50%) scale(1.06);
+    opacity:0.28; filter:saturate(1.15) contrast(1.05);
+    transition:transform .6s ease-out, opacity .6s ease;
+    will-change:transform;
+  }
+  #siteBgMedia::after{
+    content:''; position:absolute; inset:0;
+    background:
+      linear-gradient(180deg, rgba(16,14,12,0.55) 0%, rgba(16,14,12,0.82) 45%, rgba(16,14,12,0.95) 100%);
+    z-index:1;
+  }
+  body.dark-theme #siteBgMedia::after{
+    background:
+      linear-gradient(180deg, rgba(7,7,10,0.6) 0%, rgba(7,7,10,0.88) 45%, rgba(7,7,10,0.97) 100%);
+  }
+
+  /* ================= SCROLL-DRIVEN MOTION ================= */
+  .reveal{
+    opacity:0; transform:translateY(46px) scale(0.93) rotateX(6deg);
+    transition:opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1);
+    transform-style:preserve-3d;
+  }
+  .reveal.in{opacity:1; transform:translateY(0) scale(1) rotateX(0);}
+
+  /* ================= COLORED 3D ELEMENTS ================= */
+  .cap-card, .team-card{
+    transition:transform .25s ease, box-shadow .3s ease, border-color .3s ease;
+    border-width:1.5px;
+  }
+  .cap-card:nth-of-type(6n+1), .team-card:nth-of-type(6n+1){border-color:rgba(255,140,40,0.45); box-shadow:0 20px 50px -18px rgba(255,140,40,0.35);}
+  .cap-card:nth-of-type(6n+2), .team-card:nth-of-type(6n+2){border-color:rgba(56,189,248,0.45); box-shadow:0 20px 50px -18px rgba(56,189,248,0.35);}
+  .cap-card:nth-of-type(6n+3), .team-card:nth-of-type(6n+3){border-color:rgba(52,211,153,0.45); box-shadow:0 20px 50px -18px rgba(52,211,153,0.35);}
+  .cap-card:nth-of-type(6n+4), .team-card:nth-of-type(6n+4){border-color:rgba(232,121,249,0.45); box-shadow:0 20px 50px -18px rgba(232,121,249,0.35);}
+  .cap-card:nth-of-type(6n+5), .team-card:nth-of-type(6n+5){border-color:rgba(250,204,21,0.45); box-shadow:0 20px 50px -18px rgba(250,204,21,0.35);}
+  .cap-card:nth-of-type(6n+6), .team-card:nth-of-type(6n+6){border-color:rgba(248,113,113,0.45); box-shadow:0 20px 50px -18px rgba(248,113,113,0.35);}
+
+  .ring.r1{border-color:rgba(255,140,40,0.55);}
+  .ring.r2{border-color:rgba(45,212,191,0.55);}
+  .ring.r3{border-color:rgba(96,165,250,0.6);}
+  .node:nth-of-type(3n+1){background:linear-gradient(120deg,#ffb020,#ff7a3d); box-shadow:0 0 18px 4px rgba(255,140,40,0.55);}
+  .node:nth-of-type(3n+2){background:linear-gradient(120deg,#2dd4bf,#0d9488); box-shadow:0 0 18px 4px rgba(45,212,191,0.55);}
+  .node:nth-of-type(3n+3){background:linear-gradient(120deg,#60a5fa,#2563eb); box-shadow:0 0 18px 4px rgba(96,165,250,0.55);}
+
+  @media (prefers-reduced-motion: reduce){
+    #introOverlay, #introOverlay .intro-logo-wrap, #introOverlay .intro-ring{animation:none !important; opacity:1 !important; transform:none !important;}
+    #siteBgMedia video, #siteBgMedia img{transition:none;}
+  }
 </style>
 </head>
 <body>
+
+<!-- INTRO LOGO ANIMATION -->
+<div id="introOverlay">
+  <div class="intro-logo-wrap">
+    <div class="intro-ring"></div>
+    <img id="introLogoImg" src="" alt="Aviqo AI">
+    <div class="intro-text">AVIQO&nbsp;AI</div>
+  </div>
+</div>
+
+<!-- SITE-WIDE BACKGROUND MEDIA (video with image fallback) -->
+<div id="siteBgMedia">
+  <video id="siteBgVideo" autoplay muted loop playsinline preload="auto">
+    <source src="assets/aviqo-bg.mp4" type="video/mp4">
+  </video>
+</div>
 
 <div class="bg-fixed">
   <div class="bg-grid"></div>
@@ -2293,6 +2409,46 @@
     });
     wsShell.addEventListener('mouseleave', ()=>{ ws.style.transform = 'rotateX(7deg) rotateY(-6deg)'; });
   }
+
+  // Intro logo animation: reuse the existing brand logo, then fade the overlay out
+  (function(){
+    const introImg = document.getElementById('introLogoImg');
+    if(introImg && typeof logoSrc !== 'undefined') introImg.src = logoSrc;
+    const overlay = document.getElementById('introOverlay');
+    if(overlay){
+      window.addEventListener('load', ()=>{
+        setTimeout(()=>{ overlay.classList.add('hide'); }, 1900);
+      });
+      // Safety fallback in case load event is delayed
+      setTimeout(()=>{ overlay.classList.add('hide'); }, 4000);
+    }
+  })();
+
+  // Background video: grow / zoom subtly as the page is scrolled (motion on scroll)
+  (function(){
+    const bgWrap = document.getElementById('siteBgMedia');
+    const bgVideo = document.getElementById('siteBgVideo');
+    if(!bgWrap) return;
+    if(bgVideo){ bgVideo.play().catch(()=>{}); }
+    let ticking = false;
+    function applyScrollGrowth(){
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      const docHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      const progress = Math.min(scrollY / docHeight, 1);
+      const scale = 1.06 + progress * 0.34;      // media grows as you scroll
+      const opacity = 0.28 + progress * 0.14;    // slightly more visible deeper in
+      const media = bgWrap.querySelector('video, img');
+      if(media){
+        media.style.transform = `translate(-50%,-50%) scale(${scale.toFixed(3)})`;
+        media.style.opacity = opacity.toFixed(3);
+      }
+      ticking = false;
+    }
+    window.addEventListener('scroll', ()=>{
+      if(!ticking){ requestAnimationFrame(applyScrollGrowth); ticking = true; }
+    }, {passive:true});
+    applyScrollGrowth();
+  })();
 </script>
 
 </body>
