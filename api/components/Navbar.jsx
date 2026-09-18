@@ -2,20 +2,25 @@ import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export default function Navbar() {
   return (
-    <div className="flex justify-between items-center p-4">
-      {/* Signed Out State: Direct Google Modal open hoga */}
-      <SignedOut>
-        <SignInButton mode="modal">
-          <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-5 py-2 rounded-lg">
-            Sign Up Now
-          </button>
-        </SignInButton>
-      </SignedOut>
+    <header className="flex justify-between items-center px-6 py-4 bg-black/80 text-white">
+      {/* Logo */}
+      <div className="text-xl font-bold">AVIqo AI</div>
 
-      {/* Signed In State: User Google Avatar dikhega */}
-      <SignedIn>
-        <UserButton afterSignOutUrl="/" />
-      </SignedIn>
-    </div>
+      <div className="flex items-center gap-4">
+        {/* 1. Jab User Logged OUT ho: Tab sirf ye Sign Up button dikhega */}
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-lg transition">
+              Sign Up Now
+            </button>
+          </SignInButton>
+        </SignedOut>
+
+        {/* 2. Jab User Logged IN ho jaye: Sign Up button gayab ho jayega aur ye Profile Icon dikhega */}
+        <SignedIn>
+          <UserButton afterSignOutUrl="/" />
+        </SignedIn>
+      </div>
+    </header>
   );
 }
