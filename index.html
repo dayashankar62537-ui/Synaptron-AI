@@ -1003,6 +1003,59 @@
     50%{transform:scale(1.025);}
   }
 
+  /* ================= POWERED-BY SLIDING STRIP ================= */
+  .powered-strip{
+    position:relative; z-index:2; padding:34px 0 30px;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.03));
+    overflow:hidden;
+  }
+  .powered-label{
+    text-align:center; margin-bottom:20px;
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .powered-label b{
+    background:var(--grad-brand); -webkit-background-clip:text; background-clip:text;
+    color:transparent; font-weight:600;
+  }
+  .powered-marquee{
+    display:flex; width:max-content;
+    animation:poweredSlide 32s linear infinite;
+  }
+  .powered-strip:hover .powered-marquee{animation-play-state:paused;}
+  .powered-track{display:flex; align-items:center; gap:14px; padding-right:14px;}
+  .powered-chip{
+    display:inline-flex; align-items:center; gap:10px; white-space:nowrap;
+    padding:11px 22px; border-radius:999px;
+    border:1px solid var(--border); background:var(--surface);
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15.5px; color:var(--text);
+    transition:border-color .25s, transform .25s, box-shadow .25s;
+  }
+  .powered-chip::before{
+    content:''; width:8px; height:8px; border-radius:50%;
+    background:var(--grad-brand); box-shadow:0 0 10px rgba(255,140,40,0.6);
+  }
+  .powered-chip:hover{border-color:var(--border-hi); transform:translateY(-2px); box-shadow:0 8px 26px -10px rgba(255,140,40,0.45);}
+  .powered-chip.etc{color:var(--muted); font-style:italic;}
+  .powered-strip::before, .powered-strip::after{
+    content:''; position:absolute; top:0; bottom:0; width:90px; z-index:3; pointer-events:none;
+  }
+  .powered-strip::before{left:0; background:linear-gradient(90deg, var(--bg), transparent);}
+  .powered-strip::after{right:0; background:linear-gradient(270deg, var(--bg), transparent);}
+  @keyframes poweredSlide{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+  @media (max-width:600px){
+    .powered-chip{font-size:14px; padding:9px 16px;}
+    .powered-strip::before, .powered-strip::after{width:40px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .powered-marquee{animation:none; flex-wrap:wrap; justify-content:center; width:auto;}
+    .powered-track[aria-hidden="true"]{display:none;}
+  }
+
   /* ================= SITE-WIDE BACKGROUND MEDIA ================= */
   #siteBgMedia{
     position:fixed; inset:0; z-index:-2; overflow:hidden;
@@ -1147,6 +1200,15 @@
       <div class="float-chip chip-3">&#9678; study plan <b>ready</b></div>
     </div>
   </section>
+
+<!-- POWERED BY — sliding strip -->
+  <div class="powered-strip" aria-label="Powered by Google Gemini AI, Groq AI, Codex AI, OpenAI, ChatGPT, Luma AI, Pixco AI, Meta AI etc.">
+    <div class="powered-label"><b>Powered by</b></div>
+    <div class="powered-marquee">
+      <div class="powered-track"><span class="powered-chip">Google Gemini AI</span><span class="powered-chip">Groq AI</span><span class="powered-chip">Codex AI</span><span class="powered-chip">OpenAI</span><span class="powered-chip">ChatGPT</span><span class="powered-chip">Luma AI</span><span class="powered-chip">Pixco AI</span><span class="powered-chip">Meta AI</span><span class="powered-chip etc">etc.</span></div>
+      <div class="powered-track" aria-hidden="true"><span class="powered-chip">Google Gemini AI</span><span class="powered-chip">Groq AI</span><span class="powered-chip">Codex AI</span><span class="powered-chip">OpenAI</span><span class="powered-chip">ChatGPT</span><span class="powered-chip">Luma AI</span><span class="powered-chip">Pixco AI</span><span class="powered-chip">Meta AI</span><span class="powered-chip etc">etc.</span></div>
+    </div>
+  </div>
 
 <!-- TRY AVIQO AI — inline chat, right at the start -->
   <section id="try-ai" class="inline-chat-wrap wrap">
