@@ -40,7 +40,7 @@ function tooMany(ip) {
   return list.length > max;
 }
 
-module.exports = async function handler(req, res) {
+async function run(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -113,4 +113,14 @@ module.exports = async function handler(req, res) {
   } finally {
     clearTimeout(timer);
   }
-};
+}
+
+// Default export (ES module). Any unexpected crash still returns JSON, never a plain-text error page.
+export default async function handler(req, res) {
+  try {
+    return await run(req, res);
+  } catch (err) {
+    console.error('chat handler crashed:', err && err.message);
+    return res.status(500).json({ error: 'Unexpected server error. Please try again.' });
+  }
+}
