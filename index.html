@@ -1064,6 +1064,14 @@
     #introOverlay, #introOverlay .intro-logo-wrap{animation:none !important; opacity:1 !important; transform:none !important; filter:none !important;}
     #siteBgMedia video, #siteBgMedia img{transition:none;}
   }
+  /* ---------- code blocks inside chat replies ---------- */
+  .bubble .code-block{margin:10px 0; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0a0908; max-width:100%;}
+  .bubble .code-head{display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:rgba(255,255,255,0.05); font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);}
+  .bubble .code-copy{background:none; border:1px solid var(--border-hi); color:var(--text); border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer;}
+  .bubble .code-block pre{margin:0; padding:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; max-height:420px;}
+  .bubble .code-block code{font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.55; color:#f3ede3; white-space:pre;}
+  .bubble code.inline{font-family:'JetBrains Mono',monospace; font-size:.9em; background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:5px;}
+
   /* ================= MOBILE FIT — full-width on every phone ================= */
   html{-webkit-text-size-adjust:100%; text-size-adjust:100%; max-width:100%; overflow-x:hidden;}
   body{max-width:100%; overflow-x:hidden;}
@@ -1934,15 +1942,16 @@
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  function formatMessage(raw){
-    const lines = escapeHtml(raw).split(/\n+/).map(l=>l.trim()).filter(l=>l.length);
+  function formatText(chunk){
+    const lines = escapeHtml(chunk).split(/\n+/).map(l=>l.trim()).filter(l=>l.length);
     let html = '';
     let inList = false;
     lines.forEach(line=>{
-      const isBullet = /^[-•]\s+/.test(line);
+      line = line.replace(/`([^`]+)`/g, '<code class="inline">$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+      const isBullet = /^[-•*]\s+/.test(line);
       if(isBullet){
         if(!inList){ html += '<ul>'; inList = true; }
-        html += `<li>${line.replace(/^[-•]\s+/, '')}</li>`;
+        html += `<li>${line.replace(/^[-•*]\s+/, '')}</li>`;
       } else {
         if(inList){ html += '</ul>'; inList = false; }
         html += (html ? '<br>' : '') + line;
@@ -1951,6 +1960,32 @@
     if(inList) html += '</ul>';
     return html;
   }
+
+  // Renders normal text plus ```fenced code blocks``` (with a Copy button) so code answers keep their formatting
+  function formatMessage(raw){
+    const parts = String(raw).split(/```/);
+    let html = '';
+    parts.forEach((part, i)=>{
+      if(i % 2 === 0){
+        html += formatText(part);
+      } else {
+        const nl = part.indexOf('\n');
+        const lang = nl > -1 ? part.slice(0, nl).trim() : '';
+        const code = (nl > -1 ? part.slice(nl + 1) : part).replace(/\n$/, '');
+        html += `<div class="code-block"><div class="code-head"><span>${escapeHtml(lang || 'code')}</span><button type="button" class="code-copy">Copy</button></div><pre><code>${escapeHtml(code)}</code></pre></div>`;
+      }
+    });
+    return html;
+  }
+
+  // Copy button for code blocks
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest && e.target.closest('.code-copy');
+    if(!btn) return;
+    const code = btn.closest('.code-block').querySelector('code').textContent;
+    const done = ()=>{ btn.textContent = 'Copied'; setTimeout(()=>{ btn.textContent = 'Copy'; }, 1500); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(code).then(done).catch(()=>{}); }
+  });
 
   function addAiMsg(text, cardType, cardMeta){
     const div = document.createElement('div');
