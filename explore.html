@@ -74,6 +74,22 @@
 
   @media (max-width:1000px){ .grid{grid-template-columns:repeat(3,1fr);} }
   @media (max-width:640px){ .grid{grid-template-columns:repeat(2,1fr);} .navlinks{display:none;} .hero-title{font-size:24px;} }
+
+  /* GENERATED IMAGE (shown when arriving from a chat-generated image) */
+  .generated-section{padding:32px 0 8px; display:none;}
+  .generated-card{background:var(--surface); border:1px solid var(--border-hi); border-radius:18px; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; gap:0;}
+  .generated-card .img-wrap{background:var(--surface-2); display:flex; align-items:center; justify-content:center; min-height:280px;}
+  .generated-card .img-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
+  .generated-card .info{padding:28px; display:flex; flex-direction:column; justify-content:center; gap:14px;}
+  .generated-card .info .badge{display:inline-flex; align-items:center; gap:6px; background:rgba(212,255,79,0.12); color:var(--lime); font-size:11px; font-weight:700; letter-spacing:.08em; padding:5px 12px; border-radius:100px; width:fit-content;}
+  .generated-card .info .badge::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--lime);}
+  .generated-card .info h3{font-size:20px; font-weight:800;}
+  .generated-card .info p.prompt{color:var(--muted); font-size:14px; line-height:1.5;}
+  .generated-card .info .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+  .generated-card .info .actions a{font-size:13px; font-weight:700; padding:9px 16px; border-radius:100px;}
+  .generated-card .info .actions .primary{background:var(--grad-brand); color:#1a1206;}
+  .generated-card .info .actions .secondary{border:1px solid var(--border-hi); color:var(--text);}
+  @media (max-width:760px){ .generated-card{grid-template-columns:1fr;} .generated-card .img-wrap{min-height:220px;} }
 </style>
 </head>
 <body>
@@ -104,6 +120,21 @@
 </div>
 
 <main class="wrap">
+
+  <section class="generated-section" id="generatedSection">
+    <div class="generated-card">
+      <div class="img-wrap"><img id="generatedImg" src="" alt="Your generated image"></div>
+      <div class="info">
+        <span class="badge">JUST GENERATED</span>
+        <h3>Your image is ready</h3>
+        <p class="prompt" id="generatedPrompt"></p>
+        <div class="actions">
+          <a class="primary" id="generatedDownload" download="aviqo-image.png">Download</a>
+          <a class="secondary" href="chat.html">Make another</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="gallery" id="images-section">
     <div class="sec-head"><h2>TOP IMAGES</h2><a class="view-all" href="chat.html?msg=Generate%20an%20image">View All →</a></div>
@@ -181,6 +212,21 @@
 
   const pillLabels = [...imageModels, ...videoModels, ...audioModels].filter((v,i,a)=>a.indexOf(v)===i).sort();
   document.getElementById('pillsRow').innerHTML = pillLabels.map(p=>`<a class="pill" href="chat.html?msg=Use%20${encodeURIComponent(p)}">${p.replace(/-/g,' ')}</a>`).join('');
+
+  // If we were opened right after generating an image in chat.html, show it here
+  (function(){
+    try{
+      const raw = sessionStorage.getItem('aviqo_generated_image');
+      if(!raw) return;
+      const data = JSON.parse(raw);
+      if(!data || !data.dataUrl) return;
+      document.getElementById('generatedImg').src = data.dataUrl;
+      document.getElementById('generatedPrompt').textContent = data.prompt || '';
+      document.getElementById('generatedDownload').href = data.dataUrl;
+      document.getElementById('generatedSection').style.display = 'block';
+      document.getElementById('generatedSection').scrollIntoView({behavior:'smooth', block:'start'});
+    }catch(e){}
+  })();
 </script>
 
 </body>
