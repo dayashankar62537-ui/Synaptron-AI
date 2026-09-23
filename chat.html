@@ -2125,6 +2125,15 @@
       generateImage(trimmed).then(dataUrl=>{
         removeTyping();
         addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
+        // Also open the generated image on its own page (styled like Explore)
+        try{
+          sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
+            dataUrl: dataUrl,
+            prompt: trimmed,
+            ts: Date.now()
+          }));
+        }catch(e){}
+        window.open('explore.html?generated=1', '_blank');
       }).catch(err=>{
         removeTyping();
         addAiMsg("I couldn't generate that image right now (" + err.message + "). Please try again in a moment.");
