@@ -2046,11 +2046,6 @@
       || /\b(image|photo|picture)\s+of\b/i.test(raw);
   }
 
-  function detectVideoIntent(raw){
-    return /\b(generate|create|make|build)\b.*\b(video|clip|ad|animation|reel)\b/i.test(raw)
-      || /\bvideo\s+(of|for|ad)\b/i.test(raw);
-  }
-
   async function generateImage(prompt){
     const res = await fetch('/api/generate-image', {
       method:'POST',
@@ -2113,18 +2108,6 @@
     if((!text || !text.trim()) && !hasImage) return;
     if(!isSignedUp){ pendingMessage = text; openSignup(); return; }
     const trimmed = (text || '').trim();
-
-    // User wants to generate an image (typed or via quick-chip) — send them
-    // to the Explore gallery page instead of generating inline here.
-    if(!hasImage && trimmed && detectImageIntent(trimmed)){
-      window.location.href = 'explore.html';
-      return;
-    }
-    if(!hasImage && trimmed && detectVideoIntent(trimmed)){
-      window.location.href = 'explore.html#videos-section';
-      return;
-    }
-
     const imageToSend = pendingImage;
     addUserMsg(trimmed, imageToSend ? imageToSend.dataUrl : null);
     input.value = '';
@@ -2142,6 +2125,15 @@
       generateImage(trimmed).then(dataUrl=>{
         removeTyping();
         addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
+        // Also open the generated image on its own page (styled like Explore)
+        try{
+          sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
+            dataUrl: dataUrl,
+            prompt: trimmed,
+            ts: Date.now()
+          }));
+        }catch(e){}
+        window.open('explore.html?generated=1', '_blank');
       }).catch(err=>{
         removeTyping();
         addAiMsg("I couldn't generate that image right now (" + err.message + "). Please try again in a moment.");
@@ -2177,14 +2169,22 @@
   input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleSend(input.value); });
   input.addEventListener('focus', ()=>{ if(!isSignedUp){ input.blur(); openSignup(); } });
   quick.querySelectorAll('.qchip').forEach(chip=>{
-    chip.addEventListener('click', ()=>handleSend(chip.dataset.msg));
+    chip.addEventListener('click', ()=>{
+      if(chip.dataset.msg === 'Build a website for my bakery'){
+        window.location.href = 'builder.html?msg=' + encodeURIComponent(chip.dataset.msg || '');
+      }else{
+        handleSend(chip.dataset.msg);
+      }
+    });
   });
 
   // Arrived from homepage chatbox click — prefill / auto-send the message
   try{
     const qs = new URLSearchParams(window.location.search);
     const prefill = qs.get('msg');
-    if(prefill){
+    if(prefill === 'Build a website for my bakery'){
+      window.location.href = 'builder.html?msg=' + encodeURIComponent(prefill);
+    }else if(prefill){
       if(isSignedUp){ handleSend(prefill); }
       else{ input.value = prefill; }
     }
