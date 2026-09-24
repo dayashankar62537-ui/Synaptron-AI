@@ -50,9 +50,16 @@
   .view-all{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border-hi); padding:8px 16px; border-radius:100px; font-size:13px; font-weight:600;}
   .view-all:hover{background:var(--surface-2);}
 
-  .grid{display:grid; grid-template-columns:repeat(5, 1fr); gap:16px;}
-  .card{background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:transform .2s, border-color .2s;}
+  .grid{display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; padding-bottom:6px; scrollbar-width:none;}
+  .grid::-webkit-scrollbar{display:none;}
+  .grid .card{flex:0 0 220px; scroll-snap-align:start;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:transform .2s, border-color .2s; cursor:pointer;}
   .card:hover{transform:translateY(-3px); border-color:var(--border-hi);}
+  .slider-wrap{position:relative;}
+  .slide-arrow{position:absolute; top:50%; transform:translateY(-50%); z-index:10; width:38px; height:38px; border-radius:50%; border:1px solid var(--border-hi); background:rgba(16,14,12,0.85); backdrop-filter:blur(6px); color:var(--text); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .slide-arrow.left{left:-6px;}
+  .slide-arrow.right{right:-6px;}
+  .slide-arrow:hover{border-color:var(--cyan); color:var(--cyan);}
   .thumb{position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--surface-2);}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
   .thumb .heart{position:absolute; top:8px; right:8px; background:rgba(16,14,12,0.55); backdrop-filter:blur(4px); border-radius:100px; padding:4px 9px; font-size:11.5px; display:flex; align-items:center; gap:4px; color:#fff;}
@@ -72,8 +79,7 @@
   footer{border-top:1px solid var(--border); margin-top:40px; padding:40px 24px; text-align:center; color:var(--muted-2); font-size:13px;}
   footer .flinks{display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-bottom:14px; font-size:13.5px; color:var(--muted);}
 
-  @media (max-width:1000px){ .grid{grid-template-columns:repeat(3,1fr);} }
-  @media (max-width:640px){ .grid{grid-template-columns:repeat(2,1fr);} .navlinks{display:none;} .hero-title{font-size:24px;} }
+  @media (max-width:640px){ .grid .card{flex:0 0 160px;} .navlinks{display:none;} .hero-title{font-size:24px;} }
 </style>
 </head>
 <body>
@@ -107,17 +113,29 @@
 
   <section class="gallery" id="images-section">
     <div class="sec-head"><h2>TOP IMAGES</h2><a class="view-all" href="chat.html?msg=Generate%20an%20image">View All →</a></div>
-    <div class="grid" id="imagesGrid"></div>
+    <div class="slider-wrap">
+      <button class="slide-arrow left" data-target="imagesGrid">‹</button>
+      <div class="grid" id="imagesGrid"></div>
+      <button class="slide-arrow right" data-target="imagesGrid">›</button>
+    </div>
   </section>
 
   <section class="gallery" id="videos-section">
     <div class="sec-head"><h2>TOP VIDEOS</h2><a class="view-all" href="chat.html?msg=Create%20a%20video">View All →</a></div>
-    <div class="grid" id="videosGrid"></div>
+    <div class="slider-wrap">
+      <button class="slide-arrow left" data-target="videosGrid">‹</button>
+      <div class="grid" id="videosGrid"></div>
+      <button class="slide-arrow right" data-target="videosGrid">›</button>
+    </div>
   </section>
 
   <section class="gallery" id="audio-section">
     <div class="sec-head"><h2>TOP AUDIO</h2><a class="view-all" href="chat.html?msg=Create%20an%20audio%20track">View All →</a></div>
-    <div class="grid" id="audioGrid"></div>
+    <div class="slider-wrap">
+      <button class="slide-arrow left" data-target="audioGrid">‹</button>
+      <div class="grid" id="audioGrid"></div>
+      <button class="slide-arrow right" data-target="audioGrid">›</button>
+    </div>
   </section>
 
   <div class="models-wrap">
@@ -146,21 +164,58 @@
 
   const imageIcons = ['🏙️','🎨','📸','🧊','🍦','🪪','🗡️','🧘','📜','💍'];
   const imageModels = ['seedream-v4','image-gen','poster-maker','pixelforge','recraft-v4-pro','card-maker','banner-maker','logo-maker','infographic-maker','moodboard-maker'];
+  const imagePrompts = [
+    'A neon-lit futuristic cityscape at night with flying cars',
+    'A vibrant abstract portrait with flowing paint colors',
+    'A vintage concert poster with bold retro typography',
+    'A macro shot of glowing crystal shards on black glass',
+    'A creamy scoop of ice cream melting on a rustic table',
+    'A sleek modern ID card design with holographic accents',
+    'A fantasy warrior standing before a stone temple gate',
+    'A calm yoga pose illustration in pastel watercolor style',
+    'An elegant wedding invitation card with gold foil details',
+    'A cozy minimalist moodboard for a coastal home interior'
+  ];
 
   const videoIcons = ['🏛️','👗','🏠','📖','😲','🧊','🕹️','💋','🌀','🎖️'];
   const videoModels = ['motion-control','video-gen','parkour-video','hailuo-fast','clip-gen','seedream-pro','minecraft-video','story-video','merge-video','p-video'];
+  const videoPrompts = [
+    'A cinematic drone shot flying over ancient Roman ruins',
+    'A fashion model walking in flowing silk fabric, slow motion',
+    'A cozy living room scene with soft ambient lighting, looping',
+    'A dramatic storytelling video with a student at his desk',
+    'A funny reaction video with exaggerated cartoon expressions',
+    'An icy glacier timelapse with shifting blue light',
+    'A blocky game-world parkour run through a lava level',
+    'A romantic slow-motion embrace scene at golden hour',
+    'A glitchy digital staircase illusion animation',
+    'A ceremonial emblem video with gold shine animation'
+  ];
 
   const audioIcons = ['🎷','🌃','🎤','🌆','📖','🚗','📱','🎶','💡','👋'];
   const audioModels = ['tracks','music-2.0','kling-tts','musicgen-choral','minimax-music','minimax-speech','voice-gen','beat-maker','podcast-gen','ambient-gen'];
+  const audioPrompts = [
+    'A smooth jazz saxophone track for a rainy evening',
+    'A moody synthwave beat for a neon city night drive',
+    'A powerful spoken-word intro with cinematic reverb',
+    'An upbeat lo-fi track for a busy downtown montage',
+    'A calm narrated audiobook-style history segment',
+    'A high-energy road trip rock instrumental',
+    'A friendly app-notification jingle, short and catchy',
+    'A choral harmony piece for an uplifting brand video',
+    'A bold announcement voiceover for a product launch',
+    'A warm ambient welcome jingle for an AI assistant'
+  ];
 
-  function buildGrid(containerId, seedPrefix, models, kind){
+  function buildGrid(containerId, seedPrefix, models, prompts, kind){
     const el = document.getElementById(containerId);
     let html = '';
     for(let i=0;i<10;i++){
       const overlay = kind==='video' ? '<div class="play">▶️</div>' : (kind==='audio' ? '<div class="play">🎵</div>' : '');
       const photoUrl = `https://picsum.photos/seed/aviqo-${seedPrefix}-${i}/500/500`;
+      const prompt = encodeURIComponent(prompts[i]);
       html += `
-      <div class="card">
+      <div class="card" onclick="window.location.href='chat.html?msg=${prompt}'">
         <div class="thumb">
           <img src="${photoUrl}" alt="${models[i]} example" loading="lazy">
           ${overlay}
@@ -175,9 +230,17 @@
     el.innerHTML = html;
   }
 
-  buildGrid('imagesGrid', 'img', imageModels, 'image');
-  buildGrid('videosGrid', 'vid', videoModels, 'video');
-  buildGrid('audioGrid', 'aud', audioModels, 'audio');
+  buildGrid('imagesGrid', 'img', imageModels, imagePrompts, 'image');
+  buildGrid('videosGrid', 'vid', videoModels, videoPrompts, 'video');
+  buildGrid('audioGrid', 'aud', audioModels, audioPrompts, 'audio');
+
+  document.querySelectorAll('.slide-arrow').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const grid = document.getElementById(btn.dataset.target);
+      const dir = btn.classList.contains('left') ? -1 : 1;
+      grid.scrollBy({ left: dir * 460, behavior: 'smooth' });
+    });
+  });
 
   const pillLabels = [...imageModels, ...videoModels, ...audioModels].filter((v,i,a)=>a.indexOf(v)===i).sort();
   document.getElementById('pillsRow').innerHTML = pillLabels.map(p=>`<a class="pill" href="chat.html?msg=Use%20${encodeURIComponent(p)}">${p.replace(/-/g,' ')}</a>`).join('');
