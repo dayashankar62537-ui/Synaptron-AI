@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Assistant</title>
+<title>Study Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -62,17 +62,7 @@ svg{display:block;}
 .side-btn svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.7;}
 .side-btn:hover{background:var(--line2); color:var(--ink);}
 .side-btn.active{background:var(--panel); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.06);}
-.side .sep{height:1px; width:22px; background:var(--line); margin:8px 0;}
-.side .apps{display:flex; flex-direction:column; gap:8px; margin:4px 0;}
-.app-icon{width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none;}
-.app-icon svg{width:16px;height:16px;}
-.app-icon.a1{background:linear-gradient(135deg,var(--cyan),#0ea5e9);}
-.app-icon.a2{background:linear-gradient(135deg,var(--orange),#f97316);}
 .side .spacer{flex:1;}
-.avatar-btn{
-  width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--violet1),var(--blue2));
-  color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; margin-top:4px;
-}
 
 /* ---------- main ---------- */
 .main{
@@ -141,6 +131,14 @@ svg{display:block;}
 .msg{display:flex; gap:10px; max-width:88%;}
 .msg.user{align-self:flex-end; flex-direction:row-reverse;}
 .msg .bub{padding:10px 13px; border-radius:14px; font-size:13.5px; line-height:1.55;}
+.msg .bub p{margin:0 0 8px;} .msg .bub p:last-child{margin-bottom:0;}
+.msg .bub ul{margin:4px 0 8px 18px; padding:0;}
+.msg .bub li{margin-bottom:3px;}
+.msg .bub code{background:rgba(0,0,0,.08); padding:1px 5px; border-radius:5px; font-family:ui-monospace,'SFMono-Regular',Menlo,monospace; font-size:12px;}
+.msg .bub pre{background:rgba(0,0,0,.08); padding:10px 12px; border-radius:9px; overflow-x:auto; margin:6px 0;}
+.msg .bub pre code{background:none; padding:0;}
+.msg.user .bub code{background:rgba(255,255,255,.18);}
+.msg.user .bub pre{background:rgba(255,255,255,.12);}
 .msg.ai .bub{background:var(--side); border:1px solid var(--line); border-top-left-radius:4px;}
 .msg.user .bub{background:var(--dark); color:#fff; border-top-right-radius:4px;}
 .msg .av{width:26px; height:26px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;}
@@ -231,7 +229,6 @@ svg{display:block;}
   .side{width:56px;}
   .side .logo{width:32px;height:32px;}
   .side-btn{width:34px;height:34px;}
-  .app-icon{width:28px;height:28px;}
   .qa-grid{grid-template-columns:1fr;}
   .search{display:none;}
   .search-toggle{display:flex;}
@@ -261,27 +258,14 @@ svg{display:block;}
 
 <div class="side">
   <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg></div>
-  <button class="side-btn active" data-tip="Assistant" title="Assistant"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-  <button class="side-btn" data-tip="Discover" title="Discover"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5l-2 5-5 2 2-5z"/></svg></button>
-  <button class="side-btn" data-tip="New" title="New"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="side-btn" data-tip="Inbox" title="Inbox"><svg viewBox="0 0 24 24"><path d="M3 6h18v13H3z"/><path d="M3 6l9 7 9-7"/></svg></button>
-  <button class="side-btn" data-tip="Targets" title="Targets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></button>
-  <button class="side-btn" data-tip="Pipeline" title="Pipeline"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 14h6v6h-6z"/><path d="M7 10v4h7"/></svg></button>
-  <button class="side-btn" data-tip="Workspace" title="Workspace"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-8h6v8"/></svg></button>
-  <div class="sep"></div>
-  <div class="apps">
-    <button class="app-icon a1" data-tip="Analytics" title="Analytics"><svg viewBox="0 0 24 24"><path d="M4 19V9M12 19V5M20 19v-7" stroke="#fff" fill="none" stroke-width="2"/></svg></button>
-    <button class="app-icon a2" data-tip="Reports" title="Reports"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z" stroke="#fff" fill="none" stroke-width="1.8"/></svg></button>
-  </div>
+  <button class="side-btn active" id="homeBtn" title="New chat"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   <div class="spacer"></div>
-  <button class="side-btn" id="infoBtn" title="About"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg></button>
   <button class="side-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg></button>
-  <button class="avatar-btn" id="avatarBtn" title="Profile">A</button>
 </div>
 
 <div class="main">
   <div class="topbar">
-    <div class="title"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg><span>Assistant</span></div>
+    <div class="title"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg><span>Study Assistant</span></div>
     <div class="search">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="searchInput" placeholder="Search everything...">
@@ -299,26 +283,25 @@ svg{display:block;}
     <div class="center-col">
       <div class="greet" id="greet">
         <div class="orb"></div>
-        <h1>Hi! I'm your Assistant.<br>How can I help you today?</h1>
-        <p>Ask me anything about your sales and I'll provide real-time insights.</p>
+        <h1>Hi! I'm your Study Assistant.<br>What are we learning today?</h1>
+        <p>Ask me anything — I'll research it, explain it clearly, and guide you step by step in real time.</p>
 
         <div class="section-wrap">
           <div class="sec-head">
             <span class="lbl">Quick Actions</span>
-            <button class="link" id="editActionsBtn"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>Edit Actions</button>
           </div>
           <div class="qa-grid" id="qaGrid">
-            <button class="qa-card" data-msg="Show me this month's sales performance across all regions.">
-              <div class="qa-icon i1"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
-              <div class="qa-bottom"><span class="t">View<br>Sales Performance</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+            <button class="qa-card" data-msg="Explain this concept to me in simple terms, with an example: ">
+              <div class="qa-icon i1"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 00-3 11.2V17h6v-2.8A6 6 0 0012 3z"/><path d="M10 21h4M11 17v2M13 17v2"/></svg></div>
+              <div class="qa-bottom"><span class="t">Explain<br>a Concept</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
-            <button class="qa-card" data-msg="Generate a sales forecast for next quarter.">
-              <div class="qa-icon i2"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
-              <div class="qa-bottom"><span class="t">Generate<br>Sales Forecast</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+            <button class="qa-card" data-msg="Do a deep, well-researched dive into this topic, with key facts and sources: ">
+              <div class="qa-icon i2"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg></div>
+              <div class="qa-bottom"><span class="t">Deep Research<br>a Topic</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
-            <button class="qa-card" data-msg="Which products are performing the best right now?">
-              <div class="qa-icon i3"><svg viewBox="0 0 24 24"><path d="M4 19V10M11 19V5M18 19v-6"/></svg></div>
-              <div class="qa-bottom"><span class="t">Identify<br>Performing Products</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+            <button class="qa-card" data-msg="Help me debug/understand this code, step by step: ">
+              <div class="qa-icon i3"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+              <div class="qa-bottom"><span class="t">Debug &amp;<br>Learn Code</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
           </div>
         </div>
@@ -330,11 +313,11 @@ svg{display:block;}
         <div class="dock-inner">
           <div id="attachRow"></div>
           <div class="chat-box">
-            <textarea id="chatInput" rows="1" placeholder="Need quick insights...."></textarea>
+            <textarea id="chatInput" rows="1" placeholder="Ask a question, paste code, or request a deep dive..."></textarea>
             <div class="chat-row">
               <div class="chat-left">
                 <button class="icon-sq" id="attachBtn" title="Attach"><svg viewBox="0 0 24 24"><path d="M21 12.5l-8.5 8.5a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></button>
-                <button class="pill" id="webBtn" title="Web search"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></button>
+                <button class="pill on" id="webBtn" title="Deep search"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg><span class="lbl">Deep Search</span></button>
                 <button class="pill" id="libraryBtn"><svg viewBox="0 0 24 24"><path d="M4 19.5V5.5A2.5 2.5 0 016.5 3H20v16.5"/><path d="M6.5 3H20v18H6.5A2.5 2.5 0 014 18.5v0A2.5 2.5 0 016.5 16H20"/></svg><span class="lbl">Library</span></button>
                 <button class="pill" id="voiceBtn"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span class="lbl">Voice Record</span></button>
               </div>
@@ -365,9 +348,9 @@ svg{display:block;}
 <div class="side-panel" id="libraryPanel">
   <div class="panel-head"><h3>Library</h3><button id="closeLibrary">✕</button></div>
   <div class="panel-body">
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Q3 Sales Report.pdf</div><div class="s">Saved 2 days ago</div></div></div>
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Regional Breakdown.xlsx</div><div class="s">Saved 5 days ago</div></div></div>
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Forecast Notes.docx</div><div class="s">Saved 1 week ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Calculus Exam Notes.pdf</div><div class="s">Saved 2 days ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Python Assignment.py</div><div class="s">Saved 5 days ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">History Essay Draft.docx</div><div class="s">Saved 1 week ago</div></div></div>
   </div>
 </div>
 
@@ -406,20 +389,7 @@ svg{display:block;}
   $('#closeSettings').addEventListener('click', closeAllPanels);
   $('#settingsBtn').addEventListener('click', ()=>openPanel('settingsPanel'));
   $('#libraryBtn').addEventListener('click', ()=>openPanel('libraryPanel'));
-  $('#infoBtn').addEventListener('click', ()=>toast('Assistant — real-time sales insights, v1.0'));
-  $('#avatarBtn').addEventListener('click', ()=>toast('Signed in as Alex Morgan'));
-  $('#editActionsBtn').addEventListener('click', ()=>toast('Quick Actions are editable from here'));
-
-  document.querySelectorAll('.side-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      document.querySelectorAll('.side-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      toast(b.dataset.tip + ' selected');
-    });
-  });
-  document.querySelectorAll('.app-icon').forEach(b=>{
-    b.addEventListener('click', ()=>toast('Opening ' + b.dataset.tip + '...'));
-  });
+  $('#homeBtn').addEventListener('click', ()=>resetChat());
 
   // ---- history ----
   let historyLog = [];
@@ -455,14 +425,14 @@ svg{display:block;}
 
   // ---- prompts ----
   const promptPool = [
-    "What's the top-performing product this month?",
-    "Sales drop overview",
-    "Regions are performing the best",
-    "Compare this quarter to last quarter",
-    "Which reps are exceeding quota?",
-    "Show churn risk accounts",
-    "Summarize this week's pipeline",
-    "What's driving the West region dip?"
+    "Explain quantum entanglement like I'm in high school",
+    "Deep-dive on the causes of the French Revolution",
+    "Why is my Python function returning None?",
+    "What's the difference between TCP and UDP?",
+    "Make me a study plan for my calculus exam",
+    "Explain how neural networks actually learn",
+    "Summarize the key events of World War II",
+    "Help me understand recursion with an example"
   ];
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   function renderPrompts(){
@@ -489,7 +459,7 @@ svg{display:block;}
   });
 
   // ---- web toggle / voice toggle ----
-  $('#webBtn').addEventListener('click', function(){ this.classList.toggle('on'); toast(this.classList.contains('on') ? 'Web search enabled' : 'Web search disabled'); });
+  $('#webBtn').addEventListener('click', function(){ this.classList.toggle('on'); toast(this.classList.contains('on') ? 'Deep search enabled — I\'ll research the web for real-time answers' : 'Deep search disabled — answering from knowledge only'); });
   let recording=false;
   const voiceBtn = $('#voiceBtn');
   voiceBtn.addEventListener('click', ()=>{
@@ -500,7 +470,7 @@ svg{display:block;}
       setTimeout(()=>{
         if(!recording) return;
         recording=false; voiceBtn.classList.remove('on'); voiceBtn.lastChild.textContent=' Voice Record';
-        const ta=$('#chatInput'); ta.value = (ta.value ? ta.value+' ' : '') + "show me regional sales trends"; ta.focus();
+        const ta=$('#chatInput'); ta.value = (ta.value ? ta.value+' ' : '') + "explain how photosynthesis works"; ta.focus();
       }, 1600);
     } else {
       voiceBtn.lastChild.textContent=' Voice Record';
@@ -518,60 +488,88 @@ svg{display:block;}
   function aiIconSvg(){ return '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg>'; }
   function userIconSvg(){ return '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>'; }
 
+  // very small, safe markdown-ish renderer: escapes HTML first, then adds
+  // back a handful of formatting patterns so real answers stay readable.
+  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function renderMd(raw){
+    let s = escapeHtml(raw);
+    s = s.replace(/```([\s\S]*?)```/g, (m,c)=>`<pre><code>${c.trim()}</code></pre>`);
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/^-\s+(.*)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    s = s.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
+    return '<p>'+s+'</p>';
+  }
+
   function addMsg(role, text){
     const div=document.createElement('div');
     div.className='msg '+role;
     div.innerHTML = `<div class="av">${role==='ai'?aiIconSvg():userIconSvg()}</div><div class="bub"></div>`;
-    div.querySelector('.bub').textContent=text;
+    const bub = div.querySelector('.bub');
+    if(role==='ai'){ bub.innerHTML = renderMd(text); } else { bub.textContent = text; }
     logInner.appendChild(div);
     log.scrollTop = log.scrollHeight;
     return div;
   }
-  function addTyping(){
+  function addTyping(label){
     const div=document.createElement('div');
     div.className='msg ai'; div.id='typingMsg';
     div.innerHTML = `<div class="av">${aiIconSvg()}</div><div class="bub"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    if(label){ div.querySelector('.bub').innerHTML = `<span style="color:var(--muted);font-size:12px;">${label}</span>`; }
     logInner.appendChild(div); log.scrollTop=log.scrollHeight;
   }
   function removeTyping(){ const t=document.getElementById('typingMsg'); if(t) t.remove(); }
 
-  function generateReply(text){
-    const q = text.toLowerCase();
-    if(q.includes('forecast')) return "Based on current pipeline velocity and seasonal trends, I'm projecting 12-15% revenue growth next quarter, led by the Enterprise segment. Want a full breakdown by region?";
-    if(q.includes('top') && q.includes('product')) return "Your top-performing product this month is the Pro Plan, up 22% month-over-month, followed by the Growth Add-on. Would you like a comparison to last month?";
-    if(q.includes('drop') || q.includes('dip') || q.includes('decline')) return "The recent dip is concentrated in the West region, mainly from two enterprise accounts pausing renewals. Everywhere else is flat-to-up.";
-    if(q.includes('region')) return "The East region is performing best this quarter, up 18% versus target, driven by strong renewal rates and two large new-logo wins.";
-    if(q.includes('performing product') || q.includes('best')) return "Right now your best performers are the Pro Plan and the Analytics Add-on — both trending above forecast for the third straight week.";
-    if(q.includes('rep') || q.includes('quota')) return "Three reps are currently exceeding quota: Priya (134%), Jordan (121%), and Sam (116%). Want me to pull their deal mix?";
-    if(q.includes('churn')) return "I'm flagging 4 accounts at elevated churn risk based on usage drop-off and support ticket volume. I can list them with recommended next steps.";
-    if(q.includes('pipeline')) return "This week's pipeline is up 9% with 14 new opportunities added, mostly mid-market. Coverage ratio is healthy at 3.2x.";
-    if(q.includes('hi') || q.includes('hello')) return "Hey! Happy to help — ask me about sales performance, forecasts, or top products anytime.";
-    return "Got it — I'm pulling the latest data on that now. Here's a quick summary: overall metrics are trending in line with target, with a few pockets worth a closer look. Want me to dig into a specific region, product, or rep?";
+  // full conversation sent with every request — the backend has no memory of its own
+  let conversation = [];
+  const deepSearchOn = ()=> $('#webBtn').classList.contains('on');
+
+  async function askBackend(){
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ messages: conversation, deepSearch: deepSearchOn() })
+    });
+    let data;
+    try{ data = await res.json(); }catch(e){ throw new Error('The server sent back something unexpected.'); }
+    if(!res.ok){ throw new Error(data && (data.message||data.error) || ('Request failed ('+res.status+')')); }
+    return data;
   }
 
   function sendMessage(raw){
     const text = (raw||'').trim();
     if(!text && !attached) return;
     if(greet.style.display!=='none'){ greet.style.display='none'; log.style.display='block'; }
-    addMsg('user', text || ('Sent: '+attached));
+    const userText = text || ('Sent: '+attached);
+    addMsg('user', userText);
+    conversation.push({ role:'user', content: userText });
     chatInput.value=''; chatInput.style.height='auto';
     if(attached){ attached=null; $('#attachRow').innerHTML=''; }
 
-    historyLog.push({text: text.slice(0,60), time: new Date().toLocaleString()});
+    historyLog.push({text: userText.slice(0,60), time: new Date().toLocaleString()});
     try{ localStorage.setItem('asst_history', JSON.stringify(historyLog.slice(-30))); }catch(e){}
     renderHistory();
 
-    addTyping();
-    setTimeout(()=>{
+    addTyping(deepSearchOn() ? 'Researching...' : null);
+    askBackend().then(data=>{
       removeTyping();
-      addMsg('ai', generateReply(text));
-    }, 700 + Math.random()*500);
+      addMsg('ai', data.text);
+      conversation.push({ role:'assistant', content: data.text });
+      if(conversation.length>40) conversation = conversation.slice(-40);
+    }).catch(err=>{
+      removeTyping();
+      const msg = /ANTHROPIC_API_KEY|missing_api_key/i.test(err.message)
+        ? "The AI isn't connected yet — add your ANTHROPIC_API_KEY in the Vercel project's Environment Variables, then redeploy."
+        : "I couldn't reach the AI backend just now (" + err.message + "). Please try again in a moment.";
+      addMsg('ai', msg);
+    });
   }
 
+  function resetChat(){
+    logInner.innerHTML=''; log.style.display='none'; greet.style.display='flex'; conversation=[];
+  }
   $('.title').style && ($('.title').style.cursor='pointer');
-  document.querySelector('.title').addEventListener('click', ()=>{
-    logInner.innerHTML=''; log.style.display='none'; greet.style.display='flex';
-  });
+  document.querySelector('.title').addEventListener('click', resetChat);
 })();
 </script>
 </body>
