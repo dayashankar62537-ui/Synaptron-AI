@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Website Builder — Aviqo AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#100e0c;
+    --bg-2:#161310;
+    --surface:#1b1815;
+    --surface-2:#211d19;
+    --surface-3:#2a2521;
+    --border:rgba(255,236,210,0.09);
+    --border-hi:rgba(255,171,64,0.32);
+    --text:#f3ede3;
+    --muted:#b7ab99;
+    --muted-2:#7c7264;
+    --cyan:#ffc369;
+    --blue:#ff8a3d;
+    --lime:#d4ff4f;
+    --grad-brand: linear-gradient(120deg, #ffb020 0%, #ff7a3d 100%);
+    --danger:#ff6b6b;
+    --radius:14px;
+  }
+  *{margin:0; padding:0; box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--text); font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  button{font-family:inherit; cursor:pointer; background:none; border:none; color:inherit;}
+  input{font-family:inherit;}
+  a{color:inherit; text-decoration:none;}
+  ::-webkit-scrollbar{width:6px; height:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-hi); border-radius:10px;}
+
+  .icon{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+
+  /* ---------------- APP SHELL ---------------- */
+  .app-shell{display:flex; height:100vh; height:100dvh; width:100%; position:relative;}
+
+  /* ---------------- SIDEBAR ---------------- */
+  .sidebar{
+    width:250px; flex:none; background:var(--bg-2); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; height:100%; z-index:40;
+  }
+  .sidebar-top{display:flex; align-items:center; gap:10px; padding:20px 18px 14px;}
+  .brand-mark{
+    width:32px; height:32px; border-radius:9px; flex:none; background:var(--grad-brand);
+    display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; color:#1a1206; font-size:15px;
+  }
+  .brand-word{font-family:'Space Grotesk'; font-weight:700; font-size:15.5px; letter-spacing:.01em;}
+  .brand-word span{color:var(--cyan);}
+
+  .new-chat-btn{
+    margin:4px 16px 14px; padding:11px 14px; border-radius:11px; border:1px solid var(--border-hi);
+    background:var(--surface); color:var(--text); font-size:13.5px; font-weight:700;
+    display:flex; align-items:center; gap:8px; transition:background .2s, border-color .2s;
+  }
+  .new-chat-btn:hover{background:var(--surface-2); border-color:var(--border-hi);}
+  .new-chat-btn .icon{stroke:var(--lime);}
+
+  .side-nav{display:flex; flex-direction:column; gap:2px; padding:4px 12px; overflow-y:auto;}
+  .side-link{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
+    font-size:13.5px; color:var(--muted); font-weight:600; transition:background .15s, color .15s;
+  }
+  .side-link:hover{background:var(--surface); color:var(--text);}
+  .side-link.active{background:var(--surface); color:var(--text);}
+  .side-link.active .icon{stroke:var(--lime);}
+  .side-link .pro-tag{
+    margin-left:auto; font-size:9.5px; font-weight:800; letter-spacing:.05em; color:#1a1206;
+    background:var(--grad-brand); padding:2px 7px; border-radius:100px;
+  }
+
+  .sidebar-bottom{margin-top:auto; padding:14px 16px 18px; display:flex; flex-direction:column; gap:12px;}
+  .pro-card{
+    background:linear-gradient(160deg, rgba(255,176,32,0.14), rgba(255,122,61,0.05));
+    border:1px solid var(--border-hi); border-radius:13px; padding:14px;
+  }
+  .pro-card b{font-size:13px; font-family:'Space Grotesk'; display:block; margin-bottom:3px;}
+  .pro-card p{font-size:11.5px; color:var(--muted); line-height:1.4; margin-bottom:10px;}
+  .pro-card-btn{
+    display:block; text-align:center; font-size:12px; font-weight:700; padding:8px; border-radius:8px;
+    background:var(--grad-brand); color:#1a1206;
+  }
+  .sidebar-user{display:flex; align-items:center; gap:10px; padding:6px 4px;}
+  .sidebar-user .avatar{
+    width:28px; height:28px; border-radius:50%; background:var(--grad-brand); flex:none;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#1a1206;
+  }
+  .sidebar-user .u-info{flex:1; min-width:0;}
+  .sidebar-user .u-name{font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sidebar-user .u-sub{font-size:10.5px; color:var(--muted-2);}
+  .logout-row{
+    display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:9px; font-size:12.5px;
+    color:var(--muted); font-weight:600; transition:background .15s, color .15s;
+  }
+  .logout-row:hover{background:var(--surface); color:var(--danger);}
+
+  /* ---------------- MAIN ---------------- */
+  .builder-main{flex:1; min-width:0; display:flex; flex-direction:column; height:100%; background:var(--bg);}
+
+  .builder-header{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:16px 26px; border-bottom:1px solid var(--border); flex:none;
+  }
+  .builder-header h1{font-family:'Space Grotesk'; font-size:18px; font-weight:700;}
+  .builder-header p{font-size:12px; color:var(--muted); margin-top:2px;}
+  .header-actions{display:flex; align-items:center; gap:10px;}
+  .search-box{
+    display:none; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border);
+    border-radius:100px; padding:8px 14px; width:220px;
+  }
+  .search-box .icon{stroke:var(--muted-2); width:15px; height:15px;}
+  .search-box input{flex:1; background:none; border:none; color:var(--text); font-size:12.5px;}
+  .search-box input:focus{outline:none;}
+  .search-box input::placeholder{color:var(--muted-2);}
+  .icon-btn{
+    width:36px; height:36px; border-radius:10px; border:1px solid var(--border); background:var(--surface);
+    display:flex; align-items:center; justify-content:center; flex:none; transition:border-color .2s, background .2s;
+  }
+  .icon-btn:hover{border-color:var(--border-hi); background:var(--surface-2);}
+  .icon-btn .icon{stroke:var(--muted);}
+  .icon-btn.mobile-only{display:none;}
+
+  /* ---------------- BODY / CODE PANEL / THREAD ---------------- */
+  .builder-body{flex:1; overflow-y:auto; padding:20px 26px 10px;}
+  .builder-body-inner{max-width:820px; margin:0 auto; display:flex; flex-direction:column; gap:18px;}
+
+  .code-panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;
+  }
+  .code-tabs{display:flex; align-items:center; gap:4px; padding:8px 10px; border-bottom:1px solid var(--border); background:var(--surface-2);}
+  .tab{
+    padding:7px 15px; border-radius:8px; font-size:12.5px; font-weight:700; color:var(--muted);
+    font-family:'JetBrains Mono'; transition:background .15s, color .15s;
+  }
+  .tab:hover{color:var(--text);}
+  .tab.active{background:var(--surface-3); color:var(--lime);}
+  .copy-code-btn{
+    margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700;
+    color:var(--muted); padding:7px 12px; border-radius:8px; border:1px solid var(--border);
+  }
+  .copy-code-btn:hover{border-color:var(--border-hi); color:var(--text);}
+  .copy-code-btn .icon{width:14px; height:14px;}
+  .code-view{
+    max-height:340px; overflow:auto; padding:16px 18px; font-family:'JetBrains Mono'; font-size:12.5px;
+    line-height:1.7; white-space:pre; color:var(--text);
+  }
+  .code-view .cm-kw{color:#ff9d6c;}
+  .code-view .cm-str{color:var(--lime);}
+  .code-view .cm-com{color:var(--muted-2); font-style:italic;}
+  .code-view .cm-tag{color:var(--cyan);}
+  .code-view .cm-attr{color:#8ec5ff;}
+  .code-view .cm-empty{color:var(--muted-2); font-style:italic;}
+
+  .gen-note{font-size:13.5px; color:var(--muted); line-height:1.6; padding:0 2px;}
+
+  .gen-entry{display:flex; flex-direction:column; gap:12px;}
+  .gen-result-row{
+    display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:13px; padding:12px 14px;
+  }
+  .gen-result-left{display:flex; align-items:center; gap:10px; min-width:0; flex:1;}
+  .gen-result-left .r-icon{
+    width:34px; height:34px; border-radius:9px; flex:none; background:var(--grad-brand);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gen-result-left .r-icon .icon{stroke:#1a1206;}
+  .gen-result-left span{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .view-btn{
+    flex:none; display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700;
+    padding:9px 15px; border-radius:9px; border:1px solid var(--border-hi); color:var(--text);
+  }
+  .view-btn:hover{background:var(--surface-2);}
+
+  .gen-actions{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;}
+  .reaction-btn{
+    width:34px; height:34px; border-radius:9px; border:1px solid var(--border); display:flex;
+    align-items:center; justify-content:center; transition:border-color .2s, color .2s;
+  }
+  .reaction-btn:hover{border-color:var(--border-hi); color:var(--lime);}
+  .reaction-btn.active-up{color:var(--lime); border-color:var(--border-hi);}
+  .reaction-btn.active-down{color:var(--danger); border-color:rgba(255,107,107,0.4);}
+  .regenerate-btn{
+    display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; color:var(--muted);
+    padding:9px 16px; border-radius:100px; border:1px solid var(--border);
+  }
+  .regenerate-btn:hover{border-color:var(--border-hi); color:var(--text);}
+  .regenerate-btn.busy .icon{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .msg-user-echo{
+    align-self:flex-end; max-width:80%; background:var(--grad-brand); color:#1a1206; font-weight:600;
+    font-size:13.5px; padding:11px 16px; border-radius:13px 13px 3px 13px; line-height:1.5;
+  }
+
+  .empty-state{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    gap:10px; padding:60px 20px; color:var(--muted);
+  }
+  .empty-state .e-icon{
+    width:52px; height:52px; border-radius:14px; background:var(--surface); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; margin-bottom:4px;
+  }
+  .empty-state .e-icon .icon{width:24px; height:24px; stroke:var(--cyan);}
+  .empty-state h3{font-family:'Space Grotesk'; font-size:15px; color:var(--text);}
+  .empty-state p{font-size:12.5px; max-width:280px; line-height:1.6;}
+
+  .typing-row{display:flex; align-items:center; gap:10px; padding:2px;}
+  .typing{display:flex; gap:4px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; width:fit-content;}
+  .typing span{width:6px; height:6px; border-radius:50%; background:var(--muted-2); animation:tdot 1.2s ease infinite;}
+  .typing span:nth-child(2){animation-delay:.2s;} .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes tdot{0%,100%{opacity:.3; transform:translateY(0);} 50%{opacity:1; transform:translateY(-3px);}}
+
+  /* ---------------- COMPOSER ---------------- */
+  .composer-wrap{flex:none; padding:12px 26px calc(10px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--border);}
+  .composer{
+    max-width:820px; margin:0 auto; display:flex; align-items:center; gap:9px; background:var(--surface);
+    border:1px solid var(--border); border-radius:14px; padding:8px;
+  }
+  .composer input{
+    flex:1; background:none; border:none; color:var(--text); font-size:14.5px; padding:8px 6px;
+  }
+  .composer input:focus{outline:none;}
+  .composer input::placeholder{color:var(--muted-2);}
+  .send-btn{
+    width:38px; height:38px; border-radius:10px; flex:none; background:var(--grad-brand);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .send-btn .icon{stroke:#1a1206; width:16px; height:16px;}
+  .send-btn:disabled{opacity:.5; pointer-events:none;}
+  .composer-note{max-width:820px; margin:8px auto 0; text-align:center; font-size:10.5px; color:var(--muted-2);}
+
+  /* ---------------- HISTORY PANEL ---------------- */
+  .history-panel{
+    width:270px; flex:none; background:var(--bg-2); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; height:100%; z-index:40;
+  }
+  .history-head{display:flex; align-items:center; justify-content:space-between; padding:18px 18px 12px;}
+  .history-head h2{font-family:'Space Grotesk'; font-size:14.5px; font-weight:700;}
+  .history-count{font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono';}
+  .history-list{flex:1; overflow-y:auto; padding:2px 12px; display:flex; flex-direction:column; gap:3px;}
+  .history-item{
+    display:flex; align-items:flex-start; gap:4px; padding:10px 10px; border-radius:10px; cursor:pointer;
+    transition:background .15s;
+  }
+  .history-item:hover{background:var(--surface);}
+  .history-item.active{background:var(--surface-2); border:1px solid var(--border-hi);}
+  .history-item .h-check{
+    width:15px; height:15px; border-radius:4px; border:1.5px solid var(--border-hi); flex:none; margin-top:2px;
+  }
+  .history-item .h-body{min-width:0; flex:1;}
+  .history-item .h-title{font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .history-item .h-sub{font-size:11px; color:var(--muted-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;}
+  .history-empty{padding:26px 14px; text-align:center; font-size:12px; color:var(--muted-2); line-height:1.6;}
+  .clear-history-btn{
+    margin:12px; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface);
+    display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--muted);
+  }
+  .clear-history-btn:hover{border-color:rgba(255,107,107,0.4); color:var(--danger);}
+
+  /* ---------------- MOBILE TOP BAR ---------------- */
+  .mobile-topbar{display:none;}
+
+  .drawer-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:35;
+  }
+  .drawer-backdrop.show{display:block;}
+
+  /* toast */
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px); background:var(--surface-3);
+    border:1px solid var(--border-hi); color:var(--text); font-size:13px; font-weight:600; padding:11px 18px;
+    border-radius:100px; z-index:200; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+    box-shadow:0 14px 40px -10px rgba(0,0,0,0.5);
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+
+  /* ---------------- RESPONSIVE ---------------- */
+  @media (min-width:860px){
+    .search-box{display:flex;}
+  }
+
+  @media (max-width:980px){
+    .mobile-topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 14px; border-bottom:1px solid var(--border); flex:none; background:var(--bg-2);
+      padding-top:calc(12px + env(safe-area-inset-top,0px));
+    }
+    .mobile-topbar .mb-brand{display:flex; align-items:center; gap:8px; font-family:'Space Grotesk'; font-weight:700; font-size:14px;}
+    .mobile-topbar .mb-brand .brand-mark{width:26px; height:26px; font-size:12px; border-radius:7px;}
+    .app-shell{flex-direction:column;}
+    .builder-main{order:2;}
+    .sidebar{
+      position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); transition:transform .25s ease;
+      padding-top:env(safe-area-inset-top,0px);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .history-panel{
+      position:fixed; top:0; right:0; bottom:0; transform:translateX(100%); transition:transform .25s ease;
+      padding-top:env(safe-area-inset-top,0px);
+    }
+    .history-panel.open{transform:translateX(0);}
+    .builder-header{display:none;}
+    .icon-btn.mobile-only{display:flex;}
+    .builder-body{padding:16px 14px 6px;}
+    .composer-wrap{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));}
+    .code-view{max-height:260px;}
+    .gen-result-left span{font-size:12.5px;}
+  }
+
+  @media (max-width:520px){
+    .sidebar, .history-panel{width:82vw; max-width:300px;}
+    .view-btn span{display:none;}
+    .regenerate-btn span{display:inline;}
+  }
+</style>
+</head>
+<body>
+
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+<div class="app-shell">
+
+  <!-- MOBILE TOP BAR -->
+  <div class="mobile-topbar">
+    <button class="icon-btn" id="menuToggle" aria-label="Open menu">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="mb-brand">
+      <div class="brand-mark">A</div>
+      <span>Website Builder</span>
+    </div>
+    <button class="icon-btn" id="historyToggle" aria-label="Open history">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+    </button>
+  </div>
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand-mark">A</div>
+      <div class="brand-word">AVIQO<span>AI</span></div>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      New Chat
+    </button>
+
+    <nav class="side-nav">
+      <a class="side-link active" href="#">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
+        Website Builder
+      </a>
+      <a class="side-link" href="#" data-toast="Templates are coming with Aviqo Pro.">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+        Templates <span class="pro-tag">PRO</span>
+      </a>
+      <a class="side-link" href="#" data-toast="Saved projects are coming with Aviqo Pro.">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+        My Projects <span class="pro-tag">PRO</span>
+      </a>
+      <a class="side-link" href="#" data-toast="Usage statistics are coming with Aviqo Pro.">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>
+        Statistics <span class="pro-tag">PRO</span>
+      </a>
+      <a class="side-link" href="#" data-toast="Settings are coming soon.">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.55-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg>
+        Settings
+      </a>
+      <a class="side-link" href="#" data-toast="Updates & FAQ are coming soon.">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2 1.6-2.3 3.2M12 17h.01"/></svg>
+        Updates &amp; FAQ
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="pro-card">
+        <b>Upgrade to Pro</b>
+        <p>Unlock templates, saved projects &amp; more.</p>
+        <a class="pro-card-btn" href="index_11_.html#try-ai">Get Pro</a>
+      </div>
+      <div class="sidebar-user" id="sidebarUser" style="display:none;">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="u-info">
+          <div class="u-name" id="sidebarName">—</div>
+          <div class="u-sub">Signed in</div>
+        </div>
+      </div>
+      <button class="logout-row" id="logoutBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span id="logoutLabel">Back to Aviqo</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="builder-main">
+    <header class="builder-header">
+      <div>
+        <h1>Website Builder</h1>
+        <p>Describe it. Aviqo builds the code.</p>
+      </div>
+      <div class="header-actions">
+        <div class="search-box">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="historySearch" placeholder="Search history...">
+        </div>
+        <button class="icon-btn" title="Notifications">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        </button>
+        <button class="icon-btn" id="historyToggleDesktop" title="History">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="builder-body" id="builderBody">
+      <div class="builder-body-inner">
+
+        <section class="code-panel">
+          <div class="code-tabs">
+            <button class="tab active" data-tab="html">HTML</button>
+            <button class="tab" data-tab="css">CSS</button>
+            <button class="tab" data-tab="js">JS</button>
+            <button class="copy-code-btn" id="copyCodeBtn">
+              <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+              Copy code
+            </button>
+          </div>
+          <pre class="code-view" id="codeView"><code id="codeContent" class="cm-empty">// Describe the website you want below — your generated HTML will appear here.</code></pre>
+        </section>
+
+        <div id="thread">
+          <div class="empty-state" id="emptyState">
+            <div class="e-icon">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
+            </div>
+            <h3>Build your first page</h3>
+            <p>Tell Aviqo what site you want — a bakery landing page, a portfolio, a pricing page — and it'll write the HTML, CSS and JS for you.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <input type="text" id="builderInput" placeholder="Describe the website you want to build...">
+        <button class="send-btn" id="builderSend" aria-label="Send">
+          <svg class="icon" viewBox="0 0 24 24" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+        </button>
+      </div>
+      <p class="composer-note">Aviqo AI can make mistakes — review the code before you deploy it.</p>
+    </div>
+  </main>
+
+  <!-- RIGHT: HISTORY -->
+  <aside class="history-panel" id="historyPanel">
+    <div class="history-head">
+      <h2>History</h2>
+      <span class="history-count" id="historyCount">0/50</span>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty" id="historyEmpty">No builds yet.<br>Your generated sites will show up here.</div>
+    </div>
+    <button class="clear-history-btn" id="clearHistoryBtn">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13"/></svg>
+      Clear history
+    </button>
+  </aside>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const HIST_KEY = 'aviqo_builder_history';
+  const MAX_HISTORY = 50;
+  const STORAGE_KEY = 'aviqo_user';
+
+  const els = {
+    sidebar: document.getElementById('sidebar'),
+    historyPanel: document.getElementById('historyPanel'),
+    backdrop: document.getElementById('drawerBackdrop'),
+    menuToggle: document.getElementById('menuToggle'),
+    historyToggle: document.getElementById('historyToggle'),
+    historyToggleDesktop: document.getElementById('historyToggleDesktop'),
+    newChatBtn: document.getElementById('newChatBtn'),
+    thread: document.getElementById('thread'),
+    emptyState: document.getElementById('emptyState'),
+    body: document.getElementById('builderBody'),
+    input: document.getElementById('builderInput'),
+    sendBtn: document.getElementById('builderSend'),
+    codeContent: document.getElementById('codeContent'),
+    tabs: document.querySelectorAll('.tab'),
+    copyBtn: document.getElementById('copyCodeBtn'),
+    historyList: document.getElementById('historyList'),
+    historyEmpty: document.getElementById('historyEmpty'),
+    historyCount: document.getElementById('historyCount'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    historySearch: document.getElementById('historySearch'),
+    toast: document.getElementById('toast'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    logoutLabel: document.getElementById('logoutLabel'),
+    sidebarUser: document.getElementById('sidebarUser'),
+    sidebarAvatar: document.getElementById('sidebarAvatar'),
+    sidebarName: document.getElementById('sidebarName'),
+  };
+
+  let activeTab = 'html';
+  let currentCode = { html:'', css:'', js:'' };
+  let currentEntryId = null;
+  let lastPrompt = '';
+  let history = [];
+
+  // ---------- drawers (mobile) ----------
+  function openDrawer(panel){
+    panel.classList.add('open');
+    els.backdrop.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawers(){
+    els.sidebar.classList.remove('open');
+    els.historyPanel.classList.remove('open');
+    els.backdrop.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  els.menuToggle.addEventListener('click', ()=>openDrawer(els.sidebar));
+  els.historyToggle.addEventListener('click', ()=>openDrawer(els.historyPanel));
+  els.historyToggleDesktop.addEventListener('click', ()=>{
+    if(window.innerWidth <= 980) openDrawer(els.historyPanel);
+    else els.historyPanel.scrollIntoView({behavior:'smooth'});
+  });
+  els.backdrop.addEventListener('click', closeDrawers);
+
+  // ---------- toast ----------
+  let toastTimer;
+  function showToast(text){
+    els.toast.textContent = text;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>els.toast.classList.remove('show'), 2200);
+  }
+  document.querySelectorAll('[data-toast]').forEach(el=>{
+    el.addEventListener('click', (e)=>{ e.preventDefault(); showToast(el.dataset.toast); });
+  });
+
+  // ---------- sidebar user ----------
+  (function initUser(){
+    try{
+      const u = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if(u && (u.name || u.email)){
+        els.sidebarUser.style.display = 'flex';
+        els.sidebarAvatar.textContent = (u.name || u.email || '?').trim().charAt(0).toUpperCase();
+        els.sidebarName.textContent = u.name || u.email;
+        els.logoutLabel.textContent = 'Log out';
+      }
+    }catch(e){}
+  })();
+  els.logoutBtn.addEventListener('click', ()=>{
+    try{
+      if(els.logoutLabel.textContent === 'Log out'){ localStorage.removeItem(STORAGE_KEY); }
+    }catch(e){}
+    window.location.href = 'index_11_.html';
+  });
+
+  // ---------- simple code highlighter ----------
+  function esc(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function highlight(code, lang){
+    if(!code || !code.trim()) return '<span class="cm-empty">// Nothing here yet</span>';
+    let out = esc(code);
+    if(lang === 'html'){
+      out = out.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="cm-com">$1</span>');
+      out = out.replace(/(&lt;\/?)([a-zA-Z0-9-]+)/g, '$1<span class="cm-tag">$2</span>');
+      out = out.replace(/([a-zA-Z-]+)(=)(&quot;[^&]*?&quot;|"[^"]*?")/g, '<span class="cm-attr">$1</span>$2<span class="cm-str">$3</span>');
+    } else if(lang === 'css'){
+      out = out.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="cm-com">$1</span>');
+      out = out.replace(/([.#]?[a-zA-Z0-9_-]+)(\s*\{)/g, '<span class="cm-tag">$1</span>$2');
+      out = out.replace(/([a-zA-Z-]+)(\s*:)/g, '<span class="cm-attr">$1</span>$2');
+      out = out.replace(/(:\s*)([^;{}]+)(;)/g, '$1<span class="cm-str">$2</span>$3');
+    } else if(lang === 'js'){
+      out = out.replace(/(\/\/.*$)/gm, '<span class="cm-com">$1</span>');
+      out = out.replace(/(&#039;[^&]*?&#039;|&quot;[^&]*?&quot;|`[^`]*?`)/g, '<span class="cm-str">$1</span>');
+      out = out.replace(/\b(const|let|var|function|return|if|else|for|while|new|class|import|export|default|async|await|document|window)\b/g, '<span class="cm-kw">$1</span>');
+    }
+    return out;
+  }
+  function renderCode(){
+    els.codeContent.innerHTML = highlight(currentCode[activeTab], activeTab);
+  }
+  els.tabs.forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      els.tabs.forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      activeTab = tab.dataset.tab;
+      renderCode();
+    });
+  });
+  els.copyBtn.addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(currentCode[activeTab] || '');
+      showToast('Copied ' + activeTab.toUpperCase() + ' to clipboard');
+    }catch(e){ showToast('Could not copy — select the code manually'); }
+  });
+
+  // ---------- preview ----------
+  function buildPreviewDoc(html, css, js){
+    html = html || '';
+    css = css || '';
+    js = js || '';
+    if(/<html[\s>]/i.test(html)){
+      let doc = html;
+      if(css.trim()) doc = /<\/head>/i.test(doc) ? doc.replace(/<\/head>/i, '<style>'+css+'</style></head>') : '<style>'+css+'</style>' + doc;
+      if(js.trim()) doc = /<\/body>/i.test(doc) ? doc.replace(/<\/body>/i, '<script>'+js+'<\/script></body>') : doc + '<script>'+js+'<\/script>';
+      return doc;
+    }
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+css+'</style></head><body>'+html+'<script>'+js+'<\/script></body></html>';
+  }
+  function openPreview(entry){
+    const doc = buildPreviewDoc(entry.html, entry.css, entry.js);
+    const blob = new Blob([doc], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+  // ---------- history storage ----------
+  function loadHistory(){
+    try{ history = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); }catch(e){ history = []; }
+    renderHistory();
+  }
+  function saveHistory(){
+    try{ localStorage.setItem(HIST_KEY, JSON.stringify(history)); }catch(e){}
+    renderHistory();
+  }
+  function renderHistory(filter){
+    const q = (filter || '').trim().toLowerCase();
+    const list = q ? history.filter(h=>h.title.toLowerCase().includes(q)) : history;
+    els.historyCount.textContent = history.length + '/' + MAX_HISTORY;
+    els.historyList.innerHTML = '';
+    if(!list.length){
+      els.historyEmpty.style.display = 'block';
+      els.historyEmpty.textContent = q ? 'No matches.' : 'No builds yet.';
+      if(!q) els.historyEmpty.innerHTML = 'No builds yet.<br>Your generated sites will show up here.';
+      els.historyList.appendChild(els.historyEmpty);
+      return;
+    }
+    els.historyEmpty.style.display = 'none';
+    list.forEach(item=>{
+      const row = document.createElement('div');
+      row.className = 'history-item' + (item.id === currentEntryId ? ' active' : '');
+      row.innerHTML = '<div class="h-check"></div><div class="h-body"><div class="h-title"></div><div class="h-sub"></div></div>';
+      row.querySelector('.h-title').textContent = item.title;
+      row.querySelector('.h-sub').textContent = timeAgo(item.ts);
+      row.addEventListener('click', ()=>loadFromHistory(item.id));
+      els.historyList.appendChild(row);
+    });
+  }
+  function timeAgo(ts){
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if(s < 60) return 'Just now';
+    if(s < 3600) return Math.floor(s/60) + 'm ago';
+    if(s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+  function loadFromHistory(id){
+    const item = history.find(h=>h.id === id);
+    if(!item) return;
+    currentEntryId = id;
+    currentCode = { html:item.html, css:item.css, js:item.js };
+    renderCode();
+    els.thread.innerHTML = '';
+    els.emptyState.style.display = 'none';
+    addEntry({ prompt:item.title, note:'Loaded from history.', html:item.html, css:item.css, js:item.js }, false);
+    lastPrompt = item.title;
+    renderHistory(els.historySearch.value);
+    closeDrawers();
+  }
+  els.historySearch.addEventListener('input', ()=>renderHistory(els.historySearch.value));
+  els.clearHistoryBtn.addEventListener('click', ()=>{
+    if(!history.length) return;
+    if(confirm('Clear all builder history? This cannot be undone.')){
+      history = [];
+      currentEntryId = null;
+      saveHistory();
+      showToast('History cleared');
+    }
+  });
+
+  // ---------- thread rendering ----------
+  function clearActionsFromPreviousEntries(){
+    els.thread.querySelectorAll('.gen-actions').forEach(a=>a.remove());
+  }
+  function addEntry(data, withActions){
+    els.emptyState.style.display = 'none';
+    clearActionsFromPreviousEntries();
+
+    const userBubble = document.createElement('div');
+    userBubble.className = 'msg-user-echo';
+    userBubble.textContent = data.prompt;
+    els.thread.appendChild(userBubble);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'gen-entry';
+
+    const note = document.createElement('p');
+    note.className = 'gen-note';
+    note.textContent = data.note || "Here's your website — preview it or copy the code below.";
+    wrap.appendChild(note);
+
+    const row = document.createElement('div');
+    row.className = 'gen-result-row';
+    row.innerHTML = '<div class="gen-result-left"><div class="r-icon"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg></div><span></span></div><button class="view-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span></button>';
+    row.querySelector('.gen-result-left span').textContent = data.prompt;
+    row.querySelector('.view-btn').addEventListener('click', ()=>openPreview(data));
+    wrap.appendChild(row);
+
+    if(withActions){
+      const actions = document.createElement('div');
+      actions.className = 'gen-actions';
+      actions.innerHTML =
+        '<button class="reaction-btn" data-r="up"><svg class="icon" viewBox="0 0 24 24"><path d="M7 22V11M2 13v7a2 2 0 002 2h11.5a2 2 0 002-1.5l2-8A2 2 0 0017.5 10H14V5a2 2 0 00-2-2L9 10v12H4a2 2 0 01-2-2z"/></svg></button>' +
+        '<button class="reaction-btn" data-r="down"><svg class="icon" viewBox="0 0 24 24"><path d="M17 2v11M22 11V4a2 2 0 00-2-2H8.5a2 2 0 00-2 1.5l-2 8A2 2 0 006.5 14H10v5a2 2 0 002 2l3-7V2h5a2 2 0 012 2z"/></svg></button>' +
+        '<button class="reaction-btn" data-r="copy"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>' +
+        '<button class="regenerate-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M21 2v6h-6M3 22v-6h6"/><path d="M3.5 9a9 9 0 0114.5-4.5L21 8M20.5 15a9 9 0 01-14.5 4.5L3 16"/></svg><span>Regenerate response</span></button>';
+      actions.querySelector('[data-r="up"]').addEventListener('click', function(){ this.classList.toggle('active-up'); this.parentElement.querySelector('[data-r="down"]').classList.remove('active-down'); });
+      actions.querySelector('[data-r="down"]').addEventListener('click', function(){ this.classList.toggle('active-down'); this.parentElement.querySelector('[data-r="up"]').classList.remove('active-up'); });
+      actions.querySelector('[data-r="copy"]').addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(data.html || ''); showToast('Copied HTML to clipboard'); }catch(e){}
+      });
+      actions.querySelector('.regenerate-btn').addEventListener('click', function(){ regenerate(this); });
+      wrap.appendChild(actions);
+    }
+
+    els.thread.appendChild(wrap);
+    els.body.scrollTop = els.body.scrollHeight;
+  }
+  function addTypingRow(){
+    const row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typingRow';
+    row.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    els.thread.appendChild(row);
+    els.body.scrollTop = els.body.scrollHeight;
+  }
+  function removeTypingRow(){
+    const r = document.getElementById('typingRow');
+    if(r) r.remove();
+  }
+
+  // ---------- code parsing ----------
+  function parseCodeBlocks(reply){
+    const grab = (lang) => {
+      const re = new RegExp('```' + lang + '\\s*([\\s\\S]*?)```', 'i');
+      const m = reply.match(re);
+      return m ? m[1].trim() : '';
+    };
+    const html = grab('html');
+    const css = grab('css');
+    const js = grab('js(?:avascript)?');
+    if(html || css || js){
+      let note = reply.replace(/```[\s\S]*?```/g, '').trim();
+      note = note.replace(/\n{2,}/g, ' ').slice(0, 220);
+      return { html, css, js, note: note || undefined };
+    }
+    const anyBlock = reply.match(/```[a-z]*\s*([\s\S]*?)```/i);
+    if(anyBlock){
+      return { html: anyBlock[1].trim(), css:'', js:'', note: undefined };
+    }
+    return { html: reply.trim(), css:'', js:'', note: 'Aviqo replied with text instead of code this time — you can ask it to try again as code.' };
+  }
+
+  // ---------- API ----------
+  async function askBuilder(prompt){
+    const message = 'You are a website-building assistant. Build a complete, working static webpage for this request: "' + prompt + '". ' +
+      'Reply with exactly three fenced code blocks in this order and nothing else outside them: a ```html block with the full page markup, a ```css block with all styling, and a ```js block with any interactivity (use an empty comment if none is needed).';
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data && data.error ? data.error : 'Request failed');
+    return data.reply;
+  }
+
+  function pushHistoryEntry(prompt, code){
+    const entry = {
+      id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title: prompt.length > 60 ? prompt.slice(0,57) + '…' : prompt,
+      html: code.html, css: code.css, js: code.js,
+      ts: Date.now()
+    };
+    history.unshift(entry);
+    if(history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    currentEntryId = entry.id;
+    saveHistory();
+  }
+  function updateHistoryEntry(id, code){
+    const item = history.find(h=>h.id === id);
+    if(item){ item.html = code.html; item.css = code.css; item.js = code.js; item.ts = Date.now(); saveHistory(); }
+  }
+
+  async function generate(prompt, isRegenerate, regenBtn){
+    lastPrompt = prompt;
+    if(!isRegenerate) addTypingRow();
+    els.sendBtn.disabled = true;
+    if(regenBtn){ regenBtn.classList.add('busy'); regenBtn.disabled = true; }
+
+    try{
+      const reply = await askBuilder(prompt);
+      const parsed = parseCodeBlocks(reply);
+      currentCode = { html: parsed.html, css: parsed.css, js: parsed.js };
+      renderCode();
+
+      if(isRegenerate){
+        if(currentEntryId) updateHistoryEntry(currentEntryId, currentCode);
+        showToast('Regenerated');
+      }else{
+        removeTypingRow();
+        pushHistoryEntry(prompt, currentCode);
+        addEntry({ prompt, note: parsed.note, html: currentCode.html, css: currentCode.css, js: currentCode.js }, true);
+      }
+    }catch(err){
+      removeTypingRow();
+      showToast("Couldn't reach Aviqo — try again in a moment.");
+    }finally{
+      els.sendBtn.disabled = false;
+      if(regenBtn){ regenBtn.classList.remove('busy'); regenBtn.disabled = false; }
+    }
+  }
+  function regenerate(btn){
+    if(!lastPrompt) return;
+    generate(lastPrompt, true, btn);
+  }
+
+  function handleSend(){
+    const val = els.input.value.trim();
+    if(!val) return;
+    els.input.value = '';
+    generate(val, false);
+  }
+  els.sendBtn.addEventListener('click', handleSend);
+  els.input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleSend(); });
+
+  els.newChatBtn.addEventListener('click', ()=>{
+    currentEntryId = null;
+    currentCode = { html:'', css:'', js:'' };
+    lastPrompt = '';
+    activeTab = 'html';
+    els.tabs.forEach(t=>t.classList.remove('active'));
+    els.tabs[0].classList.add('active');
+    renderCode();
+    els.thread.innerHTML = '';
+    els.thread.appendChild(els.emptyState);
+    els.emptyState.style.display = 'flex';
+    els.input.value = '';
+    els.input.focus();
+    renderHistory(els.historySearch.value);
+    closeDrawers();
+  });
+
+  // ---------- arrived with a prefilled prompt (?msg=) ----------
+  (function initPrefill(){
+    try{
+      const qs = new URLSearchParams(window.location.search);
+      const prefill = qs.get('msg');
+      if(prefill){
+        els.input.value = prefill;
+        generate(prefill, false);
+      }
+    }catch(e){}
+  })();
+
+  loadHistory();
+  renderCode();
+})();
+</script>
+</body>
+</html>
