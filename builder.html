@@ -312,18 +312,33 @@
   }
   .tpl-card:hover{border-color:var(--border-hi); transform:translateY(-2px);}
   .tpl-thumb{
-    height:96px; position:relative; overflow:hidden; flex:none; padding:10px 12px; display:flex; flex-direction:column; gap:5px;
+    height:150px; position:relative; overflow:hidden; flex:none; background:#f1f1f1; cursor:pointer;
   }
-  .tpl-thumb .t-bar{height:8px; border-radius:3px;}
-  .tpl-thumb .t-row{display:flex; gap:5px; flex:1;}
-  .tpl-thumb .t-block{border-radius:3px; flex:1;}
+  .tpl-frame{
+    position:absolute; top:0; left:0; width:1280px; height:900px; border:0; pointer-events:none;
+    transform-origin:top left; background:#fff;
+  }
+  .tpl-thumb-veil{
+    position:absolute; inset:0; background:linear-gradient(200deg, transparent 55%, rgba(0,0,0,.35));
+    display:flex; align-items:flex-end; justify-content:flex-end; padding:8px; opacity:0; transition:opacity .18s;
+  }
+  .tpl-card:hover .tpl-thumb-veil{opacity:1;}
+  .tpl-thumb-veil span{
+    background:rgba(20,17,14,0.85); color:#fff; font-size:10.5px; font-weight:700; padding:5px 10px;
+    border-radius:100px; display:flex; align-items:center; gap:5px;
+  }
   .tpl-body{padding:12px 14px 14px;}
   .tpl-body .t-name{font-size:13px; font-weight:700; font-family:'Space Grotesk';}
   .tpl-body .t-desc{font-size:11.5px; color:var(--muted); line-height:1.5; margin:4px 0 10px; min-height:32px;}
-  .tpl-use-btn{
-    width:100%; text-align:center; padding:8px; border-radius:8px; font-size:12px; font-weight:700;
-    background:var(--grad-brand); color:#1a1206;
+  .tpl-btn-row{display:flex; gap:8px;}
+  .tpl-preview-btn,.tpl-use-btn{
+    flex:1; text-align:center; padding:8px 6px; border-radius:8px; font-size:11.5px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; gap:5px;
   }
+  .tpl-preview-btn{border:1px solid var(--border-hi); color:var(--text); background:var(--surface-2);}
+  .tpl-preview-btn:hover{background:var(--surface-3);}
+  .tpl-preview-btn .icon{width:13px; height:13px;}
+  .tpl-use-btn{background:var(--grad-brand); color:#1a1206;}
   .tpl-use-btn:hover{filter:brightness(1.06);}
 
   @media (max-width:760px){
@@ -1663,22 +1678,52 @@ a{text-decoration:none; color:inherit;}
     }
   ];
 
-  function renderThumb(t){
-    return '<div class="tpl-thumb" style="background:'+t.thumbBg+'">' +
-      '<div class="t-bar" style="background:'+t.thumbBar+'; width:38%;"></div>' +
-      '<div class="t-row"><div class="t-block" style="background:'+t.thumbBlock1+';"></div><div class="t-block" style="background:'+t.thumbBlock2+';"></div></div>' +
-    '</div>';
+  const tplResizeObserver = ('ResizeObserver' in window) ? new ResizeObserver(entries=>{
+    entries.forEach(entry=>{
+      const frame = entry.target.querySelector('.tpl-frame');
+      if(!frame) return;
+      const scale = entry.contentRect.width / 1280;
+      frame.style.transform = 'scale(' + scale + ')';
+    });
+  }) : null;
+
+  function buildThumb(t){
+    const thumb = document.createElement('div');
+    thumb.className = 'tpl-thumb';
+    const frame = document.createElement('iframe');
+    frame.className = 'tpl-frame';
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('tabindex', '-1');
+    frame.setAttribute('title', t.name + ' preview');
+    frame.srcdoc = buildPreviewDoc(t.html, t.css, '');
+    const veil = document.createElement('div');
+    veil.className = 'tpl-thumb-veil';
+    veil.innerHTML = '<span><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>Live preview</span>';
+    thumb.appendChild(frame);
+    thumb.appendChild(veil);
+    thumb.addEventListener('click', ()=>openPreview({ html:t.html, css:t.css, js:'' }));
+    if(tplResizeObserver) tplResizeObserver.observe(thumb);
+    return thumb;
   }
   function renderTemplateGrid(){
+    if(tplResizeObserver) tplResizeObserver.disconnect();
     els.tplGrid.innerHTML = '';
     TEMPLATES.forEach(t=>{
       const card = document.createElement('div');
       card.className = 'tpl-card';
-      card.innerHTML = renderThumb(t) +
-        '<div class="tpl-body"><div class="t-name"></div><p class="t-desc"></p><button class="tpl-use-btn">Use template</button></div>';
-      card.querySelector('.t-name').textContent = t.name;
-      card.querySelector('.t-desc').textContent = t.desc;
-      card.querySelector('.tpl-use-btn').addEventListener('click', ()=>useTemplate(t));
+      card.appendChild(buildThumb(t));
+      const body = document.createElement('div');
+      body.className = 'tpl-body';
+      body.innerHTML = '<div class="t-name"></div><p class="t-desc"></p>' +
+        '<div class="tpl-btn-row">' +
+          '<button class="tpl-preview-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>' +
+          '<button class="tpl-use-btn">Use template</button>' +
+        '</div>';
+      body.querySelector('.t-name').textContent = t.name;
+      body.querySelector('.t-desc').textContent = t.desc;
+      body.querySelector('.tpl-preview-btn').addEventListener('click', ()=>openPreview({ html:t.html, css:t.css, js:'' }));
+      body.querySelector('.tpl-use-btn').addEventListener('click', ()=>useTemplate(t));
+      card.appendChild(body);
       els.tplGrid.appendChild(card);
     });
   }
