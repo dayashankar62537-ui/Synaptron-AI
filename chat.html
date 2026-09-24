@@ -2046,6 +2046,11 @@
       || /\b(image|photo|picture)\s+of\b/i.test(raw);
   }
 
+  function detectVideoIntent(raw){
+    return /\b(generate|create|make|build)\b.*\b(video|clip|ad|animation|reel)\b/i.test(raw)
+      || /\bvideo\s+(of|for|ad)\b/i.test(raw);
+  }
+
   async function generateImage(prompt){
     const res = await fetch('/api/generate-image', {
       method:'POST',
@@ -2113,6 +2118,10 @@
     // to the Explore gallery page instead of generating inline here.
     if(!hasImage && trimmed && detectImageIntent(trimmed)){
       window.location.href = 'explore.html';
+      return;
+    }
+    if(!hasImage && trimmed && detectVideoIntent(trimmed)){
+      window.location.href = 'explore.html#videos-section';
       return;
     }
 
