@@ -941,6 +941,9 @@
   }
   #introOverlay .intro-logo-wrap video{
     width:100%; height:auto; display:block; background:transparent;
+    mix-blend-mode:screen;
+    -webkit-mask-image:radial-gradient(ellipse 78% 78% at 50% 50%, #000 82%, transparent 100%);
+            mask-image:radial-gradient(ellipse 78% 78% at 50% 50%, #000 82%, transparent 100%);
   }
     50%{transform:scale(1.025);}
   }
