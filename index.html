@@ -9,22 +9,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#100e0c;
-    --bg-2:#161310;
-    --surface:#1b1815;
-    --surface-2:#211d19;
-    --border:rgba(255,236,210,0.09);
-    --border-hi:rgba(255,171,64,0.32);
-    --text:#f3ede3;
-    --muted:#b7ab99;
-    --muted-2:#7c7264;
-    --cyan:#ffc369;
-    --blue:#ff8a3d;
+    /* LIGHT MODE (default) */
+    --bg:#faf6f0;
+    --bg-2:#f4eee5;
+    --surface:#ffffff;
+    --surface-2:#f7f1e8;
+    --border:rgba(60,40,20,0.12);
+    --border-hi:rgba(230,120,20,0.40);
+    --text:#241a10;
+    --muted:#5f5346;
+    --muted-2:#8a7d6d;
+    --cyan:#d97706;
+    --blue:#ea580c;
     --deep:#7a3e12;
-    --mint:#f2c879;
-    --grad-brand: linear-gradient(120deg, #ffb020 0%, #ff7a3d 100%);
-    --grad-text: linear-gradient(100deg, #f3ede3 0%, #ffc369 50%, #f3ede3 100%);
-    --shadow-glow: 0 0 140px rgba(255,140,40,0.14);
+    --mint:#b45309;
+    --grad-brand: linear-gradient(120deg, #ffab1f 0%, #f2691a 100%);
+    --grad-text: linear-gradient(100deg, #241a10 0%, #e2670f 50%, #241a10 100%);
+    --shadow-glow: 0 0 140px rgba(255,140,40,0.18);
   }
   body.dark-theme{
     --bg:#07070a;
@@ -48,6 +49,36 @@
   body.dark-theme .field input, body.dark-theme .field textarea{background:rgba(255,255,255,0.03);}
   body.dark-theme .signup-field input{background:rgba(255,255,255,0.03);}
   body.dark-theme .chat-input-row input{background:rgba(255,255,255,0.04);}
+
+  /* ---------- LIGHT MODE overrides (dark mode untouched) ---------- */
+  body:not(.dark-theme) header{background:rgba(250,246,240,0.80);}
+  body:not(.dark-theme) .field input, body:not(.dark-theme) .field textarea{background:#ffffff;}
+  body:not(.dark-theme) .chat-input-row input{background:var(--surface-2);}
+  body:not(.dark-theme) .bg-grid{
+    background-image:
+      linear-gradient(rgba(120,80,30,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,80,30,0.06) 1px, transparent 1px);
+  }
+  body:not(.dark-theme) #siteBgMedia{background:#faf6f0;}
+  body:not(.dark-theme) #siteBgMedia video, body:not(.dark-theme) #siteBgMedia img{opacity:0.16;}
+  body:not(.dark-theme) #siteBgMedia::after{
+    background:linear-gradient(180deg, rgba(250,246,240,0.65) 0%, rgba(250,246,240,0.88) 45%, rgba(250,246,240,0.96) 100%);
+  }
+  body:not(.dark-theme) .workspace{
+    background:linear-gradient(160deg,#fffdf9,#f7efe3);
+    box-shadow:0 50px 100px -30px rgba(60,40,20,0.30), 0 0 0 1px rgba(255,140,40,0.12);
+  }
+  body:not(.dark-theme) .ws-side{background:rgba(255,246,232,0.85);}
+  body:not(.dark-theme) .ws-bar span{background:rgba(60,40,20,0.16);}
+  body:not(.dark-theme) .ws-bar .url{background:rgba(60,40,20,0.05);}
+  body:not(.dark-theme) .ws-avatar.user{background:rgba(60,40,20,0.08);}
+  body:not(.dark-theme) .ws-bubble{background:rgba(60,40,20,0.03);}
+  body:not(.dark-theme) .ws-bubble.mine{background:rgba(255,140,40,0.10);}
+  body:not(.dark-theme) .ws-preview .blk{background:rgba(60,40,20,0.04);}
+  body:not(.dark-theme) .bubble code.inline{background:rgba(60,40,20,0.08);}
+  body:not(.dark-theme) .bubble .code-head{color:#b7ab99;}
+  body:not(.dark-theme) .bubble .code-copy{color:#f3ede3;}
+  body:not(.dark-theme) ::selection{background:rgba(255,140,40,0.25);}
 
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
