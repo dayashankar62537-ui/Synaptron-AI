@@ -6,6 +6,13 @@
 <title>Learn more — Aviqo AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  (function(){var h=document.documentElement;
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      h.classList.add('js');
+      setTimeout(function(){h.classList.remove('js');},30000); /* safety: never leave content hidden */
+    }})();
+</script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{min-height:100%;}
@@ -32,9 +39,14 @@
   h2{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; margin:56px 0 18px;}
   .list{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
   .item{
-    padding:20px 22px; border-radius:14px;
-    background:rgba(10,10,14,.55); border:1px solid rgba(255,200,130,.22);
-    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    padding:22px 24px; border-radius:16px;
+    background:linear-gradient(145deg, rgba(40,30,24,.88), rgba(12,10,15,.94));
+    border:1px solid rgba(255,200,130,.3);
+    box-shadow:0 34px 60px -26px rgba(0,0,0,.85), 0 12px 28px -14px rgba(255,140,60,.25),
+               inset 0 1px 0 rgba(255,232,200,.28), inset 0 -18px 30px -24px rgba(255,150,70,.25);
+    --rx:0deg; --ry:0deg; --tz:0px; --mx:50%; --my:50%;
+    position:relative; transform-style:preserve-3d; backface-visibility:hidden;
+    transform:translateZ(var(--tz)) rotateX(var(--rx)) rotateY(var(--ry));
   }
   .item h3{font-family:'Space Grotesk',sans-serif; font-size:18px; margin-bottom:6px;}
   .item p{font-size:15px; line-height:1.6; color:#d3cabb;}
@@ -48,16 +60,58 @@
   a:focus-visible{outline:2px solid #ffc876; outline-offset:3px;}
   @media (max-width:640px){ .list{grid-template-columns:1fr;} main{padding-top:10vh;} }
   @media (prefers-reduced-motion: reduce){ .sky{animation:none;} }
+
+  /* ================= live typing ================= */
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+  .js [data-type]{visibility:hidden;}
+  .js [data-type].typing{visibility:visible;}
+  .js [data-type] .r{visibility:hidden;}
+  .caret{display:inline-block; width:0; height:1em; position:relative; vertical-align:baseline;}
+  .caret::after{content:''; position:absolute; left:2px; top:.08em; width:2px; height:.92em; background:#ffc876;
+    box-shadow:0 0 10px rgba(255,200,118,.9); animation:blink .9s steps(2) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  /* ================= cards: faded first, then sharp 3D ================= */
+  .list{perspective:1400px; perspective-origin:50% 25%;}
+  .item h3{transform:translateZ(38px); text-shadow:0 6px 16px rgba(0,0,0,.55);}
+  .item p{transform:translateZ(20px);}
+  .item::after{
+    content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .3s;
+    background:radial-gradient(circle at var(--mx) var(--my), rgba(255,226,180,.24), transparent 58%);
+  }
+  .js .item{
+    opacity:0; filter:blur(10px); --rx:42deg; --tz:-140px;
+    transition:opacity 1s ease, filter 1s ease, transform 1.1s cubic-bezier(.2,.8,.2,1);
+  }
+  .js .item.ghost{opacity:.26; filter:blur(7px); --rx:26deg; --tz:-90px;}      /* step 1: faded, soft */
+  .js .item.sharp{opacity:1; filter:none; --rx:0deg; --tz:0px;}                 /* step 2: crisp, 3D   */
+  .js .item.ready{transition:transform .16s ease-out, box-shadow .3s, border-color .3s, opacity .3s;}
+  .item.ready:hover{border-color:rgba(255,200,130,.65);
+    box-shadow:0 44px 70px -24px rgba(0,0,0,.9), 0 16px 40px -12px rgba(255,140,60,.45),
+               inset 0 1px 0 rgba(255,232,200,.4), inset 0 -18px 30px -24px rgba(255,150,70,.35);}
+  .item.ready:hover::after{opacity:1;}
+
+  /* ================= buttons: rise in with depth ================= */
+  .actions{perspective:800px;}
+  .js .actions .btn{opacity:0;}
+  .js .actions.in .btn{opacity:1; animation:btnIn .9s cubic-bezier(.2,.8,.2,1) backwards;}
+  .js .actions.in .btn:nth-child(2){animation-delay:.14s;}
+  @keyframes btnIn{
+    from{opacity:0; transform:translateY(34px) translateZ(-80px) rotateX(-45deg); filter:blur(6px);}
+    to{opacity:1; transform:none; filter:blur(0);}
+  }
+  .btn-primary{box-shadow:0 14px 30px -10px rgba(255,122,61,.55), inset 0 1px 0 rgba(255,255,255,.45);}
+  .btn:hover{transform:translateY(-4px) rotateX(8deg);}
 </style>
 </head>
 <body>
 <div class="sky" role="img" aria-label="Andromeda galaxy against a field of stars"></div>
 <main>
   <a class="back" href="index.html">&larr; Back to Aviqo AI</a>
-  <h1>One AI for everything you create.</h1>
-  <p class="lead">Aviqo AI brings chat, image generation, video, websites, apps, study help and a personal assistant into a single workspace. Ask once, and the right specialist handles it, with no switching between tools.</p>
+  <h1 data-type>One AI for everything you create.</h1>
+  <p class="lead" data-type>Aviqo AI brings chat, image generation, video, websites, apps, study help and a personal assistant into a single workspace. Ask once, and the right specialist handles it, with no switching between tools.</p>
 
-  <h2>What Aviqo can do</h2>
+  <h2 data-type>What Aviqo can do</h2>
   <div class="list">
     <div class="item"><h3>Image generation</h3><p>Concept art, product mockups and social creatives from a plain description.</p></div>
     <div class="item"><h3>Video generation</h3><p>Short video ads and clips for your brand.</p></div>
@@ -66,12 +120,76 @@
     <div class="item"><h3>Study help</h3><p>Study plans and explanations that fit how you learn.</p></div>
     <div class="item"><h3>Personal assistant</h3><p>Plan your day, manage tasks and delegate the routine work.</p></div>
   </div>
-  <p class="note">Real AI chat and AI image generation are live today. Video, website building, app building, study tools and the personal assistant are still in development.</p>
+  <p class="note" data-type>Real AI chat and AI image generation are live today. Video, website building, app building, study tools and the personal assistant are still in development.</p>
 
   <div class="actions">
     <a class="btn btn-primary" href="chat.html" target="_blank" rel="noopener">Try Aviqo AI</a>
     <a class="btn btn-ghost" href="index.html">Back to home</a>
   </div>
 </main>
+<script>
+(function(){
+  var html=document.documentElement;
+  if(!html.classList.contains('js')) return;
+  var skipped=false;
+  var sleep=function(ms){return new Promise(function(r){skipped?r():setTimeout(r,ms);});};
+  ['pointerdown','keydown'].forEach(function(e){addEventListener(e,function(){skipped=true;},{once:true});}); /* tap/key = skip intro */
+
+  async function typeInto(el,speed){
+    var text=el.textContent.replace(/\s+/g,' ').trim();
+    el.innerHTML='<span class="sr">'+text+'</span>'+
+      '<span class="t" aria-hidden="true"></span><span class="caret" aria-hidden="true"></span><span class="r" aria-hidden="true"></span>';
+    var t=el.querySelector('.t'), r=el.querySelector('.r');
+    r.textContent=text; el.classList.add('typing');
+    for(var i=1;i<=text.length;i++){
+      if(skipped){t.textContent=text; r.textContent=''; break;}
+      t.textContent=text.slice(0,i); r.textContent=text.slice(i);
+      var ch=text[i-1];
+      await sleep(speed+(ch==='.'||ch===','?speed*7:0));
+    }
+    var c=el.querySelector('.caret'); if(c) c.remove();
+  }
+
+  async function run(){
+    var items=[].slice.call(document.querySelectorAll('.item'));
+    var actions=document.querySelector('.actions');
+    await sleep(450);
+    await typeInto(document.querySelector('h1'),38);
+    await sleep(180);
+    await typeInto(document.querySelector('.lead'),11);
+    await sleep(150);
+    await typeInto(document.querySelector('h2'),32);
+
+    /* step 1: every option appears faded & soft */
+    items.forEach(function(it,i){setTimeout(function(){it.classList.add('ghost');},skipped?0:i*130);});
+    await sleep(items.length*130+850);
+    /* step 2: all snap into crisp, high-quality 3D */
+    items.forEach(function(it,i){setTimeout(function(){it.classList.add('sharp');},skipped?0:i*150);});
+    await sleep(items.length*150+1150);
+    items.forEach(function(it){it.classList.add('ready');});
+
+    await typeInto(document.querySelector('.note'),13);
+    actions.classList.add('in');
+  }
+
+  /* 3D tilt that follows the mouse */
+  document.querySelectorAll('.item').forEach(function(it){
+    it.addEventListener('pointermove',function(e){
+      if(!it.classList.contains('ready')||e.pointerType==='touch') return;
+      var b=it.getBoundingClientRect(), x=(e.clientX-b.left)/b.width, y=(e.clientY-b.top)/b.height;
+      it.style.setProperty('--ry',((x-.5)*16)+'deg');
+      it.style.setProperty('--rx',((.5-y)*14)+'deg');
+      it.style.setProperty('--tz','28px');
+      it.style.setProperty('--mx',(x*100)+'%');
+      it.style.setProperty('--my',(y*100)+'%');
+    });
+    it.addEventListener('pointerleave',function(){
+      ['--rx','--ry','--tz'].forEach(function(p){it.style.removeProperty(p);});
+    });
+  });
+
+  run().catch(function(){html.classList.remove('js');});
+})();
+</script>
 </body>
 </html>
