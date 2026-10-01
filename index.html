@@ -1188,6 +1188,93 @@
   .ad-label{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-2); margin-bottom:8px;}
   .ad-wrap ins.adsbygoogle{min-height:0;}
   .ad-wrap:has(ins.adsbygoogle[data-ad-status="unfilled"]){display:none;}
+  /* ---------- 3D pricing cards + plan detail popup ---------- */
+  .plan3d{display:flex; perspective:1100px;}
+  .plan3d > .price-card{
+    flex:1; width:100%; transform-style:preserve-3d;
+    transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition:transform .12s ease-out, border-color .3s, box-shadow .35s;
+    will-change:transform;
+    box-shadow:0 26px 50px -28px rgba(0,0,0,0.45);
+  }
+  .plan3d > .price-card.settle{transition:transform .55s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .35s;}
+  .plan3d > .price-card:hover{
+    transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(18px);
+    border-color:var(--border-hi); box-shadow:0 44px 70px -30px rgba(255,140,40,0.38);
+  }
+  .plan3d > .price-card.featured{box-shadow:0 30px 60px -24px rgba(255,140,40,0.32);}
+  .plan3d > .price-card::before{
+    content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:var(--surface-2); border:1px solid var(--border);
+    transform:translateZ(-24px) translate(9px,11px);
+  }
+  .plan3d .price-name, .plan3d .price-amount{transform:translateZ(34px);}
+  .plan3d .price-desc{transform:translateZ(18px);}
+  .plan3d .price-badge{transform:translateZ(56px);}
+  .plan3d .price-btn{transform:translateZ(46px);}
+  .plan3d .price-btn:hover{transform:translateZ(62px) translateY(-2px);}
+  .plan3d .price-list{display:none;}
+  .price-more{flex:1; font-size:12.5px; line-height:1.55; color:var(--muted-2); margin-bottom:20px; transform:translateZ(14px);}
+  .price-btn[data-plan-open]::after{content:' \2192';}
+  .price-glare{
+    position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0;
+    background:radial-gradient(circle at var(--gx,50%) var(--gy,0%), rgba(255,190,110,0.24), transparent 58%);
+    transition:opacity .3s; transform:translateZ(1px);
+  }
+  .plan3d > .price-card:hover .price-glare{opacity:1;}
+  @media (hover:none){
+    .plan3d > .price-card{--rx:2deg; --ry:-5deg;}
+    .plan3d:nth-child(even) > .price-card{--ry:5deg;}
+  }
+
+  .plan-overlay{
+    position:fixed; inset:0; z-index:230; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(15,23,42,0.55); backdrop-filter:blur(4px);
+    opacity:0; pointer-events:none; transition:opacity .3s ease; perspective:1400px; overflow-y:auto;
+  }
+  .plan-overlay.open{opacity:1; pointer-events:auto;}
+  .plan-modal{
+    position:relative; width:100%; max-width:480px; max-height:calc(100vh - 40px); overflow:auto;
+    background:linear-gradient(160deg,var(--surface),var(--surface-2)); color:var(--text);
+    border:1px solid var(--border-hi); border-radius:22px; padding:30px 28px 26px;
+    box-shadow:0 50px 100px -30px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,140,40,0.10);
+    transform-origin:left center; transform:rotateY(-80deg) translateZ(-140px) scale(.9); opacity:0;
+    transition:transform .7s cubic-bezier(.2,.9,.25,1.05), opacity .4s ease;
+  }
+  .plan-overlay.open .plan-modal{transform:none; opacity:1;}
+  .pm-close{
+    position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer; font-size:14px;
+  }
+  .pm-close:hover{border-color:var(--border-hi);}
+  .pm-steps{display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--muted-2); margin-bottom:18px; padding-right:40px;}
+  .pm-steps b{font-weight:600; padding:3px 9px; border-radius:100px; border:1px solid var(--border);}
+  .pm-steps b.done{color:var(--mint); border-color:rgba(242,200,121,0.4);}
+  .pm-steps b.on{background:var(--grad-brand); color:#fff; border-color:transparent;}
+  .pm-badge{display:inline-block; margin-bottom:10px; padding:4px 11px; border-radius:100px; border:1px solid var(--border-hi); font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; color:var(--text);}
+  .pm-name{font-family:'Space Grotesk'; font-size:15px; font-weight:600; color:var(--muted); margin-bottom:8px;}
+  .pm-price{font-family:'Space Grotesk'; font-size:34px; font-weight:700; margin-bottom:8px;}
+  .pm-price span{font-size:13px; font-weight:500; color:var(--muted-2); font-family:'Inter';}
+  .pm-desc{color:var(--muted); font-size:13.5px; line-height:1.6; margin-bottom:16px;}
+  .pm-sub{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-2); margin-bottom:6px;}
+  .pm-list{list-style:none; margin-bottom:18px; perspective:600px;}
+  .pm-list li{
+    position:relative; font-size:14px; color:var(--text); padding:10px 0 10px 26px; border-top:1px solid var(--border);
+    opacity:0;
+  }
+  .pm-list li:first-child{border-top:none;}
+  .pm-list li::before{content:'\2713'; position:absolute; left:0; color:var(--mint); font-weight:700;}
+  .plan-overlay.open .pm-list li{animation:pmPop .55s cubic-bezier(.2,.9,.25,1.05) forwards; animation-delay:calc(.35s + var(--i,0) * .07s);}
+  @keyframes pmPop{from{opacity:0; transform:translateX(-16px) translateZ(-40px) rotateX(-20deg);} to{opacity:1; transform:none;}}
+  .pm-note{font-size:12px; line-height:1.6; color:var(--muted-2); margin-bottom:18px;}
+  .pm-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .pm-actions .price-btn{flex:1 1 200px; border:none; cursor:pointer; font-family:'Inter';}
+  .pm-actions .price-btn.ghost{border:1px solid var(--border-hi); flex:0 1 auto; padding:12px 20px;}
+  @media (prefers-reduced-motion: reduce){
+    .plan3d > .price-card, .plan3d > .price-card.settle{transition:none;}
+    .plan-modal{transform:none; transition:opacity .2s;}
+    .plan-overlay.open .pm-list li{animation:none; opacity:1;}
+  }
 </style>
 </head>
 <body>
@@ -1543,25 +1630,31 @@
     </div>
 
     <div class="pricing-grid">
-      <div class="price-card reveal">
+      <div class="plan3d reveal">
+        <div class="price-card" data-plan="free">
+          <div class="price-glare"></div>
         <div class="price-name">Free / Starter</div>
         <div class="price-amount">$0</div>
         <p class="price-desc">Try all basic features for free</p>
-        <ul class="price-list">
+        <ul class="price-list" hidden>
           <li>10 Free Credits on Signup</li>
           <li>Access to Basic Tools &amp; Templates</li>
           <li>Standard Processing Speed</li>
           <li>Watermarked / Basic Export</li>
           <li>Community Support</li>
         </ul>
-        <a href="#waitlist" class="price-btn ghost">Get Started for Free</a>
+          <div class="price-more"></div>
+          <a href="#waitlist" class="price-btn ghost" data-plan-open>Continue now</a>
+        </div>
       </div>
 
-      <div class="price-card reveal">
+      <div class="plan3d reveal">
+        <div class="price-card" data-plan="monthly">
+          <div class="price-glare"></div>
         <div class="price-name">Pro Monthly</div>
         <div class="price-amount">$2.99<span>/ month</span></div>
         <p class="price-desc">Perfect for short-term projects</p>
-        <ul class="price-list">
+        <ul class="price-list" hidden>
           <li>300 Credits per Month</li>
           <li>Access to All Premium Features</li>
           <li>Fast Processing Speed</li>
@@ -1569,15 +1662,19 @@
           <li>Standard Email Support</li>
           <li>Cancel Anytime</li>
         </ul>
-        <a href="https://rzp.io/rzp/V2SmaCw4" target="_blank" rel="noopener" class="price-btn ghost">Start Monthly Plan</a>
+          <div class="price-more"></div>
+          <a href="https://rzp.io/rzp/V2SmaCw4" target="_blank" rel="noopener" class="price-btn ghost" data-plan-open>Continue now</a>
+        </div>
       </div>
 
-      <div class="price-card featured reveal">
+      <div class="plan3d reveal">
+        <div class="price-card featured" data-plan="yearly">
+          <div class="price-glare"></div>
         <div class="price-badge">MOST POPULAR &middot; SAVE 45%</div>
         <div class="price-name">Pro Yearly</div>
         <div class="price-amount">$19.99<span>/ year (~$1.66/mo)</span></div>
         <p class="price-desc">Best value for regular users</p>
-        <ul class="price-list">
+        <ul class="price-list" hidden>
           <li>1,000 Credits per Month</li>
           <li>Priority Processing Speed</li>
           <li>Full Access to All Premium Tools</li>
@@ -1585,22 +1682,28 @@
           <li>Priority Email Support</li>
           <li>One-Time Yearly Billing</li>
         </ul>
-        <a href="https://rzp.io/rzp/hUqfABE" target="_blank" rel="noopener" class="price-btn">Get Best Value Plan</a>
+          <div class="price-more"></div>
+          <a href="https://rzp.io/rzp/hUqfABE" target="_blank" rel="noopener" class="price-btn" data-plan-open>Continue now</a>
+        </div>
       </div>
 
-      <div class="price-card reveal">
+      <div class="plan3d reveal">
+        <div class="price-card" data-plan="lifetime">
+          <div class="price-glare"></div>
         <div class="price-badge" style="background:none; border:1px solid var(--border-hi); color:var(--text);">LIMITED TIME OFFER</div>
         <div class="price-name">Lifetime Deal</div>
         <div class="price-amount">$39.99<span>/ one-time</span></div>
         <p class="price-desc">Pay once, access forever</p>
-        <ul class="price-list">
+        <ul class="price-list" hidden>
           <li>Lifetime Access (Zero Monthly Fees)</li>
           <li>500 Credits Refreshed Every Month</li>
           <li>All Future Updates Included</li>
           <li>Unlimited Projects &amp; Exports</li>
           <li>VIP Dedicated Support</li>
         </ul>
-        <a href="https://rzp.io/rzp/AV8tzsa0" target="_blank" rel="noopener" class="price-btn ghost">Claim Lifetime Access</a>
+          <div class="price-more"></div>
+          <a href="https://rzp.io/rzp/AV8tzsa0" target="_blank" rel="noopener" class="price-btn ghost" data-plan-open>Continue now</a>
+        </div>
       </div>
     </div>
     <p style="color:var(--muted-2); font-size:13px; margin-top:22px; text-align:center; max-width:640px; margin-left:auto; margin-right:auto; line-height:1.6;">
@@ -1741,6 +1844,24 @@
 </footer>
 
 <!-- SIGNUP GATE -->
+<div class="plan-overlay" id="planOverlay" aria-hidden="true">
+  <div class="plan-modal" role="dialog" aria-modal="true" aria-labelledby="pmName">
+    <button type="button" class="pm-close" id="pmClose" aria-label="Close">&#10005;</button>
+    <div class="pm-steps"><b class="done">1 CHOOSE PLAN</b><b class="on">2 REVIEW FEATURES</b><b>3 PAYMENT</b></div>
+    <div class="pm-badge" id="pmBadge" hidden></div>
+    <div class="pm-name" id="pmName"></div>
+    <div class="pm-price" id="pmPrice"></div>
+    <p class="pm-desc" id="pmDesc"></p>
+    <div class="pm-sub">Everything in this plan</div>
+    <ul class="pm-list" id="pmList"></ul>
+    <p class="pm-note" id="pmNote"></p>
+    <div class="pm-actions">
+      <a class="price-btn" id="pmPay" href="#">Proceed to payment</a>
+      <button type="button" class="price-btn ghost" id="pmBack">Back to plans</button>
+    </div>
+  </div>
+</div>
+
 <div class="video-modal" id="videoModal">
   <div class="video-modal-inner">
     <button class="video-modal-close" id="videoModalClose" type="button">✕</button>
@@ -2445,6 +2566,96 @@
     }, {passive:true});
     applyScrollGrowth();
   })();
+</script>
+
+<script>
+(function(){
+  const overlay=document.getElementById('planOverlay');
+  if(!overlay) return;
+  const $=(id)=>document.getElementById(id);
+  const fine=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 3D tilt + feature count on each card
+  document.querySelectorAll('.plan3d').forEach(function(wrap){
+    const card=wrap.querySelector('.price-card');
+    const n=card.querySelectorAll('.price-list li').length;
+    const more=card.querySelector('.price-more');
+    if(more) more.textContent=n+' features included \u2014 see them all next';
+    if(!fine||reduce) return;
+    wrap.addEventListener('pointermove',function(e){
+      const r=wrap.getBoundingClientRect();
+      const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+      card.classList.remove('settle');
+      card.style.setProperty('--ry',((px-.5)*16).toFixed(2)+'deg');
+      card.style.setProperty('--rx',((.5-py)*14).toFixed(2)+'deg');
+      card.style.setProperty('--gx',(px*100).toFixed(1)+'%');
+      card.style.setProperty('--gy',(py*100).toFixed(1)+'%');
+    });
+    wrap.addEventListener('pointerleave',function(){
+      card.classList.add('settle');
+      card.style.setProperty('--rx','0deg');
+      card.style.setProperty('--ry','0deg');
+    });
+  });
+
+  // plan detail popup
+  let lastFocus=null;
+  const pay=$('pmPay'), closeBtn=$('pmClose'), backBtn=$('pmBack');
+  function openPlan(card,href){
+    lastFocus=document.activeElement;
+    $('pmName').textContent=card.querySelector('.price-name').textContent.trim();
+    const price=$('pmPrice'); price.replaceChildren();
+    card.querySelector('.price-amount').childNodes.forEach(function(nd){price.appendChild(nd.cloneNode(true));});
+    $('pmDesc').textContent=card.querySelector('.price-desc').textContent.trim();
+    const b=card.querySelector('.price-badge'), pb=$('pmBadge');
+    if(b){pb.textContent=b.textContent.trim(); pb.hidden=false;} else {pb.hidden=true;}
+    const list=$('pmList'); list.replaceChildren();
+    card.querySelectorAll('.price-list li').forEach(function(li,i){
+      const x=document.createElement('li'); x.textContent=li.textContent.trim(); x.style.setProperty('--i',i); list.appendChild(x);
+    });
+    const free=href.charAt(0)==='#';
+    const tail=' Website building, app building, study tools and the personal assistant are still in development and are not part of any plan yet.';
+    if(free){
+      pay.textContent='Get started for free \u2192';
+      pay.setAttribute('href',href); pay.removeAttribute('target'); pay.removeAttribute('rel');
+      $('pmNote').textContent='No payment needed \u2014 you can start right away.'+tail;
+    } else {
+      pay.textContent='Proceed to payment \u2192';
+      pay.setAttribute('href',href); pay.setAttribute('target','_blank'); pay.setAttribute('rel','noopener');
+      $('pmNote').textContent='You will be taken to a secure Razorpay payment page to complete your purchase.'+tail;
+    }
+    overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    setTimeout(function(){pay.focus({preventScroll:true});},60);
+  }
+  function closePlan(){
+    if(!overlay.classList.contains('open')) return;
+    overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    if(lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true});
+  }
+  document.querySelectorAll('a[data-plan-open]').forEach(function(a){
+    a.addEventListener('click',function(e){
+      e.preventDefault();
+      openPlan(a.closest('.price-card'),a.getAttribute('href'));
+    });
+  });
+  closeBtn.addEventListener('click',closePlan);
+  backBtn.addEventListener('click',closePlan);
+  overlay.addEventListener('click',function(e){ if(e.target===overlay) closePlan(); });
+  pay.addEventListener('click',function(){ if(pay.getAttribute('href').charAt(0)==='#') closePlan(); });
+  document.addEventListener('keydown',function(e){
+    if(!overlay.classList.contains('open')) return;
+    if(e.key==='Escape'){ closePlan(); return; }
+    if(e.key==='Tab'){
+      const f=[closeBtn,pay,backBtn];
+      const i=f.indexOf(document.activeElement);
+      if(e.shiftKey && i<=0){ e.preventDefault(); f[f.length-1].focus(); }
+      else if(!e.shiftKey && (i===f.length-1)){ e.preventDefault(); f[0].focus(); }
+    }
+  });
+})();
 </script>
 
 </body>
