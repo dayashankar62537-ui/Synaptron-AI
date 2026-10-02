@@ -1427,6 +1427,70 @@
 }
 @media (prefers-reduced-motion:reduce){ .aq-avatars span{animation:none;} .aq-fade{opacity:1; transform:none; transition:none;} }
 /* ================= /AQ-END ================= */
+
+/* ===== AQ-SLIDER ===== */
+.as-sec{position:relative; z-index:5; padding:70px 0 0; overflow:hidden;}
+.as-wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+.as-fade{opacity:0; transform:translateY(26px); transition:opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1);}
+.as-fade.in{opacity:1; transform:none;}
+.as-head{display:flex; justify-content:space-between; align-items:flex-start; gap:28px; flex-wrap:wrap; margin-bottom:30px;}
+.as-head h2{font:500 clamp(28px,3.5vw,44px)/1.1 'Space Grotesk',sans-serif; letter-spacing:-.02em; color:var(--text); max-width:430px;}
+.as-head p{color:var(--muted); font-size:15px; line-height:1.65; max-width:440px;}
+.as-view{overflow:hidden; padding:10px 0 12px;}
+.as-track{--per:4; --w:calc((100% - 16px*(var(--per) - 1))/var(--per)); display:flex; gap:16px; transition:transform .6s cubic-bezier(.2,.8,.2,1);}
+.as-card{flex:0 0 var(--w); position:relative; aspect-ratio:3/4; display:block; border-radius:16px; overflow:hidden; padding:20px; color:#fff; text-decoration:none;
+  background:linear-gradient(160deg,hsl(var(--h) 70% 24%),#05060f 78%); transition:transform .35s ease, box-shadow .35s ease;}
+.as-card:hover{transform:translateY(-6px); box-shadow:0 0 0 1px rgba(255,255,255,.3), 0 22px 50px -20px rgba(122,92,255,.75);}
+.as-card h3{font:600 19px 'Space Grotesk',sans-serif; margin-bottom:8px;}
+.as-card p{font-size:13px; line-height:1.5; color:rgba(255,255,255,.78);}
+.as-arr{position:absolute; right:18px; bottom:14px; font-size:22px; transition:transform .3s;}
+.as-card:hover .as-arr{transform:translateX(5px);}
+.as-ctrl{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+.as-dots i{display:inline-block; width:6px; height:6px; border-radius:6px; margin:0 4px; background:var(--muted-2); cursor:pointer; transition:width .35s, background .35s;}
+.as-dots i.on{width:34px; background:var(--text);}
+.as-btns button{width:36px; height:36px; margin-left:8px; border-radius:50%; border:1px solid var(--border-hi); background:transparent; color:var(--text); font-size:20px; cursor:pointer; transition:box-shadow .25s;}
+.as-btns button:hover{box-shadow:0 0 20px rgba(122,92,255,.55);}
+/* live visuals */
+.as-vis{position:absolute; left:13%; right:13%; top:36%; bottom:15%; display:grid; place-items:center;}
+.as-vis u{display:block; border-radius:6px; background:rgba(255,255,255,.3); animation:asPop 4.5s infinite both; animation-delay:calc(var(--i)*.45s);}
+@keyframes asPop{0%{opacity:0; transform:translateY(10px) scale(.96)} 12%,82%{opacity:1; transform:none} 100%{opacity:0}}
+.v-img{width:76%; aspect-ratio:1; border-radius:16px; background:linear-gradient(120deg,#2d6bff,#7a3cff,#e24bff,#2d6bff); background-size:300% 100%; animation:asSlide 5s linear infinite; box-shadow:0 0 40px rgba(122,60,255,.5);}
+@keyframes asSlide{to{background-position:300% 0}}
+.v-chip{position:absolute; bottom:-8px; width:150px; padding:7px 12px; border-radius:99px; background:rgba(255,255,255,.14); font-size:11px; color:#fff;}
+.v-chip span{display:block; overflow:hidden; white-space:nowrap; width:0; animation:asType 4s steps(18) infinite;}
+@keyframes asType{0%{width:0} 60%,90%{width:100%} 100%{width:0}}
+.v-vid{position:relative; width:100%; aspect-ratio:16/10; border-radius:12px; background:linear-gradient(135deg,#7a3cff,#2d6bff);}
+.v-vid b{position:absolute; inset:0; margin:auto; width:42px; height:42px; border-radius:50%; background:#fff;}
+.v-vid b::after{content:''; position:absolute; left:16px; top:12px; border:9px solid transparent; border-left:14px solid #05060f;}
+.v-vid s{position:absolute; left:8%; right:8%; bottom:10px; height:4px; border-radius:4px; background:rgba(255,255,255,.3);}
+.v-vid s::after{content:''; display:block; height:100%; border-radius:4px; background:#fff; animation:asBar 4s linear infinite;}
+@keyframes asBar{from{width:0} to{width:100%}}
+.v-web,.v-std,.v-ast{width:100%; display:grid; gap:9px;}
+.v-web{padding:10px; border-radius:12px; background:rgba(255,255,255,.08);}
+.v-web u{height:14px;} .v-web u:nth-child(1){height:46px; background:linear-gradient(120deg,#2d6bff,#e24bff);} .v-web u:nth-child(3){width:60%;}
+.v-app{width:56%; aspect-ratio:9/16; border-radius:18px; border:2px solid rgba(255,255,255,.4); padding:12px 9px; display:grid; gap:8px; align-content:start;}
+.v-app u{height:28px;}
+.v-std u{height:8px;} .v-std u:nth-child(2){width:80%;} .v-std u:nth-child(3){width:92%;} .v-std u:nth-child(4){width:55%;}
+.v-ast u{width:max-content; max-width:92%; padding:8px 12px; font-size:12px; color:#fff; background:rgba(122,92,255,.6); border-radius:12px;}
+.v-ast u:nth-child(even){justify-self:end; background:rgba(255,255,255,.2);}
+/* getting started */
+.as-start{text-align:center; padding:90px 0 90px; margin-top:44px; background:linear-gradient(180deg,transparent 0,transparent 25%,#000 100%);}
+.as-orb{width:26px; height:26px; margin:0 auto 22px; border-radius:50%; background:var(--grad-brand); box-shadow:0 0 30px rgba(122,92,255,.7); animation:asFloat 3s ease-in-out infinite;}
+.as-start h2{font:500 clamp(26px,3.5vw,44px)/1.12 'Space Grotesk',sans-serif; letter-spacing:-.02em; color:var(--text); max-width:620px; margin:0 auto;}
+.as-start > p{margin:14px 0 40px; color:var(--muted); font-size:15px;}
+.as-duo{display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:880px; margin:0 auto; padding:0 20px;}
+.as-big{display:flex; flex-direction:column; min-height:330px; padding:22px; border-radius:16px; background:#000; color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.14); transition:box-shadow .35s, transform .35s;}
+.as-big:hover{transform:translateY(-5px); box-shadow:0 0 0 1px rgba(255,255,255,.3), 0 22px 50px -20px rgba(122,92,255,.7);}
+.as-big b{font:600 17px 'Space Grotesk',sans-serif; margin-top:auto;}
+.as-prompt{margin:auto; display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:99px; background:rgba(255,255,255,.12); font-size:14px; max-width:100%;}
+.as-prompt i{flex:none; width:14px; height:14px; border-radius:50%; background:var(--grad-brand);}
+#asType::after{content:''; display:inline-block; width:2px; height:1em; margin-left:2px; vertical-align:-.12em; background:#fff; animation:asBlink .7s steps(1) infinite;}
+@keyframes asBlink{50%{opacity:0}}
+.as-mini{margin:auto; width:88%; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+.as-mini span{aspect-ratio:1.3; display:grid; place-items:center; border-radius:10px; font-size:11px; background:linear-gradient(135deg,hsl(var(--h) 80% 45%),hsl(var(--h) 70% 22%)); animation:asFloat 4s ease-in-out infinite; animation-delay:calc(var(--i)*-.6s);}
+@keyframes asFloat{0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
+@media (max-width:700px){.as-wrap{padding:0 18px} .as-duo{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.as-sec *{animation:none !important} .as-fade{opacity:1; transform:none}}
 </style>
 </head>
 <body>
@@ -1952,6 +2016,24 @@
   </section>
 
 </main>
+
+<!-- ======== FEATURE SLIDER + GETTING STARTED ======== -->
+<section id="aq-slider" class="as-sec" aria-label="Everything you need">
+  <div class="as-wrap">
+    <div class="as-head as-fade"><h2>Everything you need in one AI</h2><p>Image, video, websites, apps, study and a personal assistant — all on one Aviqo core, with no switching between tools.</p></div>
+    <div class="as-view as-fade"><div class="as-track" id="asTrack"></div></div>
+    <div class="as-ctrl"><div class="as-dots" id="asDots"></div><div class="as-btns"><button id="asPrev" type="button" aria-label="Previous">&#8249;</button><button id="asNext" type="button" aria-label="Next">&#8250;</button></div></div>
+  </div>
+  <div class="as-start as-fade">
+    <div class="as-orb"></div>
+    <h2>Getting started has never been easier with AI</h2>
+    <p>No experience required.</p>
+    <div class="as-duo">
+      <a class="as-big" href="#try-ai"><div class="as-prompt"><i></i><span id="asType"></span></div><b>Start with AI &rarr;</b></a>
+      <a class="as-big" href="#capabilities"><div class="as-mini" id="asMini"></div><b>Explore what it builds &rarr;</b></a>
+    </div>
+  </div>
+</section>
 
 <!-- ======== CLOSING SECTION ======== -->
 <section id="aq-end" aria-label="Closing section">
@@ -3106,6 +3188,50 @@
     var was = cvVis; cvVis = es[0].isIntersecting;
     if(cvVis && !was) requestAnimationFrame(draw);
   }, {rootMargin:'100px'}).observe(cv);
+})();
+</script>
+
+
+<script>
+(function(){
+  var $=function(q){return document.querySelector(q)};
+  var C=[['Image Generation','From concept art to product mockups — describe it once, get visuals in seconds.','explore.html','img'],
+   ['Video Generation','Turn a script or one prompt into scene-aware video: ads, explainers, reels.','chat.html?msg=Create%20a%20short%20video%20ad%20for%20my%20brand','vid'],
+   ['Website Building','Describe your business, get a responsive website with copy and motion.','chat.html?msg=Build%20a%20website%20for%20my%20bakery','web'],
+   ['App Building','Ship web and mobile apps from a plain-language brief.','studio.html?tool=app','app'],
+   ['Study &amp; Research','Summaries, exam prep and notes tuned to how you learn.','study.html?msg=Help%20me%20create%20a%20study%20plan','std'],
+   ['Personal Assistant','Plans your day, drafts messages and tracks tasks — always on.','chat.html?msg=Help%20me%20plan%20my%20day%20and%20manage%20my%20tasks','ast']];
+  var U=function(n,t){var o='';for(var k=0;k<n;k++)o+='<u style="--i:'+k+'">'+(t&&t[k]||'')+'</u>';return o};
+  var V={img:'<div class="v-img"></div><div class="v-chip"><span>neon city at dusk</span></div>',vid:'<div class="v-vid"><b></b><s></s></div>',
+   web:'<div class="v-web">'+U(4)+'</div>',app:'<div class="v-app">'+U(3)+'</div>',std:'<div class="v-std">'+U(4)+'</div>',
+   ast:'<div class="v-ast">'+U(3,['Plan my day','Done ✓ 3 tasks','Draft the email'])+'</div>'};
+  var H=[225,265,205,290,240,315], tr=$('#asTrack'), dots=$('#asDots'), sec=$('#aq-slider');
+  tr.innerHTML=C.map(function(c,i){return '<a class="as-card" style="--h:'+H[i]+'" href="'+c[2]+'" target="_blank" rel="noopener"><h3>'+c[0]+'</h3><p>'+c[1]+'</p><div class="as-vis k-'+c[3]+'">'+V[c[3]]+'</div><span class="as-arr">&rarr;</span></a>'}).join('');
+  var cards=tr.children, i=0, t, vis=false, drag=0, sx=null;
+  var perF=function(){return innerWidth<=640?1.3:innerWidth<=1000?3:4};
+  var max=function(){return Math.max(0,cards.length-Math.floor(perF()))};
+  function go(n,user){i=Math.max(0,Math.min(n,max()));tr.style.transform='translateX('+(-i*(cards[0].offsetWidth+16))+'px)';
+    [].forEach.call(dots.children,function(d,k){d.className=k===i?'on':''});if(user)restart()}
+  function restart(){clearInterval(t);t=setInterval(function(){if(vis)go(i>=max()?0:i+1)},4500)}
+  function build(){tr.style.setProperty('--per',perF());dots.innerHTML='';
+    for(var k=0;k<=max();k++){var d=document.createElement('i');d.onclick=(function(k){return function(){go(k,1)}})(k);dots.appendChild(d)}go(Math.min(i,max()))}
+  $('#asNext').onclick=function(){go(i>=max()?0:i+1,1)};
+  $('#asPrev').onclick=function(){go(i<=0?max():i-1,1)};
+  sec.addEventListener('mouseenter',function(){clearInterval(t)});sec.addEventListener('mouseleave',restart);
+  tr.addEventListener('pointerdown',function(e){sx=e.clientX;drag=0});
+  tr.addEventListener('pointerup',function(e){if(sx===null)return;var d=e.clientX-sx;sx=null;if(Math.abs(d)>40){drag=1;go(d<0?i+1:i-1,1)}});
+  tr.addEventListener('click',function(e){if(drag){e.preventDefault();drag=0}},true);
+  addEventListener('resize',build);build();restart();
+  new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(sec);
+  /* fade-in */
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  [].forEach.call(sec.querySelectorAll('.as-fade'),function(el){io.observe(el)});
+  /* live typing prompt */
+  var P=['Build me a website for my bakery','Make a 15-second reel for my brand','Create a 7-day study plan for exams'],pi=0,ci=0,del=0,el=$('#asType');
+  (function ty(){var s=P[pi];if(!del){ci++;el.textContent=s.slice(0,ci);if(ci===s.length){del=1;return setTimeout(ty,1600)}}
+    else{ci--;el.textContent=s.slice(0,ci);if(ci===0){del=0;pi=(pi+1)%P.length}}setTimeout(ty,del?25:55)})();
+  /* mini grid */
+  $('#asMini').innerHTML=['Image','Video','Website','App','Study','Assistant'].map(function(n,k){return '<span style="--h:'+H[k]+';--i:'+k+'">'+n+'</span>'}).join('');
 })();
 </script>
 
