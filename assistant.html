@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Study Assistant</title>
+<title>Personal Assistant — Aviqo AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem('aviqo_theme')||localStorage.getItem('asst_theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
@@ -303,7 +303,7 @@ svg{display:block;}
 
 <div class="main">
   <div class="topbar">
-    <div class="title"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg><span>Study Assistant</span></div>
+    <div class="title"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"/></svg><span>Personal Assistant</span></div>
     <div class="search">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="searchInput" placeholder="Search everything...">
@@ -323,25 +323,25 @@ svg{display:block;}
     <div class="center-col">
       <div class="greet" id="greet">
         <div class="orb"></div>
-        <h1>Hi! I'm your Study Assistant.<br>What are we learning today?</h1>
-        <p>Ask me anything — I'll research it, explain it clearly, and guide you step by step in real time.</p>
+        <h1>Hi! I'm your Personal Assistant.<br>What can I take off your plate today?</h1>
+        <p>I plan your day, draft your messages and track your tasks — just tell me what you need.</p>
 
         <div class="section-wrap">
           <div class="sec-head">
             <span class="lbl">Quick Actions</span>
           </div>
           <div class="qa-grid" id="qaGrid">
-            <button class="qa-card" data-msg="Explain this concept to me in simple terms, with an example: ">
+            <button class="qa-card" data-msg="Plan my day. Ask what I have on today, then build a time-blocked schedule. ">
               <div class="qa-icon i1"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 00-3 11.2V17h6v-2.8A6 6 0 0012 3z"/><path d="M10 21h4M11 17v2M13 17v2"/></svg></div>
-              <div class="qa-bottom"><span class="t">Explain<br>a Concept</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+              <div class="qa-bottom"><span class="t">Plan<br>My Day</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
-            <button class="qa-card" data-msg="Do a deep, well-researched dive into this topic, with key facts and sources: ">
+            <button class="qa-card" data-msg="Draft a clear, polite message for me. Ask who it is for if you need to: ">
               <div class="qa-icon i2"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg></div>
-              <div class="qa-bottom"><span class="t">Deep Research<br>a Topic</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+              <div class="qa-bottom"><span class="t">Draft<br>a Message</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
-            <button class="qa-card" data-msg="Help me debug/understand this code, step by step: ">
+            <button class="qa-card" data-msg="Help me sort my to-do list into priorities and next steps: ">
               <div class="qa-icon i3"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div>
-              <div class="qa-bottom"><span class="t">Debug &amp;<br>Learn Code</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+              <div class="qa-bottom"><span class="t">Track<br>My Tasks</span><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
             </button>
           </div>
         </div>
@@ -353,7 +353,7 @@ svg{display:block;}
         <div class="dock-inner">
           <div id="attachRow"></div>
           <div class="chat-box">
-            <textarea id="chatInput" rows="1" placeholder="Ask a question, paste code, or request a deep dive..."></textarea>
+            <textarea id="chatInput" rows="1" placeholder="Ask me to plan your day, draft a message or track a task..."></textarea>
             <div class="chat-row">
               <div class="chat-left">
                 <button class="icon-sq" id="attachBtn" title="Attach"><svg viewBox="0 0 24 24"><path d="M21 12.5l-8.5 8.5a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></button>
@@ -388,9 +388,9 @@ svg{display:block;}
 <div class="side-panel" id="libraryPanel">
   <div class="panel-head"><h3>Library</h3><button id="closeLibrary">✕</button></div>
   <div class="panel-body">
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Calculus Exam Notes.pdf</div><div class="s">Saved 2 days ago</div></div></div>
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Python Assignment.py</div><div class="s">Saved 5 days ago</div></div></div>
-    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">History Essay Draft.docx</div><div class="s">Saved 1 week ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Weekly Plan.docx</div><div class="s">Saved 2 days ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Meeting Notes.pdf</div><div class="s">Saved 5 days ago</div></div></div>
+    <div class="lib-item"><svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg><div><div class="t">Email Drafts.txt</div><div class="s">Saved 1 week ago</div></div></div>
   </div>
 </div>
 
@@ -465,14 +465,14 @@ svg{display:block;}
 
   // ---- prompts ----
   const promptPool = [
-    "Explain quantum entanglement like I'm in high school",
-    "Deep-dive on the causes of the French Revolution",
-    "Why is my Python function returning None?",
-    "What's the difference between TCP and UDP?",
-    "Make me a study plan for my calculus exam",
-    "Explain how neural networks actually learn",
-    "Summarize the key events of World War II",
-    "Help me understand recursion with an example"
+    "Plan my day. I have a 2 PM meeting",
+    "Draft an email asking my manager for Friday off",
+    "Turn my to-do list into a priority order",
+    "Write a polite reminder to a client about an invoice",
+    "Block out time for deep work tomorrow morning",
+    "Reply to a friend who invited me to a party I can't attend",
+    "Make me a simple weekly routine",
+    "Summarise my day into three things to finish"
   ];
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   function renderPrompts(){
@@ -510,7 +510,7 @@ svg{display:block;}
       setTimeout(()=>{
         if(!recording) return;
         recording=false; voiceBtn.classList.remove('on'); voiceBtn.lastChild.textContent=' Voice Record';
-        const ta=$('#chatInput'); ta.value = (ta.value ? ta.value+' ' : '') + "explain how photosynthesis works"; ta.focus();
+        const ta=$('#chatInput'); ta.value = (ta.value ? ta.value+' ' : '') + "plan my day for tomorrow"; ta.focus();
       }, 1600);
     } else {
       voiceBtn.lastChild.textContent=' Voice Record';
@@ -610,6 +610,11 @@ svg{display:block;}
   }
   $('.title').style && ($('.title').style.cursor='pointer');
   document.querySelector('.title').addEventListener('click', resetChat);
+  // opened from the Personal Assistant card on the home page: assistant.html?msg=...
+  try{
+    const m = new URLSearchParams(location.search).get('msg');
+    if(m && m.trim()) setTimeout(()=>sendMessage(m), 250);
+  }catch(e){}
 })();
 </script>
 
