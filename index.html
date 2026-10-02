@@ -1290,6 +1290,11 @@
     .brand img{width:34px; height:34px;}
     nav{padding-left:20px; padding-right:20px;}
   }
+  /* ---------- profile pill opens the account page ---------- */
+  .profile-pill{cursor:pointer; transition:border-color .2s, background .2s;}
+  .profile-pill:hover{border-color:var(--border-hi);}
+  .profile-pill:focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
+  .profile-logout{cursor:pointer;}
 </style>
 
 <style id="aviqo-flip-typing">
@@ -1915,7 +1920,8 @@
     <div id="suSuccess" style="display:none; text-align:center; padding:10px 0;">
       <div style="width:44px;height:44px;border-radius:50%;margin:0 auto 12px;background:var(--grad-brand);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;">✓</div>
       <b style="display:block; font-size:15px; margin-bottom:6px;">You're signed up!</b>
-      <span style="color:var(--muted); font-size:13.5px;">Welcome to Aviqo AI.</span>
+      <span style="color:var(--muted); font-size:13.5px;">Welcome to Aviqo AI. Your account is ready with 10 free credits.</span>
+      <a href="account.html" style="display:inline-block; margin-top:12px; font-size:13px; font-weight:600; color:var(--cyan);">View my account &rarr;</a>
     </div>
   </div>
 </div>
@@ -1958,20 +1964,42 @@
   // this is not secure cross-device login, just a local convenience) ---
   const STORAGE_KEY = 'aviqo_user';
 
+  // --- Account (plan / credits / avatar) lives next to the user record, per email, on THIS browser.
+  // The plan and credits can be overridden by the server: if /api/me returns user.plan / user.credits they win.
+  const ACCT_PREFIX = 'aviqo_acct_';
+  function acctKey(user){ return ACCT_PREFIX + String(user.email || '').toLowerCase(); }
+  function readAccount(user){
+    try { const a = JSON.parse(localStorage.getItem(acctKey(user)) || 'null'); return (a && typeof a === 'object') ? a : {}; }
+    catch(e){ return {}; }
+  }
+  function ensureAccount(user){
+    if(!user || !user.email) return;
+    try {
+      if(!localStorage.getItem(acctKey(user))){
+        localStorage.setItem(acctKey(user), JSON.stringify({ plan:'free', credits:10, createdAt:new Date().toISOString() }));
+      }
+    } catch(e){}
+  }
+  function safePic(u){ return (typeof u === 'string' && (/^https:\/\//i.test(u) || /^data:image\/(png|jpe?g|webp);base64,/i.test(u))) ? u : ''; }
+
   function showProfile(user){
+    ensureAccount(user); // a new sign-up gets an account straight away (Free plan, 10 credits)
+    const acct = readAccount(user);
+    const pic = safePic(acct.avatar) || safePic(user.picture);
+    const shownName = (acct.displayName || user.name || user.email || '').trim();
     navSignupBtn.style.display = 'none';
     if(navGetAccess) navGetAccess.style.display = 'none';
     profilePill.style.display = 'flex';
-    if(user.picture){
-      profileAvatar.style.backgroundImage = 'url(' + user.picture + ')';
+    if(pic){
+      profileAvatar.style.backgroundImage = 'url("' + pic.replace(/"/g,'%22') + '")';
       profileAvatar.style.backgroundSize = 'cover';
       profileAvatar.style.backgroundPosition = 'center';
       profileAvatar.textContent = '';
     } else {
-      profileAvatar.style.backgroundImage = 'none';
-      profileAvatar.textContent = (user.name || '?').trim().charAt(0).toUpperCase();
+      profileAvatar.style.backgroundImage = '';
+      profileAvatar.textContent = (shownName || '?').charAt(0).toUpperCase();
     }
-    profileName.textContent = user.name || user.email;
+    profileName.textContent = shownName;
     if(user.verified){
       profileBadge.textContent = '✓ Verified';
       profileBadge.classList.remove('unverified');
@@ -2007,6 +2035,17 @@
       }
     } catch(e){ /* offline or backend not ready — keep cached view */ }
   }
+
+  profilePill.setAttribute('role','link');
+  profilePill.setAttribute('tabindex','0');
+  profilePill.setAttribute('title','My account');
+  profilePill.addEventListener('click', (e)=>{
+    if(e.target.closest('#profileLogout')) return;
+    location.href = 'account.html';
+  });
+  profilePill.addEventListener('keydown', (e)=>{
+    if((e.key === 'Enter' || e.key === ' ') && !e.target.closest('#profileLogout')){ e.preventDefault(); location.href = 'account.html'; }
+  });
 
   profileLogout.addEventListener('click', ()=>{
     try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
