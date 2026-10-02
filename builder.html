@@ -6,6 +6,7 @@
 <title>Website Builder — Aviqo AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('aviqo_theme')||localStorage.getItem('asst_theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
 <style>
   :root{
     --bg:#100e0c;
@@ -25,6 +26,17 @@
     --danger:#ff6b6b;
     --radius:14px;
   }
+:root[data-theme="light"]{
+    --bg:#ffffff; --bg-2:#faf8f5; --surface:#f5f2ec; --surface-2:#ece7de; --surface-3:#e3dcd0;
+    --border:rgba(70,45,20,0.12); --border-hi:rgba(255,122,61,0.42);
+    --text:#1c1712; --muted:#6a5f52; --muted-2:#9a8f80;
+    --cyan:#d9600a; --blue:#ff7a3d; --lime:#e8710a; --danger:#e03131;
+  }
+  :root[data-theme="light"] .code-view .cm-kw{color:#c2410c;}
+  :root[data-theme="light"] .code-view .cm-str{color:#0f7b4a;}
+  :root[data-theme="light"] .code-view .cm-attr{color:#1d63c4;}
+  :root[data-theme="light"] .pro-card{background:linear-gradient(160deg,rgba(255,176,32,0.2),rgba(255,122,61,0.07));}
+  :root[data-theme="light"] .brand-mark{color:#fff;}
   *{margin:0; padding:0; box-sizing:border-box;}
   html,body{height:100%;}
   body{
@@ -387,6 +399,43 @@
     .view-btn span{display:none;}
     .regenerate-btn span{display:inline;}
   }
+
+/* ===== AVIQO ACCOUNT + THEME (shared) ===== */
+.aq-tg{width:38px; height:38px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  border:1.5px solid var(--border-hi); background:var(--surface); color:#e8710a; transition:transform .2s, box-shadow .2s, color .2s;}
+.aq-tg:hover{transform:rotate(18deg) scale(1.06); box-shadow:0 0 0 4px rgba(255,122,61,.18);}
+.aq-tg svg{width:18px; height:18px;} .aq-tg .tg-moon{display:none;}
+:root[data-theme="dark"] .aq-tg{color:#a99bff;} :root[data-theme="dark"] .aq-tg .tg-sun{display:none;} :root[data-theme="dark"] .aq-tg .tg-moon{display:block;}
+.aq-pill{display:flex; align-items:center; gap:10px; padding:5px 12px 5px 5px; border-radius:100px; cursor:pointer; flex:none; max-width:240px;
+  background:var(--surface); border:1px solid var(--border); transition:border-color .2s, box-shadow .2s;}
+.aq-pill:hover{border-color:#7a5cff; box-shadow:0 0 0 3px rgba(122,92,255,.14);}
+.aq-pill:focus-visible{outline:2px solid #7a5cff; outline-offset:2px;}
+.aq-av{width:32px; height:32px; border-radius:50%; flex:none; background:#0a0a14 url(data:image/webp;base64,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) center/cover; box-shadow:0 0 0 1.5px rgba(122,92,255,.55);}
+.aq-av.big{width:72px; height:72px; box-shadow:0 0 0 2px rgba(122,92,255,.6), 0 10px 26px -8px rgba(122,92,255,.6);}
+.aq-pi{display:flex; flex-direction:column; line-height:1.2; min-width:0;}
+.aq-pn{font-size:12.5px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.aq-pb{font:600 10px 'JetBrains Mono',ui-monospace,monospace; color:#4f5bff; white-space:nowrap;} .aq-pb.ok{color:#12a37a;}
+.aq-ov{position:fixed; inset:0; background:rgba(10,8,24,.38); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s; z-index:9998;}
+.aq-ov.open{opacity:1; pointer-events:auto;}
+.aq-panel{position:fixed; top:0; right:0; bottom:0; width:min(380px,92vw); transform:translateX(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); z-index:9999;
+  background:var(--bg); color:var(--text); border-left:1px solid var(--border); box-shadow:-20px 0 50px -20px rgba(20,10,60,.35); display:flex; flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); font-family:'Inter',system-ui,sans-serif;}
+.aq-panel.open{transform:none;}
+.aq-ph{display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid var(--border); font-weight:700; font-size:14.5px;}
+.aq-ph button{width:30px; height:30px; border-radius:8px; color:var(--muted); font-size:16px; display:flex; align-items:center; justify-content:center;} .aq-ph button:hover{background:var(--surface);}
+.aq-pbdy{padding:22px 20px; overflow:auto; flex:1;}
+.aq-hero{display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:8px 0 20px;}
+.aq-hero h4{font-size:17px; margin-top:8px;} .aq-hero span{font-size:12.5px; color:var(--muted); word-break:break-all;}
+.aq-badge{display:inline-block; margin-top:6px; font:700 10.5px 'JetBrains Mono',ui-monospace,monospace; padding:4px 10px; border-radius:99px; background:rgba(79,91,255,.12); color:#4f5bff;} .aq-badge.ok{background:rgba(18,163,122,.14); color:#12a37a;}
+.aq-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+.aq-stats div{padding:13px 14px; border-radius:14px; background:var(--surface); border:1px solid var(--border);} .aq-stats b{display:block; font-size:19px; margin-top:2px;} .aq-stats small{font-size:11px; color:var(--muted);}
+.aq-row{display:flex; align-items:center; justify-content:space-between; padding:13px 4px; border-bottom:1px solid var(--border); font-size:13.5px; font-weight:600;}
+.aq-btn{display:flex; align-items:center; justify-content:center; width:100%; margin-top:12px; padding:12px; border-radius:12px; font-weight:700; font-size:13.5px; cursor:pointer; border:1px solid var(--border); color:var(--text); background:transparent; text-decoration:none;}
+.aq-btn:hover{background:var(--surface);} .aq-btn.pri{background:linear-gradient(120deg,#4f6bff,#a23cff); color:#fff; border:none;} .aq-btn.pri:hover{filter:brightness(1.08);} .aq-btn.out:hover{color:#e03131; border-color:rgba(224,49,49,.4);}
+.aq-sw{width:38px; height:22px; border-radius:22px; background:var(--border); position:relative; flex:none; cursor:pointer; transition:background .2s;} .aq-sw i{position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:left .2s;}
+:root[data-theme="dark"] .aq-sw{background:#7a5cff;} :root[data-theme="dark"] .aq-sw i{left:19px;}
+@media (max-width:640px){.aq-pi{display:none;} .aq-pill{padding:3px;}}
+
 </style>
 </head>
 <body>
@@ -404,6 +453,8 @@
       <div class="brand-mark">A</div>
       <span>Website Builder</span>
     </div>
+    <button class="aq-tg" data-aq="tg" type="button" title="Toggle light / dark" aria-label="Toggle light or dark mode"><svg class="tg-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg><svg class="tg-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+    <div class="aq-pill" data-aq="pill" role="button" tabindex="0" title="My account"><div class="aq-av"></div></div>
     <button class="icon-btn" id="historyToggle" aria-label="Open history">
       <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
     </button>
@@ -459,7 +510,7 @@
         </ul>
         <a class="pro-card-btn" href="https://rzp.io/rzp/t5EBP6iZ" target="_blank" rel="noopener">Pay &amp; Subscribe</a>
       </div>
-      <div class="sidebar-user" id="sidebarUser" style="display:none;">
+      <div class="sidebar-user" id="sidebarUser" data-aq="pill" style="display:none; cursor:pointer;" title="My account">
         <div class="avatar" id="sidebarAvatar">?</div>
         <div class="u-info">
           <div class="u-name" id="sidebarName">—</div>
@@ -488,6 +539,8 @@
         <button class="icon-btn" title="Notifications">
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
         </button>
+<button class="aq-tg" data-aq="tg" type="button" title="Toggle light / dark" aria-label="Toggle light or dark mode"><svg class="tg-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg><svg class="tg-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="aq-pill" data-aq="pill" role="button" tabindex="0" title="My account"><div class="aq-av"></div><div class="aq-pi"><span class="aq-pn">Guest</span><span class="aq-pb">Sign in</span></div></div>
         <button class="icon-btn" id="historyToggleDesktop" title="History">
           <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
         </button>
@@ -1883,6 +1936,51 @@ a{text-decoration:none; color:inherit;}
 
   loadHistory();
   renderCode();
+})();
+</script>
+
+<div class="aq-ov" id="aqOv"></div>
+<aside class="aq-panel" id="aqPanel" aria-label="My account">
+  <div class="aq-ph"><span>My account</span><button type="button" id="aqClose" aria-label="Close">✕</button></div>
+  <div class="aq-pbdy">
+    <div class="aq-hero"><div class="aq-av big"></div><h4 id="aqName">Guest</h4><span id="aqMail">Not signed in</span><em class="aq-badge" id="aqBadge" style="font-style:normal">Guest</em></div>
+    <div class="aq-stats"><div><small>Plan</small><b id="aqPlan">Free</b></div><div><small>Credits</small><b id="aqCred">10</b></div></div>
+    <div class="aq-row">Dark mode<div class="aq-sw" id="aqSw" role="switch" tabindex="0"><i></i></div></div>
+    <a class="aq-btn pri" id="aqAcct" href="account.html">Open full account</a>
+    <a class="aq-btn" href="index_11_.html">Back to Aviqo</a>
+    <button class="aq-btn out" type="button" id="aqOut">Log out</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+  var K='aviqo_user', root=document.documentElement, $=function(i){return document.getElementById(i)};
+  function theme(t,save){root.setAttribute('data-theme',t); if(save){try{localStorage.setItem('aviqo_theme',t)}catch(e){}} try{localStorage.setItem('asst_theme',t)}catch(e){} var s=$('darkSwitch'); if(s) s.classList.toggle('on',t==='dark');}
+  window.aqToggleTheme=function(){theme(root.getAttribute('data-theme')==='dark'?'light':'dark',1)};
+  var u=null; try{u=JSON.parse(localStorage.getItem(K)||'null')}catch(e){}
+  var acct={}; try{ if(u&&u.email) acct=JSON.parse(localStorage.getItem('aviqo_acct_'+String(u.email).toLowerCase())||'{}')||{} }catch(e){}
+  var name=(acct.displayName||(u&&(u.name||u.email))||'').trim();
+  function fill(){
+    var signed=!!(u&&(u.name||u.email)), ver=!!(u&&u.verified);
+    document.querySelectorAll('.aq-pn').forEach(function(e){e.textContent=signed?name:'Guest'});
+    document.querySelectorAll('.aq-pb').forEach(function(e){e.textContent=signed?(ver?'✓ Verified':'Check email to verify'):'Sign in'; e.classList.toggle('ok',signed&&ver)});
+    $('aqName').textContent=signed?name:'Guest'; $('aqMail').textContent=signed?(u.email||''):'Not signed in';
+    var b=$('aqBadge'); b.textContent=signed?(ver?'✓ Verified':'Check email to verify'):'Guest'; b.classList.toggle('ok',signed&&ver);
+    $('aqPlan').textContent=((acct.plan||'free')+'').replace(/^./,function(c){return c.toUpperCase()}); $('aqCred').textContent=(acct.credits!=null?acct.credits:10);
+    $('aqOut').textContent=signed?'Log out':'Sign in';
+  }
+  function open(){fill();$('aqOv').classList.add('open');$('aqPanel').classList.add('open')}
+  function close(){$('aqOv').classList.remove('open');$('aqPanel').classList.remove('open')}
+  window.aqOpenProfile=open;
+  document.addEventListener('click',function(e){
+    if(e.target.closest('[data-aq=tg]')) return window.aqToggleTheme();
+    if(e.target.closest('[data-aq=pill]')) return open();
+    if(e.target.closest('#aqSw')) return window.aqToggleTheme();
+    if(e.target.closest('#aqClose')||e.target===$('aqOv')) return close();
+    if(e.target.closest('#aqOut')){ if(u&&(u.name||u.email)){try{localStorage.removeItem(K)}catch(x){}} location.href='index_11_.html'; }
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-aq=pill],#aqSw')){e.preventDefault();e.target.click()} });
+  fill(); theme(root.getAttribute('data-theme')||'light',0);
 })();
 </script>
 </body>
