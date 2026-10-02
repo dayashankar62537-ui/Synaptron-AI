@@ -2310,6 +2310,27 @@
     return data.image;
   }
 
+  // Background removal for an attached photo (API Ninjas)
+  function detectBgRemoveIntent(raw){
+    const t = (raw || '').toLowerCase();
+    const bg = /(background|backround|backgroud|bg|backgrond)/.test(t);
+    const act = /(remove|hata|hatao|delete|clean|clear|cut|erase|transparent|nikal)/.test(t);
+    return bg && act;
+  }
+
+  async function removeBackground(image){
+    const res = await fetch('/api/remove-background', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ image: { mimeType: image.mimeType, data: image.data } })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(data && data.error ? data.error : 'Background removal failed');
+    }
+    return data.image;
+  }
+
   function addAiImage(dataUrl, caption){
     const div = document.createElement('div');
     div.className = 'msg';
@@ -2367,6 +2388,20 @@
       attachInput.value = '';
       attachPreview.style.display = 'none';
       attachBtn.classList.remove('has-file');
+    }
+
+    // If the user attached a photo and asks to remove its background,
+    // use the real background-removal endpoint.
+    if(imageToSend && detectBgRemoveIntent(trimmed)){
+      addTyping();
+      removeBackground(imageToSend).then(dataUrl=>{
+        removeTyping();
+        addAiImage(dataUrl, 'Done! Here is your photo with the background removed.');
+      }).catch(err=>{
+        removeTyping();
+        addAiMsg("I couldn't remove the background (" + err.message + "). Please try again in a moment.");
+      });
+      return;
     }
 
     // If the user is asking to generate an image (and hasn't attached their
