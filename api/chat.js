@@ -18,11 +18,11 @@ export const config = {
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 // Text-only model — fast and solid for general conversation.
-const TEXT_MODEL = 'llama-3.3-70b-versatile';
+const TEXT_MODEL = 'openai/gpt-oss-20b';
 // Vision-capable model — used automatically when the user attaches a photo.
 // Check https://console.groq.com/docs/models for the current vision model
 // name if this one is ever retired.
-const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const VISION_MODEL = 'qwen/qwen3.6-27b';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
