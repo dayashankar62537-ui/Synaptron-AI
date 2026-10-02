@@ -164,6 +164,11 @@
   .tool-tab.active{background:var(--violet-dim); border-color:var(--border-hi); color:var(--violet-2);}
 
 
+
+  /* ---------------- account links (plan pill + avatar) ---------------- */
+  .credit-pill, .avatar{cursor:pointer;}
+  .avatar{background-size:cover; background-position:center;}
+
   /* ---------------- theme toggle ---------------- */
   .theme-btn{
     width:30px; height:30px; border-radius:50%; border:1px solid var(--border); background:var(--surface);
@@ -443,6 +448,37 @@
     apply(isDark);
     try{localStorage.setItem('aviqo_theme',isDark?'dark':'light');}catch(e){}
   });
+})();
+</script>
+<script>
+(function(){
+  var LABEL={free:'Free',monthly:'Pro Monthly',yearly:'Pro Yearly',lifetime:'Lifetime'};
+  var pill=document.querySelector('.credit-pill'), av=document.getElementById('avatarDot');
+  function go(href){ return function(){ location.href=href; }; }
+  var user=null;
+  try{ user=JSON.parse(localStorage.getItem('aviqo_user')||'null'); }catch(e){}
+  if(!user||!user.email){
+    if(av){ av.title='Sign up'; av.addEventListener('click',go('index.html')); }
+    if(pill){ pill.title='See plans'; pill.addEventListener('click',go('index.html#pricing')); }
+    return;
+  }
+  var a={};
+  try{ a=JSON.parse(localStorage.getItem('aviqo_acct_'+String(user.email).toLowerCase())||'null')||{}; }catch(e){}
+  var plan=LABEL[user.plan]?user.plan:(LABEL[a.plan]?a.plan:'free');
+  var raw=(user.credits!==undefined&&user.credits!==null)?user.credits:a.credits;
+  var hasCredits=(raw!==undefined&&raw!==null&&raw!==''&&isFinite(Number(raw)));
+  if(pill){
+    var span=pill.querySelector('span');
+    if(span) span.textContent=LABEL[plan]+(hasCredits?' \u00b7 '+Number(raw).toLocaleString()+' credits':'');
+    pill.title='My account'; pill.addEventListener('click',go('account.html'));
+  }
+  if(av){
+    var name=(a.displayName||user.name||user.email||'').trim();
+    var pic=[a.avatar,user.picture].filter(function(u){ return typeof u==='string'&&(/^https:\/\//i.test(u)||/^data:image\/(png|jpe?g|webp);base64,/i.test(u)); })[0];
+    if(pic){ av.style.backgroundImage='url("'+pic.replace(/"/g,'%22')+'")'; av.textContent=''; }
+    else { av.textContent=(name.charAt(0)||'A').toUpperCase(); }
+    av.title='My account'; av.addEventListener('click',go('account.html'));
+  }
 })();
 </script>
 </body>
