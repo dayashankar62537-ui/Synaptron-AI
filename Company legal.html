@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company &amp; Legal — Aviqo AI</title>
+<meta name="description" content="Aviqo AI company details, AI disclaimer, refund and cancellation policy, responsible AI principles, Startup India recognition and grievance redressal.">
+<script>document.documentElement.classList.add('js');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafafa; --bg-2:#f0f0f0; --surface:#ffffff; --surface-2:#f2f2f2;
+    --border:rgba(0,0,0,0.12); --border-hi:rgba(0,0,0,0.40);
+    --text:#0a0a0a; --muted:#555555; --muted-2:#8a8a8a;
+    --on-brand:#ffffff; --grid:rgba(0,0,0,0.05); --shadow:0 24px 60px -28px rgba(0,0,0,0.28);
+    --head-bg:rgba(250,250,250,0.82);
+  }
+  body.dark-theme{
+    --bg:#000000; --bg-2:#050505; --surface:#0b0b0b; --surface-2:#141414;
+    --border:rgba(255,255,255,0.10); --border-hi:rgba(255,255,255,0.40);
+    --text:#ffffff; --muted:#a8a8a8; --muted-2:#6b6b6b;
+    --on-brand:#000000; --grid:rgba(255,255,255,0.05); --shadow:0 24px 60px -28px rgba(255,255,255,0.14);
+    --head-bg:rgba(0,0,0,0.72);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth; scroll-padding-top:92px;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.65; -webkit-font-smoothing:antialiased; overflow-x:hidden;}
+  h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif; letter-spacing:-0.015em; line-height:1.15;}
+  a{color:inherit; text-decoration:none;}
+  img{max-width:100%; display:block;}
+  ::selection{background:rgba(128,128,128,0.28);}
+  .wrap{width:min(1040px, 100% - 40px); margin:0 auto;}
+  :focus-visible{outline:2px solid var(--text); outline-offset:3px; border-radius:6px;}
+
+  /* ---------- header ---------- */
+  header{position:sticky; top:0; z-index:50; background:var(--head-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--border);}
+  .nav{display:flex; align-items:center; justify-content:space-between; height:68px; width:min(1160px, 100% - 40px); margin:0 auto;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand img{width:38px; height:38px; border-radius:10px;}
+  .brand-name{font-family:'Space Grotesk'; font-weight:700; font-size:19px; letter-spacing:0.01em;}
+  .brand-name span{font-weight:500; margin-left:4px; color:var(--muted);}
+  .nav-r{display:flex; align-items:center; gap:10px;}
+  .back{display:inline-flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; padding:9px 16px; border-radius:99px; border:1px solid var(--border-hi); transition:background .25s;}
+  .back:hover{background:var(--surface-2);}
+  .back svg{width:15px; height:15px;}
+  .theme-toggle{width:38px; height:38px; border-radius:50%; border:1px solid var(--border-hi); background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .theme-toggle:hover{background:var(--surface-2);}
+  .theme-toggle svg{width:18px; height:18px; stroke:var(--text);}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative; padding:76px 0 52px; overflow:hidden;}
+  .hero::before{content:''; position:absolute; inset:0; z-index:-1;
+    background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:44px 44px; -webkit-mask-image:radial-gradient(ellipse 70% 80% at 50% 0%, #000 30%, transparent 75%); mask-image:radial-gradient(ellipse 70% 80% at 50% 0%, #000 30%, transparent 75%);}
+  .eyebrow{display:inline-flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);
+    padding:7px 14px; border:1px solid var(--border); border-radius:99px; background:var(--surface);}
+  .eyebrow::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--text);}
+  .hero h1{font-size:clamp(36px,5.4vw,60px); font-weight:700; margin:22px 0 18px; max-width:760px;}
+  .hero .lead{font-size:clamp(15.5px,1.6vw,18px); color:var(--muted); max-width:660px;}
+  .meta{display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:26px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted-2); letter-spacing:0.02em;}
+  .meta b{color:var(--text); font-weight:500;}
+
+  .jump{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:44px;}
+  .jump a{display:flex; align-items:flex-start; gap:14px; padding:18px; border:1px solid var(--border); border-radius:16px; background:var(--surface); transition:transform .25s, border-color .25s, box-shadow .25s;}
+  .jump a:hover{transform:translateY(-4px); border-color:var(--border-hi); box-shadow:var(--shadow);}
+  .jump .ic{flex:none; width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background:var(--text); color:var(--bg);}
+  .jump .ic svg{width:20px; height:20px;}
+  .jump small{display:block; font-family:'JetBrains Mono'; font-size:11px; color:var(--muted-2); letter-spacing:0.08em;}
+  .jump b{display:block; font-family:'Space Grotesk'; font-size:16px; font-weight:600; margin:2px 0 3px;}
+  .jump span{font-size:12.5px; color:var(--muted); line-height:1.5; display:block;}
+
+  /* ---------- sections ---------- */
+  main{padding-bottom:40px;}
+  .sec{margin-top:26px; border:1px solid var(--border); border-radius:24px; background:var(--surface); padding:clamp(24px,4vw,44px); box-shadow:0 1px 0 var(--border);}
+  .sec-head{display:flex; gap:20px; align-items:flex-start; padding-bottom:26px; margin-bottom:26px; border-bottom:1px solid var(--border);}
+  .sec-ic{flex:none; width:56px; height:56px; border-radius:16px; display:grid; place-items:center; background:var(--text); color:var(--bg);}
+  .sec-ic svg{width:26px; height:26px;}
+  .sec-num{font-family:'JetBrains Mono'; font-size:12px; letter-spacing:0.1em; color:var(--muted-2);}
+  .sec h2{font-size:clamp(24px,3vw,32px); font-weight:700; margin:4px 0 8px;}
+  .sec-lede{color:var(--muted); font-size:15.5px; max-width:640px;}
+  .sec p{color:var(--muted); font-size:15px;}
+  .sec p + p{margin-top:12px;}
+  .sec p strong, .sec li strong{color:var(--text); font-weight:600;}
+  .sec a.lnk{color:var(--text); font-weight:600; border-bottom:1px solid var(--border-hi);}
+  .sec a.lnk:hover{border-bottom-color:var(--text);}
+  .sec h3{font-size:17px; font-weight:600; margin-bottom:8px;}
+
+  .note{display:flex; gap:14px; align-items:flex-start; padding:18px 20px; border-radius:14px; background:var(--surface-2); border:1px solid var(--border); border-left:4px solid var(--text); margin-bottom:24px;}
+  .note svg{flex:none; width:22px; height:22px; margin-top:1px;}
+  .note p{color:var(--text); font-size:15px; font-weight:500;}
+
+  .grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .cell{padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--bg); transition:border-color .25s, transform .25s;}
+  .cell:hover{border-color:var(--border-hi); transform:translateY(-2px);}
+  .cell .ci{width:36px; height:36px; border-radius:10px; display:grid; place-items:center; border:1px solid var(--border-hi); margin-bottom:12px;}
+  .cell .ci svg{width:18px; height:18px;}
+  .cell p{font-size:14px; line-height:1.6;}
+  .closing{margin-top:22px; padding-top:20px; border-top:1px dashed var(--border-hi); font-size:13.5px !important;}
+
+  .ticks{list-style:none; display:grid; gap:11px;}
+  .ticks li{position:relative; padding-left:30px; font-size:14.5px; color:var(--muted);}
+  .ticks li::before{content:''; position:absolute; left:0; top:3px; width:18px; height:18px; border-radius:50%; background:var(--text);
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.3l2.6 2.6L13 6.4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='9' cy='9' r='8.2' fill='none' stroke='black'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.3l2.6 2.6L13 6.4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='9' cy='9' r='8.2' fill='none' stroke='black'/%3E%3C/svg%3E") center/contain no-repeat;}
+  .ticks.two{grid-template-columns:repeat(2,1fr); column-gap:30px;}
+  @media (max-width:640px){ .ticks.two{grid-template-columns:1fr;} }
+  .ticks.x li::before{
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M6 6l6 6M12 6l-6 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='9' r='8.2' fill='none' stroke='black'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M6 6l6 6M12 6l-6 6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='9' r='8.2' fill='none' stroke='black'/%3E%3C/svg%3E") center/contain no-repeat;}
+
+  /* refund highlights + accordion */
+  .stat{padding:22px; border-radius:16px; background:var(--text); color:var(--bg);}
+  .stat b{display:block; font-family:'Space Grotesk'; font-size:26px; font-weight:700; letter-spacing:-0.02em;}
+  .stat span{display:block; font-size:13px; opacity:.72; margin-top:4px;}
+  .acc{margin-top:22px; border:1px solid var(--border); border-radius:16px; overflow:hidden;}
+  details{border-bottom:1px solid var(--border); background:var(--bg);}
+  details:last-child{border-bottom:none;}
+  summary{list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; font-family:'Space Grotesk'; font-size:16.5px; font-weight:600;}
+  summary::-webkit-details-marker{display:none;}
+  summary:hover{background:var(--surface-2);}
+  summary svg{flex:none; width:18px; height:18px; transition:transform .3s;}
+  details[open] summary svg{transform:rotate(180deg);}
+  details[open] summary{background:var(--surface-2);}
+  .acc-body{padding:6px 22px 22px; background:var(--surface-2);}
+  .acc-body p{font-size:14.5px;}
+  .acc-body .ticks{margin-top:4px;}
+
+  /* key/value tables */
+  .kv{border:1px solid var(--border); border-radius:16px; overflow:hidden;}
+  .kv > div{display:grid; grid-template-columns:230px 1fr; gap:18px; padding:16px 22px; border-bottom:1px solid var(--border); align-items:baseline;}
+  .kv > div:last-child{border-bottom:none;}
+  .kv dt{font-family:'JetBrains Mono'; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted-2);}
+  .kv dd{font-size:15px; font-weight:500; color:var(--text); word-break:break-word;}
+  .kv dd a{border-bottom:1px solid var(--border-hi);}
+  .ph{display:inline-block; font-size:12.5px; font-weight:500; color:var(--muted); padding:2px 10px; border:1px dashed var(--border-hi); border-radius:99px; background:var(--bg);}
+
+  .badge-row{display:flex; align-items:center; gap:18px; padding:20px 22px; border-radius:16px; background:var(--text); color:var(--bg); margin-bottom:22px;}
+  .badge-row svg{flex:none; width:40px; height:40px;}
+  .badge-row b{font-family:'Space Grotesk'; font-size:18px; display:block; margin-bottom:2px;}
+  .badge-row span{font-size:13.5px; opacity:.75;}
+  .fine{font-size:12.5px !important; color:var(--muted-2) !important; margin-top:16px;}
+
+  /* grievance */
+  .gr{display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px; align-items:start;}
+  .gr-card{border:1px solid var(--border); border-radius:18px; padding:24px; background:var(--bg);}
+  .gr-card h3{margin-bottom:16px;}
+  .row{display:flex; align-items:flex-start; gap:14px; padding:13px 0; border-bottom:1px solid var(--border);}
+  .row:last-of-type{border-bottom:none;}
+  .row .ri{flex:none; width:36px; height:36px; border-radius:10px; display:grid; place-items:center; border:1px solid var(--border-hi);}
+  .row .ri svg{width:17px; height:17px;}
+  .row small{display:block; font-family:'JetBrains Mono'; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted-2);}
+  .row div > span, .row div > a{font-size:15px; font-weight:500; word-break:break-word;}
+  .row div > a{border-bottom:1px solid var(--border-hi);}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; margin-top:18px; width:100%; padding:14px 22px; border-radius:12px; background:var(--text); color:var(--bg); font-weight:700; font-size:14.5px; transition:transform .2s, opacity .2s;}
+  .btn:hover{transform:translateY(-2px); opacity:.9;}
+  .btn svg{width:17px; height:17px;}
+  .steps{list-style:none; counter-reset:s; display:grid; gap:0;}
+  .steps li{counter-increment:s; position:relative; padding:0 0 22px 52px; font-size:14px; color:var(--muted);}
+  .steps li:last-child{padding-bottom:0;}
+  .steps li::before{content:counter(s); position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%; background:var(--text); color:var(--bg); display:grid; place-items:center; font-family:'JetBrains Mono'; font-size:13px; font-weight:600;}
+  .steps li::after{content:''; position:absolute; left:16.5px; top:38px; bottom:4px; width:1px; background:var(--border-hi);}
+  .steps li:last-child::after{display:none;}
+  .steps b{display:block; color:var(--text); font-family:'Space Grotesk'; font-size:15.5px; margin-bottom:2px;}
+  .law{margin-top:20px; font-size:12.5px !important; color:var(--muted-2) !important;}
+
+  /* footer */
+  footer{margin-top:60px; border-top:1px solid var(--border); padding:34px 0 44px;}
+  .foot{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:18px; width:min(1160px, 100% - 40px); margin:0 auto;}
+  .foot p{font-size:13px; color:var(--muted-2);}
+  .foot nav{display:flex; gap:22px; flex-wrap:wrap;}
+  .foot nav a{font-size:13.5px; color:var(--muted); transition:color .2s;}
+  .foot nav a:hover{color:var(--text);}
+  .totop{position:fixed; right:22px; bottom:22px; width:46px; height:46px; border-radius:50%; border:1px solid var(--border-hi); background:var(--text); color:var(--bg); display:grid; place-items:center; cursor:pointer; opacity:0; pointer-events:none; transform:translateY(10px); transition:opacity .3s, transform .3s; z-index:40;}
+  .totop.show{opacity:1; pointer-events:auto; transform:none;}
+  .totop svg{width:18px; height:18px;}
+
+  /* reveal (only when JS is on) */
+  .js .rv{opacity:0; transform:translateY(26px); transition:opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1);}
+  .js .rv.in{opacity:1; transform:none;}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} .js .rv{opacity:1; transform:none; transition:none;} }
+
+  @media (max-width:900px){
+    .jump{grid-template-columns:repeat(2,1fr);}
+    .grid3{grid-template-columns:1fr;}
+    .gr{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .jump{grid-template-columns:1fr;}
+    .grid2{grid-template-columns:1fr;}
+    .sec-head{flex-direction:column; gap:16px;}
+    .kv > div{grid-template-columns:1fr; gap:4px; padding:14px 18px;}
+    .back span{display:none;} .back{padding:9px 11px;}
+    .hero{padding-top:52px;}
+  }
+  @media print{
+    header, .totop, .theme-toggle, .jump{display:none !important;}
+    body{background:#fff; color:#000;} .sec{box-shadow:none; break-inside:avoid-page;}
+    .js .rv{opacity:1 !important; transform:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="index.html" aria-label="Aviqo AI home">
+      <img src="data:image/png;base64,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" alt="Aviqo AI logo">
+      <div class="brand-name">AVIQO<span>AI</span></div>
+    </a>
+    <div class="nav-r">
+      <a class="back" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span>Back to website</span></a>
+      <button class="theme-toggle" id="themeToggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
+        <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Company &amp; Legal</span>
+    <h1>Company &amp; Legal Information</h1>
+    <p class="lead">Everything you should know about Aviqo AI as a company: how our AI should be used, how billing and refunds work, the principles we build by, our corporate details, and how to reach us with a complaint.</p>
+    <div class="meta"><span>Last updated: <b>05 October 2026</b></span><span>Applies to: <b>Aviqo AI website &amp; services</b></span><span>Jurisdiction: <b>India</b></span></div>
+
+    <div class="jump">
+      <a href="#ai-disclaimer"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div><small>01</small><b>AI Disclaimer</b><span>Accuracy limits and your responsibility</span></div></a>
+      <a href="#refund-cancellation"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div><div><small>02</small><b>Refund &amp; Cancellation</b><span>Billing, cancellations and refunds</span></div></a>
+      <a href="#responsible-ai"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div><div><small>03</small><b>Responsible AI &amp; Ethics</b><span>Our principles and prohibited uses</span></div></a>
+      <a href="#corporate-details"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"/><path d="M14 9h5a1 1 0 0 1 1 1v11M2 21h20M8 8h2M8 12h2M8 16h2"/></svg></div><div><small>04</small><b>Corporate Details &amp; CIN</b><span>Registered entity information</span></div></a>
+      <a href="#startup-india"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div><div><small>05</small><b>Startup India Recognition</b><span>DPIIT recognition details</span></div></a>
+      <a href="#grievance"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg></div><div><small>06</small><b>Grievance Officer &amp; Contact</b><span>Raise a complaint, get a response</span></div></a>
+    </div>
+  </div>
+</section>
+
+<main>
+<div class="wrap">
+
+  <!-- 01 AI DISCLAIMER -->
+  <section class="sec rv" id="ai-disclaimer">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div><span class="sec-num">01 / LEGAL</span><h2>AI Disclaimer</h2><p class="sec-lede">Aviqo AI generates content using artificial intelligence. Please read this section before relying on any output.</p></div>
+    </div>
+
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <p>AI can make mistakes. Outputs may be inaccurate, incomplete or misleading. Always verify important information before you act on it.</p></div>
+
+    <div class="grid2">
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Accuracy</h3><p>Text, images, video, code, websites and apps are produced by probabilistic models. They can contain factual errors, fabricated statements or references (&ldquo;hallucinations&rdquo;), outdated information, or bias.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 14h6M9 17h4"/></svg></div><h3>Not professional advice</h3><p>Outputs are for general informational and creative use only. They are not legal, medical, financial, tax or other professional advice. Consult a qualified professional before making decisions.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div><h3>Your responsibility</h3><p>You are solely responsible for reviewing, editing and verifying generated content, and for how you use, publish or share it, including compliance with applicable laws and third-party rights.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></div><h3>Similarity &amp; ownership</h3><p>Similar or identical outputs may be generated for other users. We do not guarantee that outputs are unique or free from third-party intellectual property claims.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h3>Sensitive information</h3><p>Avoid entering confidential, sensitive personal or regulated information in prompts. Never rely on Aviqo AI for emergencies or safety-critical decisions.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></div><h3>Third-party models</h3><p>Some features may use third-party AI models and services. Their availability and behaviour can change without notice.</p></div>
+    </div>
+    <p class="closing">To the fullest extent permitted by applicable law, Aviqo AI, its directors, employees and affiliates are not liable for any loss, damage or claim arising from reliance on AI-generated output. This disclaimer should be read together with our <a class="lnk" href="terms.html">Terms &amp; Conditions</a> and <a class="lnk" href="privacy.html">Privacy Policy</a>.</p>
+  </section>
+
+  <!-- 02 REFUND & CANCELLATION -->
+  <section class="sec rv" id="refund-cancellation">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <div><span class="sec-num">02 / BILLING</span><h2>Refund &amp; Cancellation Policy</h2><p class="sec-lede">Simple, transparent billing for Aviqo AI subscriptions and credit packs.</p></div>
+    </div>
+
+    <div class="grid3">
+      <div class="stat"><b>Cancel anytime</b><span>From your account or by email</span></div>
+      <div class="stat"><b>7-day window</b><span>For first-time paid plan purchases</span></div>
+      <div class="stat"><b>5&ndash;7 business days</b><span>To credit approved refunds</span></div>
+    </div>
+
+    <div class="acc">
+      <details open>
+        <summary>Cancellation <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="acc-body"><ul class="ticks">
+          <li>You may cancel your paid plan at any time from your <a class="lnk" href="account.html">Account</a> page or by emailing us.</li>
+          <li>Cancellation stops future renewals. You keep access to paid features until the end of the current billing period.</li>
+          <li>We do not provide pro-rata refunds for the unused part of a billing period, except as described below.</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary>When a refund is available <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="acc-body"><ul class="ticks">
+          <li>You request a refund within <strong>7 days</strong> of your first purchase of a paid plan and have used only a small portion of the included credits.</li>
+          <li>You were charged more than once for the same plan, or charged an incorrect amount because of a technical error.</li>
+          <li>A paid feature was materially unavailable for an extended period because of a fault on our side that we could not resolve.</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary>When a refund is not available <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="acc-body"><ul class="ticks x">
+          <li>Renewals where the plan was not cancelled before the renewal date, unless you contact us within 48 hours of the charge and have not used the renewed credits.</li>
+          <li>Credits that have already been consumed, and credit packs or top-ups after use.</li>
+          <li>Promotional or discounted purchases, unless the offer states otherwise.</li>
+          <li>Accounts suspended or terminated for violating our <a class="lnk" href="terms.html">Terms &amp; Conditions</a>.</li>
+          <li>Dissatisfaction with a specific AI output alone. Please write to us and we will do our best to help.</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary>How to request a refund <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="acc-body">
+          <p>Email <a class="lnk" data-href="email" href="mailto:hello@aviqoai.com"><span data-f="email">hello@aviqoai.com</span></a> with the subject <strong>&ldquo;Refund Request&rdquo;</strong> and include your registered email address, transaction or order ID, date of payment and the reason for your request. We aim to respond within 2 business days.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Processing time &amp; failed payments <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="acc-body"><ul class="ticks">
+          <li>Approved refunds are credited to the original payment method within 5&ndash;7 business days of approval. Bank and payment gateway timelines may add to this.</li>
+          <li>If money was deducted but your payment failed, it is normally reversed automatically by your bank or the payment gateway within 5&ndash;7 business days. If it is not, contact us with your transaction ID.</li>
+        </ul></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 03 RESPONSIBLE AI -->
+  <section class="sec rv" id="responsible-ai">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <div><span class="sec-num">03 / ETHICS</span><h2>Responsible AI &amp; Ethics Policy</h2><p class="sec-lede">We are building AI that people can trust: safe, fair, transparent and accountable.</p></div>
+    </div>
+
+    <div class="grid3">
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><h3>Safety first</h3><p>We design safeguards to reduce harmful, illegal or abusive outputs, and we keep improving them as risks evolve.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M5 7l-3 8a3 3 0 0 0 6 0zM19 7l-3 8a3 3 0 0 0 6 0z"/></svg></div><h3>Fairness &amp; inclusion</h3><p>We work to reduce bias in how our AI responds and to serve people across languages, regions and backgrounds.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div><h3>Transparency</h3><p>We are clear that you are interacting with AI, and we are honest about its limits, as set out in our AI Disclaimer.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h3>Privacy &amp; data protection</h3><p>We collect only the data needed to run the service and handle it as described in our <a class="lnk" href="privacy.html">Privacy Policy</a>.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg></div><h3>Human oversight</h3><p>People remain accountable for how AI is built and used. High-impact decisions should always involve human review.</p></div>
+      <div class="cell"><div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 14l2 2 4-4"/></svg></div><h3>Accountability</h3><p>We review reported issues, act on misuse, and welcome feedback to help us hold ourselves to these principles.</p></div>
+    </div>
+
+    <h3 style="margin-top:30px;">Prohibited uses</h3>
+    <p style="margin-bottom:16px;">You must not use Aviqo AI to create, request or distribute any of the following. We may restrict or suspend accounts that do.</p>
+    <ul class="ticks x two">
+      <li>Unlawful, fraudulent or deceptive content</li>
+      <li>Sexual content involving minors, or any exploitation of children</li>
+      <li>Harassment, hate speech or discrimination</li>
+      <li>Deepfakes or impersonation intended to mislead</li>
+      <li>Malware, hacking tools or cyber-attack assistance</li>
+      <li>Large-scale misinformation or election manipulation</li>
+      <li>Content that infringes privacy or intellectual property rights</li>
+      <li>Fully automated decisions with legal or health impact, without human review</li>
+    </ul>
+    <p class="closing">To report a safety or ethics concern, write to <a class="lnk" data-href="email" href="mailto:hello@aviqoai.com"><span data-f="email">hello@aviqoai.com</span></a> or use the <a class="lnk" href="#grievance">Grievance Officer</a> details below.</p>
+  </section>
+
+  <!-- 04 CORPORATE DETAILS -->
+  <section class="sec rv" id="corporate-details">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"/><path d="M14 9h5a1 1 0 0 1 1 1v11M2 21h20M8 8h2M8 12h2M8 16h2"/></svg></div>
+      <div><span class="sec-num">04 / CORPORATE</span><h2>Corporate Details &amp; CIN</h2><p class="sec-lede">Official information about the company that operates Aviqo AI, provided for transparency and legal verification.</p></div>
+    </div>
+    <dl class="kv">
+      <div><dt>Registered name</dt><dd data-f="legalName"></dd></div>
+      <div><dt>Brand / product</dt><dd data-f="brand"></dd></div>
+      <div><dt>CIN</dt><dd data-f="cin"></dd></div>
+      <div><dt>Date of incorporation</dt><dd data-f="incorporated"></dd></div>
+      <div><dt>Registered office</dt><dd data-f="registeredAddress"></dd></div>
+      <div><dt>GSTIN</dt><dd data-f="gstin"></dd></div>
+      <div><dt>Founder &amp; CEO</dt><dd data-f="founder"></dd></div>
+      <div><dt>Official email</dt><dd><a data-href="email" href="mailto:hello@aviqoai.com"><span data-f="email"></span></a></dd></div>
+      <div><dt>Phone</dt><dd><a data-href="phone" href="tel:+918146966781"><span data-f="phone"></span></a></dd></div>
+    </dl>
+    <p class="fine">You can verify a company&rsquo;s registration on the Ministry of Corporate Affairs (MCA) portal using its CIN.</p>
+  </section>
+
+  <!-- 05 STARTUP INDIA -->
+  <section class="sec rv" id="startup-india">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
+      <div><span class="sec-num">05 / RECOGNITION</span><h2>Startup India Recognition</h2><p class="sec-lede">Aviqo AI is proud to be part of India&rsquo;s startup ecosystem.</p></div>
+    </div>
+    <div class="badge-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>
+      <div><b>Recognised by DPIIT under the Startup India initiative</b><span>Department for Promotion of Industry and Internal Trade, Ministry of Commerce &amp; Industry, Government of India</span></div>
+    </div>
+    <dl class="kv">
+      <div><dt>Recognised entity</dt><dd data-f="legalName"></dd></div>
+      <div><dt>DPIIT certificate no.</dt><dd data-f="dpiitNumber"></dd></div>
+      <div><dt>Date of recognition</dt><dd data-f="dpiitDate"></dd></div>
+      <div><dt>Programme</dt><dd>Startup India (Government of India)</dd></div>
+    </dl>
+    <p class="fine">DPIIT recognition does not constitute a government endorsement of our products or services. Any benefits or tax exemptions are subject to eligibility and the law in force from time to time.</p>
+  </section>
+
+  <!-- 06 GRIEVANCE -->
+  <section class="sec rv" id="grievance">
+    <div class="sec-head">
+      <div class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg></div>
+      <div><span class="sec-num">06 / SUPPORT</span><h2>Grievance Officer &amp; Contact</h2><p class="sec-lede">If you have a complaint about our services, content or data handling, our Grievance Officer will address it.</p></div>
+    </div>
+
+    <div class="gr">
+      <div class="gr-card">
+        <h3>Grievance Officer</h3>
+        <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div><div><small>Name &amp; designation</small><span data-f="officerName"></span></div></div>
+        <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div><div><small>Email</small><a data-href="officerEmail" href="mailto:hello@aviqoai.com"><span data-f="officerEmail"></span></a></div></div>
+        <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div><div><small>Phone</small><a data-href="officerPhone" href="tel:+918146966781"><span data-f="officerPhone"></span></a></div></div>
+        <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><small>Availability</small><span data-f="officerHours"></span></div></div>
+        <div class="row"><div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><small>Address</small><span data-f="registeredAddress"></span></div></div>
+        <a class="btn" data-href="officerEmailSubject" href="mailto:hello@aviqoai.com?subject=Grievance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Email the Grievance Officer</a>
+      </div>
+
+      <div class="gr-card">
+        <h3>How we handle complaints</h3>
+        <ol class="steps">
+          <li><b>Submit your complaint</b>Email the Grievance Officer with your registered email, a clear description of the issue and any supporting details.</li>
+          <li><b>Acknowledgement within 48 hours</b>We confirm receipt and assign a reference for your complaint.</li>
+          <li><b>Resolution within 30 days</b>We investigate, take appropriate action and inform you of the outcome.</li>
+        </ol>
+        <p class="law">Handled in line with the Information Technology Act, 2000, the IT (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021 and the Consumer Protection (E-Commerce) Rules, 2020.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer>
+  <div class="foot">
+    <p>&copy; <span id="yr">2026</span> Aviqo AI. All rights reserved.</p>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="terms.html">Terms &amp; Conditions</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="support.html">Support</a>
+    </nav>
+  </div>
+</footer>
+
+<button class="totop" id="toTop" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+<script>
+/* ============================================================
+   EDIT YOUR COMPANY DETAILS HERE — the whole page updates.
+   Leave a value as "" and the page shows "To be updated".
+   ============================================================ */
+var COMPANY = {
+  legalName:         "",                       // e.g. "Aviqo AI Private Limited"
+  brand:             "Aviqo AI",
+  cin:               "",                       // 21-character Corporate Identification Number
+  incorporated:      "",                       // e.g. "12 March 2026"
+  registeredAddress: "",                       // full registered office address
+  gstin:             "",                       // optional
+  founder:           "Chetan Gautam, Founder & CEO",
+  email:             "hello@aviqoai.com",
+  phone:             "+91 81469 66781",
+  dpiitNumber:       "",                       // DPIIT recognition certificate number
+  dpiitDate:         "",                       // date of recognition
+  officerName:       "",                       // e.g. "Chetan Gautam, Grievance Officer"
+  officerEmail:      "hello@aviqoai.com",
+  officerPhone:      "+91 81469 66781",
+  officerHours:      "Monday to Saturday, 10:00 AM – 6:00 PM IST"
+};
+
+(function(){
+  /* fill details */
+  document.querySelectorAll('[data-f]').forEach(function(el){
+    var v = COMPANY[el.getAttribute('data-f')];
+    if(v){ el.textContent = v; }
+    else { el.innerHTML = '<span class="ph">To be updated</span>'; }
+  });
+  function tel(s){ return String(s).replace(/[^\d+]/g,''); }
+  document.querySelectorAll('[data-href]').forEach(function(a){
+    var k = a.getAttribute('data-href');
+    if(k==='email') a.href = 'mailto:' + COMPANY.email;
+    if(k==='phone') a.href = 'tel:' + tel(COMPANY.phone);
+    if(k==='officerEmail') a.href = 'mailto:' + COMPANY.officerEmail;
+    if(k==='officerPhone') a.href = 'tel:' + tel(COMPANY.officerPhone);
+    if(k==='officerEmailSubject') a.href = 'mailto:' + COMPANY.officerEmail + '?subject=' + encodeURIComponent('Grievance – ' + COMPANY.brand);
+  });
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  /* theme (shares the key used by the main website) */
+  var body = document.body, sun = document.getElementById('themeIconSun'), moon = document.getElementById('themeIconMoon');
+  function apply(isDark){ body.classList.toggle('dark-theme', isDark); sun.style.display = isDark ? 'none' : 'block'; moon.style.display = isDark ? 'block' : 'none'; }
+  var saved = 'light'; try{ saved = localStorage.getItem('aviqo_theme') || 'light'; }catch(e){}
+  apply(saved === 'dark');
+  document.getElementById('themeToggle').addEventListener('click', function(){
+    var d = !body.classList.contains('dark-theme'); apply(d);
+    try{ localStorage.setItem('aviqo_theme', d ? 'dark' : 'light'); }catch(e){}
+  });
+
+  /* reveal on scroll */
+  var rv = [].slice.call(document.querySelectorAll('.rv'));
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, {threshold:0.08});
+    rv.forEach(function(el){ io.observe(el); });
+  } else { rv.forEach(function(el){ el.classList.add('in'); }); }
+
+  /* back to top */
+  var top = document.getElementById('toTop');
+  window.addEventListener('scroll', function(){ top.classList.toggle('show', window.scrollY > 700); }, {passive:true});
+  top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+
+  /* open all accordions when printing */
+  window.addEventListener('beforeprint', function(){ document.querySelectorAll('details').forEach(function(d){ d.setAttribute('open',''); }); });
+})();
+</script>
+</body>
+</html>
