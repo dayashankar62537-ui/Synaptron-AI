@@ -3516,9 +3516,50 @@ body.dark-theme #avq-root{--bt:#8d98ff}
 .avq-l #avq-tip{right:auto;left:72px;border-radius:14px 14px 14px 4px;transform:translateX(-14px) scale(.94)}
 .avq-l #avq-tip.on{transform:none}
 @media(max-width:560px){#avq-root #avq-panel{position:fixed;left:10px;right:10px;width:auto;bottom:84px;top:auto;height:min(72dvh,560px)}#avq-root.avq-t #avq-panel{top:84px;bottom:auto}#avq-tip{max-width:56vw;white-space:normal}}
+/* ---- layout polish: laptop + mobile ---- */
+#avq-root button{-webkit-tap-highlight-color:transparent}
+#avq-bd{display:none}
+#avq-panel{width:min(400px,calc(100vw - 32px));border-radius:24px;box-shadow:0 30px 70px -20px rgba(15,23,80,.5),0 0 0 1px var(--border)}
+@media(min-width:1200px){#avq-panel{width:420px}}
+.avq-hd{position:relative;padding:16px 16px 16px 18px}
+.avq-hd b{font-size:16px}
+#avq-msgs{padding:18px 16px;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent}
+#avq-msgs::-webkit-scrollbar{width:6px}
+#avq-msgs::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:6px}
+.avq-m{font-size:14.5px}
+.avq-m.b{border:1px solid var(--border)}
+.avq-r{display:flex;align-items:flex-end;gap:8px;max-width:92%;align-self:flex-start;animation:avqIn .3s ease both}
+.avq-r .avq-m{animation:none;max-width:none}
+.avq-av{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:#fff;object-fit:cover;flex:none}
+.avq-act{margin-left:34px}
+.avq-wel{text-align:center;padding:4px 6px 2px;animation:avqIn .4s ease both}
+.avq-wel img{display:block;width:62px;height:62px;border-radius:50%;border:2px solid var(--b);background:#fff;margin:0 auto 10px;box-shadow:0 10px 24px -10px var(--b)}
+.avq-wel h3{font:600 21px 'Space Grotesk',sans-serif;letter-spacing:-.01em;margin-bottom:4px}
+.avq-wel p{font-size:13.5px;color:var(--muted);line-height:1.5}
+.avq-chips{display:grid;grid-template-columns:1fr;gap:8px}
+.avq-chips .avq-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 14px;text-align:left;border-radius:14px;color:var(--text);border-color:var(--border);background:var(--surface-2)}
+.avq-chips .avq-chip::after{content:'';width:7px;height:7px;flex:none;border-right:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);opacity:.6}
+.avq-chips .avq-chip:hover{background:var(--b);border-color:var(--b);color:#fff}
+@media(min-width:561px){.avq-chips{grid-template-columns:1fr 1fr}}
+#avq-form{padding:12px 12px 6px;background:var(--surface)}
+.avq-ft{text-align:center;font-size:11px;color:var(--muted-2);padding:0 0 9px;background:var(--surface)}
+@media(pointer:coarse){#avq-in{font-size:16px}}
+@media(max-width:560px){
+  #avq-bd{display:block;position:fixed;inset:0;background:rgba(5,8,30,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+  #avq-root.avq-open #avq-bd{opacity:1;visibility:visible;transition:opacity .3s,visibility 0s}
+  #avq-root #avq-panel{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:min(88vh,680px);height:min(88dvh,680px);border-radius:24px 24px 0 0;border-bottom:0;transform-origin:bottom center;transform:translateY(48px)}
+  #avq-root.avq-t #avq-panel{top:auto;bottom:0;transform:translateY(48px)}
+  #avq-root.avq-open #avq-panel,#avq-root.avq-open.avq-t #avq-panel{transform:none}
+  .avq-hd{padding-top:22px}
+  .avq-hd::before{content:'';position:absolute;top:8px;left:50%;width:38px;height:4px;border-radius:4px;background:rgba(255,255,255,.45);transform:translateX(-50%)}
+  #avq-x{width:40px;height:40px}
+  #avq-root.avq-open #avq-fab{opacity:0;pointer-events:none;scale:.6;transition:opacity .2s,scale .2s}
+  .avq-ft{padding-bottom:calc(9px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 
 <div id="avq-root">
+  <div id="avq-bd"></div>
   <div id="avq-tip" role="button" tabindex="0">Questions? Ask Aviqo</div>
   <section id="avq-panel" role="dialog" aria-label="Aviqo assistant">
     <div class="avq-hd">
@@ -3530,6 +3571,7 @@ body.dark-theme #avq-root{--bt:#8d98ff}
       <input id="avq-in" maxlength="300" placeholder="Ask about Aviqo AI" aria-label="Your question">
       <button id="avq-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
     </form>
+    <div class="avq-ft">Powered by Aviqo AI</div>
   </section>
   <button id="avq-fab" type="button" title="Click to chat, drag to move" aria-label="Open Aviqo assistant" aria-expanded="false">
     <img class="avq-bot" id="avq-bot" alt="">
@@ -3580,7 +3622,9 @@ body.dark-theme #avq-root{--bt:#8d98ff}
       .replace(/\+91 81469 66781/g,'<a href="tel:+918146966781">+91 81469 66781</a>')
       .replace(/\n/g,'<br>');
   }
-  function add(t,cls,raw){var d=document.createElement('div');d.className='avq-m '+cls;d.innerHTML=raw?t:fmt(t);box.appendChild(d);box.scrollTop=box.scrollHeight;return d}
+  function add(t,cls,raw){var d=document.createElement('div');d.className='avq-m '+cls;d.innerHTML=raw?t:fmt(t);var el=d;
+    if(cls==='b'){el=document.createElement('div');el.className='avq-r';var a=document.createElement('img');a.className='avq-av';a.alt='';a.src=LOGO;el.appendChild(a);el.appendChild(d)}
+    box.appendChild(el);box.scrollTop=box.scrollHeight;return el}
   function act(go,lb){
     var b=document.createElement('button');b.type='button';b.className='avq-chip avq-act';b.textContent=lb;
     b.onclick=function(){
@@ -3596,13 +3640,15 @@ body.dark-theme #avq-root{--bt:#8d98ff}
     var c=box.querySelector('.avq-chips');if(c)c.remove();
     add(q,'u');inp.value='';
     var t=add('<span class="avq-dots"><i></i><i></i><i></i></span>','b',1),hi=HI.test(q),m=find(q);
-    function done(){busy=false;inp.focus()}
+    function done(){busy=false;if(matchMedia('(pointer:fine)').matches)inp.focus()}
     if(m){setTimeout(function(){t.remove();add(hi?m[2]:m[1],'b');if(m[3])act(m[3],m[4]);done()},550)}
     else ask(q,hi).then(function(r){t.remove();add(r,'b');done()}).catch(function(){t.remove();add(hi?FB_HI:FB_EN,'b');done()});
   }
 
   function welcome(){
-    add("Hi, I'm the Aviqo assistant. Ask me anything about our AI or the company.",'b');
+    var w=document.createElement('div');w.className='avq-wel';
+    w.innerHTML='<img alt="" src="'+LOGO+'"><h3>How can I help?</h3><p>Ask me about Aviqo AI, what it can build, pricing or our company.</p>';
+    box.appendChild(w);
     var c=document.createElement('div');c.className='avq-chips';
     ['How does Aviqo AI work?','What all can it build?','What is Aviqo AI?','Pricing plans','About the company','Contact support'].forEach(function(t){
       var b=document.createElement('button');b.type='button';b.className='avq-chip';b.textContent=t;b.onclick=function(){send(t)};c.appendChild(b);
@@ -3616,7 +3662,8 @@ body.dark-theme #avq-root{--bt:#8d98ff}
     fab.setAttribute('aria-expanded',open);
     fab.setAttribute('aria-label',open?'Close assistant':'Open Aviqo assistant');
     tip.classList.remove('on');
-    if(open){place();if(!started){started=true;welcome()}setTimeout(function(){inp.focus()},320)}
+    document.documentElement.style.overflow=(open&&innerWidth<=560)?'hidden':'';
+    if(open){place();if(!started){started=true;welcome()}if(matchMedia('(pointer:fine)').matches)setTimeout(function(){inp.focus()},320)}
   }
 
   var panel=$('avq-panel'),SZ=58,M=12,lastDrag=0,d=null;
@@ -3625,9 +3672,19 @@ body.dark-theme #avq-root{--bt:#8d98ff}
   function place(){
     var r=fab.getBoundingClientRect(),L=r.left+r.width/2<innerWidth/2,T=r.top+r.height/2<innerHeight/2;
     root.classList.toggle('avq-l',L);root.classList.toggle('avq-t',T);
-    if(innerWidth>560){var sp=(T?innerHeight-r.bottom:r.top)-90;panel.style.height=Math.max(300,Math.min(560,sp))+'px'}
-    else panel.style.height='';
+    if(innerWidth>560){panel.style.bottom='';var sp=(T?innerHeight-r.bottom:r.top)-90;panel.style.height=Math.max(300,Math.min(620,sp))+'px'}
+    else fit();
   }
+  function fit(){
+    var v=window.visualViewport,vh=v?v.height:innerHeight,off=v?innerHeight-v.height-v.offsetTop:0;
+    panel.style.height=Math.min(680,vh*0.9)+'px';panel.style.bottom=Math.max(0,off)+'px';
+  }
+  if(window.visualViewport){
+    var vf=function(){if(innerWidth<=560&&root.classList.contains('avq-open'))fit()};
+    visualViewport.addEventListener('resize',vf);visualViewport.addEventListener('scroll',vf);
+  }
+  inp.addEventListener('focus',function(){setTimeout(function(){box.scrollTop=box.scrollHeight},300)});
+  $('avq-bd').addEventListener('click',function(){toggle(false)});
   function applySaved(){
     try{var s=JSON.parse(localStorage.getItem('avqPos'));
       if(s&&isFinite(s.x)&&isFinite(s.y))setPos(M+clamp(s.x,0,1)*Math.max(0,innerWidth-SZ-2*M),M+clamp(s.y,0,1)*Math.max(0,innerHeight-SZ-2*M));
