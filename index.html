@@ -3441,5 +3441,246 @@
 })();
 </script>
 
+<!-- ===== AVIQO SUPPORT ASSISTANT (floating widget) ===== -->
+<style>
+#avq-root{--e:cubic-bezier(.2,.9,.25,1.12);--b:#3343db;position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));z-index:210;font-family:'Inter',sans-serif;color:var(--text)}
+#avq-fab{position:relative;width:58px;height:58px;border-radius:50%;border:2px solid var(--b);padding:0;cursor:pointer;background:#fff;color:var(--b);display:grid;place-items:center;box-shadow:0 12px 30px -8px var(--b);scale:0;opacity:0;animation:avqPop .6s var(--e) 1.2s forwards,avqWig 8s ease-in-out 5s infinite;transition:transform .3s var(--e)}
+#avq-fab:hover{transform:scale(1.09) rotate(-6deg)}
+#avq-fab:focus-visible,#avq-send:focus-visible,.avq-chip:focus-visible,#avq-tip:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+#avq-fab::before,#avq-fab::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--b);opacity:0;pointer-events:none;animation:avqRing 3.2s ease-out 2.4s infinite}
+#avq-fab::after{animation-delay:4s}
+.avq-open #avq-fab{animation:none;scale:1;opacity:1}
+.avq-open #avq-fab::before,.avq-open #avq-fab::after{animation:none}
+.avq-ic{position:absolute;width:27px;height:27px;transition:transform .45s var(--e),opacity .25s}
+.avq-ic.x{transform:rotate(-90deg) scale(.3);opacity:0}
+.avq-open .avq-ic.c{transform:rotate(90deg) scale(.3);opacity:0}
+.avq-open .avq-ic.x{transform:none;opacity:1}
+.avq-st{transform-box:fill-box;transform-origin:center;animation:avqTw 2.4s ease-in-out infinite}
+.avq-live{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2.5px solid #fff;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:avqLive 2s infinite}
+.avq-open .avq-live{display:none}
+#avq-tip{position:absolute;right:72px;bottom:9px;white-space:nowrap;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:10px 15px;border-radius:14px 14px 4px 14px;font-size:13px;font-weight:500;box-shadow:0 14px 30px -12px rgba(0,0,0,.4);opacity:0;transform:translateX(14px) scale(.94);pointer-events:none;cursor:pointer;transition:opacity .35s,transform .45s var(--e)}
+#avq-tip.on{opacity:1;transform:none;pointer-events:auto}
+#avq-panel{position:absolute;right:0;bottom:74px;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:0 40px 80px -24px rgba(0,0,0,.5);overflow:hidden;transform-origin:bottom right;opacity:0;visibility:hidden;transform:translateY(18px) scale(.86);transition:transform .45s var(--e),opacity .25s,visibility 0s .45s}
+.avq-open #avq-panel{opacity:1;visibility:visible;transform:none;transition:transform .45s var(--e),opacity .25s,visibility 0s}
+.avq-hd{display:flex;align-items:center;gap:12px;padding:15px 18px;background:linear-gradient(135deg,var(--b),#202ca3);color:#fff}
+.avq-hd img{width:38px;height:38px;border-radius:50%;background:#fff;padding:3px;object-fit:cover;flex:none}
+.avq-hd b{display:block;font:600 15px 'Space Grotesk',sans-serif}
+.avq-hd small{display:flex;align-items:center;gap:6px;font-size:12px;opacity:.75;margin-top:2px}
+.avq-hd small i{width:7px;height:7px;border-radius:50%;background:#22c55e}
+#avq-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain;scroll-behavior:smooth}
+.avq-m{max-width:88%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.55;overflow-wrap:anywhere;animation:avqIn .3s ease both}
+.avq-m a{text-decoration:underline}
+.avq-m.b{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:5px}
+.avq-m.u{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:5px}
+.avq-chips{display:flex;flex-wrap:wrap;gap:8px;animation:avqIn .4s ease .2s both}
+.avq-chip{font:500 13px 'Inter',sans-serif;padding:8px 13px;border-radius:999px;border:1px solid var(--bt);background:transparent;color:var(--bt);cursor:pointer;transition:background .2s,color .2s,transform .2s}
+.avq-chip:hover{background:var(--b);border-color:var(--b);color:#fff;transform:translateY(-1px)}
+.avq-act{align-self:flex-start;animation:avqIn .3s ease both}
+.avq-dots{display:inline-flex;gap:4px;padding:3px 0}
+.avq-dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:avqDot 1s ease-in-out infinite}
+.avq-dots i:nth-child(2){animation-delay:.15s}.avq-dots i:nth-child(3){animation-delay:.3s}
+#avq-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+#avq-in{flex:1;min-width:0;font:400 14px 'Inter',sans-serif;color:var(--text);background:var(--surface-2);border:1px solid transparent;border-radius:999px;padding:11px 16px;outline:0;transition:border-color .2s}
+#avq-in:focus{border-color:var(--b)}
+#avq-send{width:42px;height:42px;flex:none;border-radius:50%;border:0;cursor:pointer;background:var(--b);color:#fff;display:grid;place-items:center;transition:transform .2s var(--e)}
+#avq-send:hover{transform:scale(1.08)}
+#avq-send svg{width:18px;height:18px}
+@keyframes avqPop{from{scale:0;opacity:0}to{scale:1;opacity:1}}
+@keyframes avqRing{0%{transform:scale(1);opacity:.45}100%{transform:scale(1.75);opacity:0}}
+@keyframes avqWig{0%,90%,100%{rotate:0deg}92%{rotate:-12deg}94%{rotate:10deg}96%{rotate:-6deg}98%{rotate:3deg}}
+@keyframes avqTw{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.4) rotate(45deg)}}
+@keyframes avqLive{70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@keyframes avqIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes avqDot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+@media(max-width:480px){#avq-root{right:14px;bottom:14px}#avq-panel{position:fixed;left:10px;right:10px;width:auto;bottom:84px;height:min(72dvh,560px)}#avq-tip{max-width:56vw;white-space:normal;right:70px}}
+@media(prefers-reduced-motion:reduce){#avq-root *,#avq-root *::before,#avq-root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+#avq-root{--bt:var(--b)}
+body.dark-theme #avq-root{--bt:#8d98ff}
+.avq-bot{position:absolute;width:42px;height:42px;border-radius:50%;object-fit:cover;animation:avqBob 3.2s ease-in-out infinite;transition:transform .45s var(--e),opacity .25s}
+.avq-open .avq-bot{transform:rotate(90deg) scale(.3);opacity:0;animation:none}
+.avq-ic.x{color:var(--b)}
+#avq-tip{border-color:var(--b)}
+@keyframes avqBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+#avq-root{display:flex}
+#avq-fab{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+#avq-root.avq-drag #avq-fab{cursor:grabbing;transform:scale(1.12);animation:none;scale:1;opacity:1}
+#avq-root.avq-drag #avq-tip{opacity:0}
+#avq-root.avq-drag .avq-bot{animation:none}
+#avq-x{margin-left:auto;flex:none;width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;display:grid;place-items:center;transition:background .2s}
+#avq-x:hover{background:rgba(255,255,255,.3)}
+#avq-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.avq-l #avq-panel{right:auto;left:0;transform-origin:bottom left}
+.avq-t #avq-panel{bottom:auto;top:74px;transform:translateY(-18px) scale(.86);transform-origin:top right}
+.avq-l.avq-t #avq-panel{transform-origin:top left}
+.avq-open.avq-t #avq-panel{transform:none}
+.avq-l #avq-tip{right:auto;left:72px;border-radius:14px 14px 14px 4px;transform:translateX(-14px) scale(.94)}
+.avq-l #avq-tip.on{transform:none}
+@media(max-width:560px){#avq-root #avq-panel{position:fixed;left:10px;right:10px;width:auto;bottom:84px;top:auto;height:min(72dvh,560px)}#avq-root.avq-t #avq-panel{top:84px;bottom:auto}#avq-tip{max-width:56vw;white-space:normal}}
+</style>
+
+<div id="avq-root">
+  <div id="avq-tip" role="button" tabindex="0">Questions? Ask Aviqo</div>
+  <section id="avq-panel" role="dialog" aria-label="Aviqo assistant">
+    <div class="avq-hd">
+      <img id="avq-logo" alt="">
+      <div><b>Aviqo Assistant</b><small><i></i>Online, replies instantly</small></div><button type="button" id="avq-x" aria-label="Close chat"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div id="avq-msgs" role="log" aria-live="polite"></div>
+    <form id="avq-form" autocomplete="off">
+      <input id="avq-in" maxlength="300" placeholder="Ask about Aviqo AI" aria-label="Your question">
+      <button id="avq-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+    </form>
+  </section>
+  <button id="avq-fab" type="button" title="Click to chat, drag to move" aria-label="Open Aviqo assistant" aria-expanded="false">
+    <img class="avq-bot" id="avq-bot" alt="">
+    <svg class="avq-ic x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    <span class="avq-live"></span>
+  </button>
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)},root=$('avq-root'),fab=$('avq-fab'),box=$('avq-msgs'),inp=$('avq-in'),tip=$('avq-tip'),busy=false,started=false;
+  var LOGO="data:image/png;base64,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";
+  $('avq-logo').src=LOGO;$('avq-bot').src=LOGO;
+
+  /* Hinglish detection: replies in Hinglish when the user writes Hinglish/Hindi */
+  var HI=/[\u0900-\u097F]|\b(kya|hai|hain|kaise|kitna|kitne|mujhe|aap|aapka|apka|batao|bataiye|kaun|kahan|kab|nahi|karo|hamara|tum)\b/i;
+
+  /* Knowledge base: [pattern, English, Hinglish, action target, action label]. First match wins. */
+  var PRICE_EN="**Free** $0: 10 credits on signup.\n**Pro Monthly** $2.99/mo: 300 credits a month, no watermark.\n**Pro Yearly** $19.99/yr (about $1.66/mo): 1,000 credits a month, priority speed.\n**Lifetime** $39.99 one-time: 500 credits every month plus all future updates.";
+  var PRICE_HI="**Free** $0: signup par 10 credits.\n**Pro Monthly** $2.99/mahina: 300 credits per month, no watermark.\n**Pro Yearly** $19.99/saal (lagbhag $1.66/mahina): 1,000 credits per month, priority speed.\n**Lifetime** $39.99 ek baar: har mahine 500 credits aur saare future updates.";
+  var K=[
+    [/^\s*(hi+|hello|hey|hlo|namaste|good (morning|evening|afternoon))\b/i,"Hi! I'm the Aviqo assistant. Ask me about our AI, pricing or the company.","Namaste! Main Aviqo ka assistant hu. Aviqo AI, pricing ya company ke baare mein kuch bhi puchiye."],
+    [/thank|thx|shukriya|dhanyavad/i,"You're welcome! Anything else you'd like to know?","Aapka swagat hai! Aur kuch puchna ho to batayiye."],
+    [/sign ?up|register|log ?in|create (an )?account|early access|account (bana|kaise)|join/i,"Tap **Sign Up Now** at the top of the page to create your account. Every new account starts with 10 free credits.","Page ke top par **Sign Up Now** dabaiye aur account bana lijiye. Har naye account ko 10 free credits milte hain.","signup","Sign up now"],
+    [/pric|plan|cost|kitn|paise|paisa|fee|subscri|credit|free|lifetime|yearly|monthly|\bpro\b|charge|dollar|\$/i,PRICE_EN,PRICE_HI,"#pricing","See pricing"],
+    [/contact|support|e-?mail|phone|call|number|whatsapp|reach|sampark|address|location|where|kahan/i,"You can email the team at hello@aviqoai.com or call +91 81469 66781. The founder's direct email is ChetanGautam5025@gmail.com. We're based in Punjab, India.","Team ko hello@aviqoai.com par email kijiye ya +91 81469 66781 par call kijiye. Founder ka direct email ChetanGautam5025@gmail.com hai. Hum Punjab, India mein hain.","#contact","Contact section"],
+    [/how.*(work|function)|kaise (kaam|kam|use|chalta|start)|steps|process/i,"Aviqo works in three steps:\n**1. Tell it your goal** in plain language, like an image, an app, a study plan or a task.\n**2. Aviqo plans and builds.** One core routes your request to the right specialist engine and assembles the result step by step.\n**3. You review and ship.** Refine it in the same chat, no new tool needed.","Aviqo teen steps mein kaam karta hai:\n**1. Goal bataiye** simple language mein, jaise image, app, study plan ya koi task.\n**2. Aviqo plan karke banata hai.** Ek core aapki request ko sahi specialist engine ke paas bhejta hai aur result step by step jodta hai.\n**3. Aap review karke use kijiye.** Usi chat mein badlav kar sakte hain, naya tool nahi chahiye.","#how","How it works"],
+    [/company|team|founder|ceo|mission|vision|punjab|startup|who (built|made|created|owns)|kisne|banaya|owner|chetan/i,"Aviqo AI is built in Punjab, India by a small focused team led by founder Chetan Gautam. Our mission is to give every individual and small business the power of a full creative and technical team inside one AI.","Aviqo AI Punjab, India mein ek chhoti focused team ne banaya hai, founder Chetan Gautam ke saath. Hamara mission hai ki har individual aur small business ko ek hi AI mein poori creative aur technical team jaisi power mile.","team.html","Meet the team"],
+    [/what (all )?can|can (it|aviqo|you)|kya.*(kar|bana)|feature|capabilit|image|video|website|\bapp\b|study|build|generate|live|available|develop|coming/i,"Aviqo can build:\n**Images:** concept art, product mockups, social creatives.\n**Video:** ads, explainers and reels from a script or prompt.\n**Websites:** a designed, responsive site from your business description.\n**Apps:** web and mobile apps from a plain-language brief.\n**Study and research:** summaries, exam prep, structured notes.\n**Personal assistant:** plans your day, drafts messages, tracks tasks.\nRight now AI chat and image generation are live; the rest are still in development.","Aviqo ye sab bana sakta hai:\n**Images:** concept art, product mockups, social creatives.\n**Video:** script ya prompt se ads, explainers aur reels.\n**Websites:** aapke business ke description se designed, responsive website.\n**Apps:** simple language brief se web aur mobile apps.\n**Study aur research:** summaries, exam prep, structured notes.\n**Personal assistant:** din plan karna, messages likhna, tasks track karna.\nAbhi AI chat aur image generation live hain; baaki abhi development mein hain.","#capabilities","See capabilities"],
+    [/what is|what's|kya hai|about|aviqo|who are you|tum kaun|aap kaun|explain|tell me/i,"Aviqo AI is an all-in-one AI: images, video, websites, apps, study help and a personal assistant in one place, so you don't juggle ten different tools. You describe what you need in plain language and Aviqo builds it.","Aviqo AI ek all-in-one AI hai: image, video, website, app, study help aur personal assistant, sab ek hi jagah. Aap simple language mein bataiye ki kya chahiye, baaki Aviqo karta hai.","#try-ai","Try the AI"]
+  ];
+  function find(q){for(var i=0;i<K.length;i++)if(K[i][0].test(q))return K[i];return null}
+
+  var FACTS="Aviqo AI is an all-in-one AI (image, video, website and app building, study help, personal assistant) built in Punjab, India by founder Chetan Gautam. Live now: AI chat and image generation; other tools are in development. Plans: Free $0 (10 credits), Pro Monthly $2.99, Pro Yearly $19.99, Lifetime $39.99. Contact: hello@aviqoai.com, +91 81469 66781.";
+  var FB_EN="I'm not sure about that one. Please email hello@aviqoai.com or call +91 81469 66781 and the team will help you.",
+      FB_HI="Is baare mein mujhe pakka nahi pata. Please hello@aviqoai.com par email kijiye ya +91 81469 66781 par call kijiye, team aapki madad karegi.";
+  function ask(q,hi){
+    var msg="You are the support assistant on the Aviqo AI website. Reply in at most 3 short sentences, in the same language as the question"+(hi?" (Hinglish, Roman script)":"")+". Use only these facts; if the answer is not covered, say you are not sure and suggest emailing hello@aviqoai.com.\nFacts: "+FACTS+"\nQuestion: "+q;
+    return fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})})
+      .then(function(r){if(!r.ok)throw 0;return r.json()})
+      .then(function(d){if(!d||!d.reply)throw 0;return d.reply});
+  }
+
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function fmt(s){
+    return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+      .replace(/([\w.+-]+@[\w-]+\.[\w.]+\w)/g,'<a href="mailto:$1">$1</a>')
+      .replace(/\+91 81469 66781/g,'<a href="tel:+918146966781">+91 81469 66781</a>')
+      .replace(/\n/g,'<br>');
+  }
+  function add(t,cls,raw){var d=document.createElement('div');d.className='avq-m '+cls;d.innerHTML=raw?t:fmt(t);box.appendChild(d);box.scrollTop=box.scrollHeight;return d}
+  function act(go,lb){
+    var b=document.createElement('button');b.type='button';b.className='avq-chip avq-act';b.textContent=lb;
+    b.onclick=function(){
+      if(go==='signup'){toggle(false);var s=$('navSignupBtn');if(s)s.click()}
+      else if(go.charAt(0)==='#'){toggle(false);var el=document.querySelector(go);if(el)el.scrollIntoView({behavior:'smooth'})}
+      else location.href=go;
+    };
+    box.appendChild(b);box.scrollTop=box.scrollHeight;
+  }
+
+  function send(q){
+    q=q.trim();if(!q||busy)return;busy=true;
+    var c=box.querySelector('.avq-chips');if(c)c.remove();
+    add(q,'u');inp.value='';
+    var t=add('<span class="avq-dots"><i></i><i></i><i></i></span>','b',1),hi=HI.test(q),m=find(q);
+    function done(){busy=false;inp.focus()}
+    if(m){setTimeout(function(){t.remove();add(hi?m[2]:m[1],'b');if(m[3])act(m[3],m[4]);done()},550)}
+    else ask(q,hi).then(function(r){t.remove();add(r,'b');done()}).catch(function(){t.remove();add(hi?FB_HI:FB_EN,'b');done()});
+  }
+
+  function welcome(){
+    add("Hi, I'm the Aviqo assistant. Ask me anything about our AI or the company.",'b');
+    var c=document.createElement('div');c.className='avq-chips';
+    ['How does Aviqo AI work?','What all can it build?','What is Aviqo AI?','Pricing plans','About the company','Contact support'].forEach(function(t){
+      var b=document.createElement('button');b.type='button';b.className='avq-chip';b.textContent=t;b.onclick=function(){send(t)};c.appendChild(b);
+    });
+    box.appendChild(c);
+  }
+
+  function toggle(o){
+    var open=o===undefined?!root.classList.contains('avq-open'):o;
+    root.classList.toggle('avq-open',open);
+    fab.setAttribute('aria-expanded',open);
+    fab.setAttribute('aria-label',open?'Close assistant':'Open Aviqo assistant');
+    tip.classList.remove('on');
+    if(open){place();if(!started){started=true;welcome()}setTimeout(function(){inp.focus()},320)}
+  }
+
+  var panel=$('avq-panel'),SZ=58,M=12,lastDrag=0,d=null;
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function setPos(l,t){root.style.left=l+'px';root.style.top=t+'px';root.style.right='auto';root.style.bottom='auto'}
+  function place(){
+    var r=fab.getBoundingClientRect(),L=r.left+r.width/2<innerWidth/2,T=r.top+r.height/2<innerHeight/2;
+    root.classList.toggle('avq-l',L);root.classList.toggle('avq-t',T);
+    if(innerWidth>560){var sp=(T?innerHeight-r.bottom:r.top)-90;panel.style.height=Math.max(300,Math.min(560,sp))+'px'}
+    else panel.style.height='';
+  }
+  function applySaved(){
+    try{var s=JSON.parse(localStorage.getItem('avqPos'));
+      if(s&&isFinite(s.x)&&isFinite(s.y))setPos(M+clamp(s.x,0,1)*Math.max(0,innerWidth-SZ-2*M),M+clamp(s.y,0,1)*Math.max(0,innerHeight-SZ-2*M));
+    }catch(e){}
+  }
+  function save(){
+    try{var r=root.getBoundingClientRect();
+      localStorage.setItem('avqPos',JSON.stringify({x:(r.left-M)/Math.max(1,innerWidth-SZ-2*M),y:(r.top-M)/Math.max(1,innerHeight-SZ-2*M)}));
+    }catch(e){}
+  }
+  fab.addEventListener('pointerdown',function(e){
+    if(e.button>0)return;
+    var r=root.getBoundingClientRect();d={sx:e.clientX,sy:e.clientY,l:r.left,t:r.top,moved:false};
+    try{fab.setPointerCapture(e.pointerId)}catch(x){}
+  });
+  fab.addEventListener('pointermove',function(e){
+    if(!d)return;
+    var dx=e.clientX-d.sx,dy=e.clientY-d.sy;
+    if(!d.moved){if(Math.hypot(dx,dy)<6)return;d.moved=true;root.classList.add('avq-drag');tip.classList.remove('on')}
+    setPos(clamp(d.l+dx,M,innerWidth-SZ-M),clamp(d.t+dy,M,innerHeight-SZ-M));place();
+  });
+  function endDrag(){
+    if(!d)return;var mv=d.moved;d=null;root.classList.remove('avq-drag');
+    if(mv){lastDrag=Date.now();place();save()}
+  }
+  fab.addEventListener('pointerup',endDrag);
+  fab.addEventListener('pointercancel',endDrag);
+  fab.addEventListener('click',function(){if(Date.now()-lastDrag<350)return;toggle()});
+  fab.addEventListener('keydown',function(e){
+    var k={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]}[e.key];
+    if(!k||!e.shiftKey)return;e.preventDefault();
+    var r=root.getBoundingClientRect();
+    setPos(clamp(r.left+k[0],M,innerWidth-SZ-M),clamp(r.top+k[1],M,innerHeight-SZ-M));place();save();
+  });
+  $('avq-x').addEventListener('click',function(){toggle(false);fab.focus()});
+  addEventListener('resize',function(){applySaved();place()});
+  applySaved();place();
+  tip.addEventListener('click',function(){toggle(true)});
+  tip.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')toggle(true)});
+  $('avq-form').addEventListener('submit',function(e){e.preventDefault();send(inp.value)});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root.classList.contains('avq-open')){toggle(false);fab.focus()}});
+
+  /* one gentle nudge per browser session */
+  try{
+    if(!sessionStorage.getItem('avqTip')){
+      sessionStorage.setItem('avqTip','1');
+      setTimeout(function(){if(!root.classList.contains('avq-open'))tip.classList.add('on')},5000);
+      setTimeout(function(){tip.classList.remove('on')},14000);
+    }
+  }catch(e){}
+})();
+</script>
+<!-- ===== /AVIQO SUPPORT ASSISTANT ===== -->
+
 </body>
 </html>
