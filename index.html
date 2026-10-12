@@ -1690,6 +1690,16 @@
   .tool-more{margin-top:34px;display:flex;justify-content:center;}
   @media (max-width:980px){.tool-grid{grid-template-columns:repeat(2,1fr);}}
   @media (max-width:640px){.tool-grid{grid-template-columns:1fr;}.tfilter{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;}.tfilter button{flex:none;}}
+  /* ---------- AI model logos orbiting the core ---------- */
+  .node{width:0 !important; height:0 !important; background:none !important; box-shadow:none !important;}
+  .node .nb{position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:12px; padding:6px;
+    box-shadow:0 10px 26px rgba(0,0,0,0.28), 0 0 0 1px rgba(128,128,128,0.28); animation:nbspin 26s linear infinite;}
+  .node .nb.full{padding:0;}
+  @keyframes nbspin{
+    from{transform:rotateZ(0deg) rotateX(-58deg);}
+    to{transform:rotateZ(-360deg) rotateX(-58deg);}
+  }
+  @media (prefers-reduced-motion: reduce){ .node .nb{animation:none !important;} }
 </style>
 </head>
 <body>
@@ -2962,6 +2972,8 @@
   const coreEl = document.getElementById('core');
   if(coreEl){
     const count = 10;
+    const LOGOS = ['chatgpt','claude','gemini','grok','deepseek','meta','midjourney','mistral','sora','perplexity'];
+    const FULL = ['chatgpt','sora'];
     for(let i=0;i<count;i++){
       const angle = (i / count) * Math.PI * 2;
       const radius = 168;
@@ -2970,6 +2982,10 @@
       const z = (i % 2 === 0) ? 34 : -34;
       const n = document.createElement('div');
       n.className = 'node';
+      const b = document.createElement('span');
+      b.className = 'nb pl l-' + LOGOS[i] + (FULL.indexOf(LOGOS[i]) > -1 ? ' full' : '');
+      b.setAttribute('aria-hidden','true');
+      n.appendChild(b);
       n.style.left = `calc(50% + ${x}px)`;
       n.style.top = `calc(50% + ${y}px)`;
       n.style.transform = `translate(-50%,-50%) translateZ(${z}px)`;
