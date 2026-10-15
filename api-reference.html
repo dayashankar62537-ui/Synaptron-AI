@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>API Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--sf2:#f3f5ff;--bd:rgba(30,40,110,.1);--hi:rgba(100,80,235,.4);--tx:#14183a;--mu:#5b6190;--b:#6a56f0;--g:linear-gradient(120deg,#2d6bff,#7a3cff 55%,#e24bff)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font:16px/1.6 Inter,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;letter-spacing:-.01em}code,.mono{font-family:'JetBrains Mono',monospace}
+.glow{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 50% 40% at 8% 0,rgba(110,100,255,.12),transparent 70%),radial-gradient(ellipse 45% 35% at 96% 90%,rgba(226,75,255,.08),transparent 70%)}
+.bar{position:fixed;top:0;left:0;height:3px;width:100%;transform:scaleX(0);transform-origin:0;background:var(--g);z-index:60}
+header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(255,255,255,.85);border-bottom:1px solid var(--bd);padding-top:env(safe-area-inset-top,0px)}
+.nav{max-width:1200px;margin:auto;padding:12px 24px;display:flex;align-items:center;gap:16px}
+.nav b{font:700 18px 'Space Grotesk'}.nav b span{background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sr{margin-left:auto;position:relative;width:min(340px,100%)}.sr input{width:100%;padding:10px 16px 10px 40px;border-radius:99px;border:1.5px solid var(--bd);background:#f7f8ff;font:inherit;font-size:14px;color:var(--tx);outline:0;transition:.25s}
+.sr input:focus{border-color:var(--b);box-shadow:0 0 0 4px rgba(106,86,240,.15);background:#fff}.sr:before{content:'\1F50D';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px}
+.lay{max-width:1200px;margin:auto;padding:40px 24px 60px;display:grid;grid-template-columns:1fr 210px;gap:48px;position:relative}
+.toc{position:sticky;top:90px;align-self:start;border-left:2px solid var(--bd);padding-left:6px}.toc small{display:block;font:600 11px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:0 0 8px 12px}
+.toc a{display:block;padding:6px 12px;color:var(--mu);font-size:14px;border-radius:8px;transition:.25s;margin-left:-8px;border-left:2px solid transparent;text-decoration:none}.toc a:hover{color:var(--b)}.toc a.on{color:var(--tx);font-weight:600;border-left-color:var(--b);background:rgba(106,86,240,.07)}
+.eyebrow{font:500 13px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:#4a5df0}
+h1{font-size:clamp(34px,5vw,52px);line-height:1.1;margin:8px 0 10px}h1 em{font-style:normal;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--mu);margin-bottom:46px}
+section{scroll-margin-top:90px;margin-bottom:60px}h2{font-size:28px;margin-bottom:14px}
+.note{padding:14px 18px;border-radius:14px;background:var(--sf2);border-left:4px solid var(--b);color:var(--mu);font-size:14.5px;margin-bottom:18px}.note b{color:var(--tx)}.note.warn{border-left-color:#f5a623;background:#fff8ec}
+.feat{position:relative;overflow:hidden;padding:28px;border-radius:24px;background:linear-gradient(150deg,#fff,var(--sf2));border:1.5px solid rgba(110,100,255,.28);box-shadow:0 26px 50px -30px rgba(90,70,230,.6);transition:.35s}
+.feat:hover{transform:translateY(-6px);box-shadow:0 34px 60px -30px rgba(90,70,230,.7)}
+.feat:before{content:'';position:absolute;width:260px;height:260px;right:-80px;top:-100px;border-radius:50%;background:radial-gradient(circle,rgba(143,123,255,.3),transparent 70%);animation:fl 6s ease-in-out infinite}@keyframes fl{50%{transform:translate(-14px,14px)}}
+.fh{display:flex;gap:16px;align-items:center;margin-bottom:10px;position:relative}.ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:24px;background:var(--g);box-shadow:0 12px 24px -10px #7a3cff}.fh h3{font-size:24px}.feat p{color:var(--mu);max-width:680px;position:relative}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px;position:relative}.st{padding:16px;border-radius:16px;background:#fff;border:1px solid var(--bd);text-align:center}.st small{display:block;color:var(--mu);font-size:12.5px;margin-bottom:6px}.st b{font:700 22px 'Space Grotesk'}
+.caps{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.caps span{padding:5px 12px;border-radius:99px;background:var(--sf2);font:600 12px Inter;transition:.25s}.caps span:hover{background:var(--g);color:#fff;transform:translateY(-3px)}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:18px;box-shadow:0 18px 40px -30px rgba(90,70,230,.5)}
+table{width:100%;border-collapse:collapse;min-width:900px;font-size:14px}th{position:sticky;top:0;text-align:left;font:600 11px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);background:#f7f8ff;padding:14px 14px;white-space:nowrap}
+th.s{cursor:pointer}th.s:hover{color:var(--b)}td{padding:16px 14px;border-top:1px solid var(--bd);vertical-align:middle}tr.r{transition:.25s}tr.r:hover{background:rgba(106,86,240,.05)}
+.mn{display:flex;gap:12px;align-items:center}.lg{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font:700 13px 'Space Grotesk';color:#fff}
+.mn b{display:block;font:600 15px 'Space Grotesk'}.id{display:inline-flex;align-items:center;gap:6px;margin-top:3px;padding:2px 8px;border-radius:8px;background:var(--sf2);font:500 11.5px 'JetBrains Mono';color:var(--mu);cursor:pointer;border:0;transition:.2s}.id:hover{background:var(--b);color:#fff}
+.ent{margin-left:6px;padding:2px 8px;border-radius:99px;background:#fff3d6;color:#a86a00;font:600 10.5px Inter}
+.sp{display:flex;align-items:center;gap:8px;min-width:100px}.sp i{display:block;height:6px;border-radius:9px;background:var(--g);width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+td small{color:var(--mu)}.cs{color:var(--b);font-weight:600}
+.empty{display:none;text-align:center;padding:30px;color:var(--mu)}
+.cb{border:1px solid var(--bd);border-radius:18px;overflow:hidden;box-shadow:0 18px 40px -30px rgba(90,70,230,.5)}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7f8ff;border-bottom:1px solid var(--bd)}.tabs{display:flex;gap:6px}.tab{padding:6px 14px;border-radius:99px;border:0;background:none;color:var(--mu);font:600 13px Inter;cursor:pointer}.tab.on{background:var(--g);color:#fff}
+.cp{padding:6px 14px;border-radius:99px;border:1px solid var(--bd);background:#fff;font:600 12.5px Inter;cursor:pointer;transition:.2s}.cp:hover{border-color:var(--b);color:var(--b)}
+pre{padding:18px;overflow-x:auto;font:400 13.5px/1.7 'JetBrains Mono';background:#fff}.k{color:#a626a4}.s2{color:#2e8b3d}.f{color:#2d6bff}
+.fb{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:30px;color:var(--mu);font-size:14.5px}.fb button{padding:8px 18px;border-radius:99px;border:1.5px solid var(--bd);background:#fff;font:600 13.5px Inter;cursor:pointer;transition:.25s}.fb button:hover{border-color:var(--b);color:var(--b);transform:translateY(-2px)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;padding:10px 20px;border-radius:99px;background:var(--tx);color:#fff;font-size:14px;transition:.35s;z-index:70;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s,transform .9s cubic-bezier(.2,.8,.2,1)}.rv.in{opacity:1;transform:none}
+@media(max-width:960px){.lay{grid-template-columns:1fr}.toc{display:none}.stats{grid-template-columns:1fr}.nav b{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+
+.lay{grid-template-columns:230px 1fr}.nv{position:sticky;top:84px;align-self:start;max-height:calc(100vh - 100px);overflow:auto;padding-right:6px}
+.nv small{display:block;font:600 11px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:14px 0 6px 10px}.nv a{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:10px;color:var(--mu);font-size:13.5px;text-decoration:none;transition:.2s}
+.nv a:hover{color:var(--b);transform:translateX(3px)}.nv a.on{background:rgba(106,86,240,.1);color:var(--tx);font-weight:600}.nv a[hidden]{display:none}
+.mt{font:700 10px 'JetBrains Mono';padding:2px 7px;border-radius:6px;color:#fff;flex:none}.GET{background:#18a86a}.POST{background:#2d6bff}.DELETE{background:#d6336c}
+.ep{scroll-margin-top:90px;padding:26px;border-radius:22px;background:#fff;border:1.5px solid rgba(110,100,255,.2);box-shadow:0 16px 36px -26px rgba(90,70,230,.45);margin-bottom:22px;transition:.35s}.ep:hover{border-color:var(--hi);box-shadow:0 26px 46px -26px rgba(90,70,230,.55)}.ep[hidden]{display:none}
+.ep h3{font-size:22px;margin:6px 0}.ep>p{color:var(--mu);margin-bottom:14px}.url{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:12px;background:var(--sf2);font:500 13px 'JetBrains Mono';word-break:break-all}
+.url button{margin-left:auto;border:0;background:#fff;border:1px solid var(--bd);border-radius:99px;padding:3px 12px;font:600 11.5px Inter;cursor:pointer}.url button:hover{border-color:var(--b);color:var(--b)}
+.pt{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;min-width:0}.pt td{padding:10px 8px;border-top:1px solid var(--bd);vertical-align:top}.pt td:first-child{white-space:nowrap}.pt code{font-size:13px;font-weight:500;color:var(--b)}
+.pt em{font-style:normal;font:600 10.5px Inter;padding:2px 8px;border-radius:99px;margin-left:6px}.rq{background:#ffe9ef;color:#c0225a}.op{background:#eef0ff;color:var(--mu)}.pt small{color:var(--mu);display:block}
+.ph{font:600 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-top:14px}.cb{margin-top:10px}
+.hero{padding:6px 0 30px}.pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.pl2{padding:8px 16px;border-radius:99px;background:#fff;border:1px solid var(--hi);font:500 13px 'JetBrains Mono'}
+@media(max-width:960px){.lay{grid-template-columns:1fr}.nv{display:none}}</style></head><body><div class="glow"></div><div class="bar" id="bar"></div>
+<header><div class="nav"><b>API <span>Reference</span></b><label class="sr"><input id="q" type="search" placeholder="Search endpoints, parameters..." aria-label="Search"></label></div></header>
+<div class="lay"><aside class="nv" id="nv"></aside><main>
+<div class="hero"><div class="eyebrow">Docs · GroqCloud</div><h1>API <em>Reference</em></h1><p class="lead" style="margin-bottom:0">Endpoints, parameters and examples for the Groq API.</p>
+<div class="pills"><span class="pl2">Base URL https://api.groq.com/openai/v1</span><span class="pl2">Authorization: Bearer $GROQ_API_KEY</span></div>
+<div class="note warn" style="margin-top:18px"><b>Keep your API key secret.</b> Use it only on your server (for example in Vercel environment variables), never inside HTML or browser JavaScript.</div></div>
+<div id="ml"></div><div class="empty" id="em">No endpoints match your search.</div></main></div>
+<script>
+const B='https://api.groq.com/openai/v1';
+const G=[
+['Chat',[['POST','/chat/completions','Create chat completion','Creates a model response for the given chat conversation.',[['messages','array',1,'The conversation so far.'],['model','string',1,'ID of the model to use.'],['temperature','number',0,'0 to 2, default 1. Higher is more random.'],['max_completion_tokens','integer',0,'Upper limit of generated tokens.'],['stream','boolean',0,'Send partial deltas as server-sent events. Default false.'],['tools','array',0,'Functions the model may call (max 128).'],['tool_choice','string / object',0,'none, auto, required, or a specific function.'],['response_format','object',0,'json_schema (Structured Outputs) or json_object.'],['reasoning_effort','string',0,'Supported values depend on the model (low, medium, high...).'],['top_p','number',0,'0 to 1, default 1. Nucleus sampling.'],['seed','integer',0,'Best-effort deterministic sampling.'],['stop','string / array',0,'Up to 4 stop sequences.']],{"model":"llama-3.3-70b-versatile","messages":[{"role":"user","content":"Explain the importance of fast language models"}]},'import os\nfrom groq import Groq\n\nclient = Groq(api_key=os.environ.get("GROQ_API_KEY"))\n\nchat = client.chat.completions.create(\n    messages=[{"role": "user", "content": "Explain the importance of fast language models"}],\n    model="llama-3.3-70b-versatile",\n)\nprint(chat.choices[0].message.content)']]],
+['Responses (beta)',[['POST','/responses','Create response','Creates a model response for the given input.',[['input','string / array',1,'Text input to the model.'],['model','string',1,'ID of the model to use.'],['instructions','string',0,'System (developer) message placed first.'],['max_output_tokens','integer',0,'Upper bound including reasoning tokens.'],['temperature','number',0,'0 to 2, default 1.'],['tools','array',0,'Function definitions only, max 128.'],['stream','boolean',0,'Default false.'],['store','boolean',0,'Only false or null is supported.']],{"model":"openai/gpt-oss-120b","input":"Tell me a three sentence bedtime story about a unicorn."},null]]],
+['Audio',[['POST','/audio/transcriptions','Create transcription','Transcribes audio into the input language.',[['model','string',1,'whisper-large-v3 or whisper-large-v3-turbo.'],['file','file',0,'flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm. File or URL is required.'],['url','string',0,'Audio URL (required in Batch API).'],['language','string',0,'ISO-639-1 code; improves accuracy and latency.'],['prompt','string',0,'Guides style or continues a previous segment.'],['response_format','string',0,'json (default), text or verbose_json.'],['temperature','number',0,'0 to 1, default 0.'],['timestamp_granularities[]','array',0,'word and/or segment; needs verbose_json.']],'FORM:file=@./sample_audio.m4a|model=whisper-large-v3',null],
+['POST','/audio/translations','Create translation','Translates audio into English.',[['model','string',1,'whisper-large-v3 or whisper-large-v3-turbo.'],['file','file',0,'Audio file to translate.'],['url','string',0,'Audio URL; only option in Batch API.'],['prompt','string',0,'Should be in English.'],['response_format','string',0,'json (default), text or verbose_json.'],['temperature','number',0,'0 to 1, default 0.']],'FORM:file=@./sample_audio.m4a|model=whisper-large-v3',null],
+['POST','/audio/speech','Create speech','Generates audio from the input text.',[['input','string',1,'Text to generate audio for.'],['model','string',1,'An available TTS model.'],['voice','string',1,'Voice to use.'],['response_format','string',0,'flac, mp3 (default), mulaw, ogg or wav.'],['sample_rate','integer',0,'8000 to 48000, default 48000.'],['speed','number',0,'0.5 to 5, default 1.']],{"model":"playai-tts","input":"I love building and shipping new features for our users!","voice":"Fritz-PlayAI","response_format":"wav"},null]]],
+['Models',[['GET','/models','List models','List all available models.',[],null,'import os\nfrom groq import Groq\n\nclient = Groq(api_key=os.environ.get("GROQ_API_KEY"))\nprint(client.models.list())'],
+['GET','/models/{model}','Retrieve model','Get detailed information about a model.',[],null,null]]],
+['Batches',[['POST','/batches','Create batch','Creates and executes a batch from an uploaded file of requests.',[['input_file_id','string',1,'ID of an uploaded .jsonl file (purpose batch, up to 100 MB).'],['endpoint','string',1,'Currently /v1/chat/completions.'],['completion_window','string',1,'From 24h to 7d.'],['metadata','object',0,'Optional custom metadata.']],{"input_file_id":"file_01jh6x76wtemjr74t1fh0faj5t","endpoint":"/v1/chat/completions","completion_window":"24h"},null],
+['GET','/batches/{batch_id}','Retrieve batch','Retrieves a batch.',[],null,null],['GET','/batches','List batches',"List your organization's batches.",[],null,null],['POST','/batches/{batch_id}/cancel','Cancel batch','Cancels a batch.',[],null,null]]],
+['Files',[['POST','/files','Upload file','Upload a file for use across endpoints. The Batch API supports .jsonl files up to 100 MB.',[['file','file',1,'The file object (not file name).'],['purpose','string',1,'Use batch.']],'FORM:purpose=batch|file=@batch_file.jsonl',null],
+['GET','/files','List files','Returns a list of files.',[],null,null],['GET','/files/{file_id}','Retrieve file','Returns information about a file.',[],null,null],['DELETE','/files/{file_id}','Delete file','Delete a file.',[],null,null],['GET','/files/{file_id}/content','Download file','Returns the contents of the specified file.',[],null,null]]]];
+
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const slug=e=>(e[0]+e[1]).toLowerCase().replace(/[^a-z]+/g,'-');
+let nav='',main='';
+G.forEach(([g,E])=>{nav+=`<small>${g}</small>`;main+=`<h2 class="rv" style="margin:40px 0 16px">${g}</h2>`;
+E.forEach(e=>{const [m,p,t,d,ps,body,x]=e,id=slug(e);nav+=`<a href="#${id}" data-s="${(t+p+d).toLowerCase()}"><span class="mt ${m}">${m}</span>${t}</a>`;
+let c;if(typeof body==='string'){c=`curl ${B}${p} \\\n  -H "Authorization: Bearer $GROQ_API_KEY" \\\n`+body.slice(5).split('|').map(f=>`  -F ${f.split('=')[0]}="${f.split('=').slice(1).join('=')}"`).join(' \\\n')}
+else c=`curl ${m=='GET'?'':'-X '+m+' '}${B}${p} \\\n  -H "Authorization: Bearer $GROQ_API_KEY"`+(body?` \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(body,null,2)}'`:'');
+const py=x||(Array.isArray(e[6])?null:null);
+main+=`<article class="ep rv" id="${id}" data-s="${(t+p+d+ps.map(a=>a[0]).join(' ')).toLowerCase()}"><span class="mt ${m}">${m}</span><h3>${t}</h3><p>${d}</p><div class="url"><span>${B}${p}</span><button data-c="${B}${p}">Copy URL</button></div>`+
+(ps.length?`<div class="ph">Request body</div><table class="pt">${ps.map(a=>`<tr><td><code>${a[0]}</code><em class="${a[2]?'rq':'op'}">${a[2]?'Required':'Optional'}</em><small>${a[1]}</small></td><td>${a[3]}</td></tr>`).join('')}</table>`:'')+
+`<div class="cb"><div class="ch"><div class="tabs"><button class="tab on" data-k="0">cURL</button>${py?'<button class="tab" data-k="1">Python</button>':''}</div><button class="cp">Copy</button></div><pre></pre></div></article>`;
+e._c=[c,py]})});
+$('#nv').innerHTML=nav;$('#ml').innerHTML=main;
+let i=0;G.forEach(([g,E])=>E.forEach(e=>{const a=$$('.ep')[i++];a.querySelector('pre').textContent=e._c[0];a._c=e._c}));
+$$('.ep').forEach(a=>{a.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{a.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');a.querySelector('pre').textContent=a._c[b.dataset.k]});
+a.querySelector('.cp').onclick=e=>{navigator.clipboard&&navigator.clipboard.writeText(a.querySelector('pre').textContent);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Copy',1500)}});
+$$('.url button').forEach(b=>b.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(b.dataset.c);b.textContent='Copied ✓';setTimeout(()=>b.textContent='Copy URL',1500)});
+$('#q').oninput=e=>{const q=e.target.value.toLowerCase().trim();let n=0;$$('.ep').forEach(a=>{const ok=!q||a.dataset.s.includes(q);a.hidden=!ok;n+=ok});$$('.nv a').forEach(a=>a.hidden=!!q&&!a.dataset.s.includes(q));$('#em').style.display=n?'none':'block'};
+addEventListener('scroll',()=>{$('#bar').style.transform='scaleX('+scrollY/(document.body.scrollHeight-innerHeight)+')'},{passive:true});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});$$('.rv').forEach(e=>io.observe(e));
+const sp=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)$$('.nv a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')=='#'+e.target.id))}),{rootMargin:'-25% 0px -65% 0px'});$$('.ep').forEach(a=>sp.observe(a));
+</script></body></html>
