@@ -1770,6 +1770,15 @@
   .about-grid .cap-icon{width:60px;height:60px;border-radius:16px;background:var(--surface,rgba(128,128,128,.12));padding:8px;transition:transform .35s}
   .about-grid .cap-icon img{width:100%;height:100%;object-fit:contain}
   .about-grid .cap-card:hover .cap-icon{transform:rotate(-6deg) scale(1.08)}
+
+.su-more{max-width:300px;margin:12px auto 0}.su-pv{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 14px;margin-bottom:10px;border-radius:999px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font:600 14px 'Inter',sans-serif;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;position:relative}
+.su-pv:hover:not(:disabled){transform:translateY(-2px);border-color:var(--text);box-shadow:0 10px 22px -14px rgba(0,0,0,.45)}.su-pv svg{width:19px;height:19px;flex:none}.su-pv:disabled{opacity:.5;cursor:not-allowed}
+.su-pv i{position:absolute;right:12px;font:600 10px 'Inter',sans-serif;font-style:normal;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.su-sso{max-height:0;overflow:hidden;transition:max-height .35s}.su-sso.on{max-height:70px}
+.su-or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12.5px;margin:14px 0}.su-or:before,.su-or:after{content:'';flex:1;height:1px;background:var(--border)}
+.su-more input{width:100%;padding:12px 18px;border-radius:999px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font:14px 'Inter',sans-serif;outline:0;margin-bottom:10px}.su-more input:focus{border-color:var(--text)}
+.su-go{width:100%;padding:12px;border:0;border-radius:999px;background:var(--text);color:var(--bg);font:600 14px 'Inter',sans-serif;cursor:pointer;transition:transform .25s}.su-go:hover{transform:translateY(-2px)}.su-go:disabled{opacity:.7;cursor:wait}
+.su-msg{min-height:20px;margin-top:10px;font-size:12.5px;color:#dc2626}.su-msg.ok{color:#168553}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Aviqo AI","alternateName":"Aviqo","url":"https://synaptron-ai.vercel.app/"}</script>
 </head>
@@ -2517,10 +2526,10 @@
         <h3 id="suTitle">Sign up to chat with Aviqo AI</h3>
         <p id="suSubtitle">Continue with your Google account to start creating images, videos, websites, apps, and more with Aviqo.</p>
         <div class="su-perks"><span>10 free credits</span><span>Upgrade anytime</span></div>
-        <div id="googleBtnContainer" class="google-btn-wrap"></div>
+        <div id="googleBtnContainer" class="google-btn-wrap"></div><div class="su-more"><button type="button" class="su-pv" data-p="github"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>Continue with GitHub</button><button type="button" class="su-pv" data-p="apple"><svg viewBox="0 0 24 24"><path d="M16.37 12.6c-.03-2.7 2.2-4 2.3-4.07-1.25-1.83-3.2-2.08-3.9-2.1-1.66-.17-3.24.98-4.08.98-.84 0-2.14-.96-3.52-.93-1.81.03-3.48 1.05-4.41 2.67-1.88 3.26-.48 8.1 1.35 10.75.9 1.3 1.97 2.76 3.37 2.7 1.35-.05 1.86-.87 3.5-.87 1.63 0 2.09.87 3.52.84 1.45-.03 2.37-1.32 3.26-2.62 1.03-1.5 1.45-2.96 1.48-3.03-.03-.01-2.84-1.09-2.87-4.32zM13.7 4.6c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.36.71-3.13 1.61-.69.8-1.29 2.07-1.13 3.29 1.19.09 2.4-.6 3.16-1.5z"/></svg>Continue with Apple</button><button type="button" class="su-pv" data-p="sso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 18a4.5 4.5 0 1 1 1.2-8.8A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 18 18z"/><circle cx="12" cy="14" r="1.3"/><path d="M12 15.3V17"/></svg>Continue with SSO</button><div class="su-sso" id="suSso"><input id="suDom" placeholder="Company domain, e.g. acme.com" autocomplete="organization"></div><div class="su-or">or</div><input id="suEm" class="su-in" type="email" placeholder="example@email.com" autocomplete="email"><button type="button" class="su-go" id="suGo">Continue with email</button><p class="su-msg" id="suMsg" role="status"></p></div>
         <p class="signup-error" id="suError" style="display:none; color:#dc2626; font-size:12.5px; margin:14px 0 0;"></p>
         <button class="signup-skip" id="suSkip">Continue as guest</button>
-        <p class="signup-note" id="suNote">We only use your Google name, email and photo to set up your account.</p>
+        <p class="signup-note" id="suNote">We only use your name, email and photo to set up your account.</p>
         <div id="suSuccess" style="display:none; text-align:center; padding:10px 0;">
           <div style="width:44px;height:44px;border-radius:50%;margin:0 auto 12px;background:var(--grad-brand);color:var(--on-brand);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;">&#10003;</div>
           <b style="display:block; font-size:15px; margin-bottom:6px;">You're signed up!</b>
@@ -2768,11 +2777,37 @@
   }
   initGoogleSignIn();
 
+  // ---- More sign-in options (Supabase Auth: GitHub, Apple, SSO, email link) ----
+  const SB_URL='https://iiktxvssnwaonzbdikta.supabase.co', SB_KEY='sb_publishable_VJdIQ1D3_AxmoboLq8eH7A_tOcHEgE3';
+  const SBH={apikey:SB_KEY,'Content-Type':'application/json'}, SB_BACK=location.origin+location.pathname;
+  const suMsg=document.getElementById('suMsg'), suGo=document.getElementById('suGo'), suEm=document.getElementById('suEm');
+  function sm(t,ok){suMsg.textContent=t;suMsg.className='su-msg'+(ok?' ok':'');}
+  fetch(SB_URL+'/auth/v1/settings',{headers:SBH}).then(r=>r.json()).then(d=>{const e=d.external||{};
+    document.querySelectorAll('.su-pv').forEach(b=>{const p=b.dataset.p;if(p!=='sso'&&e[p]===false){b.disabled=true;b.insertAdjacentHTML('beforeend','<i>Coming soon</i>');}});
+    if(e.email===false){suGo.disabled=true;}}).catch(()=>{});
+  document.querySelectorAll('.su-pv').forEach(b=>b.addEventListener('click',async()=>{const p=b.dataset.p;
+    if(p==='sso'){const box=document.getElementById('suSso');if(!box.classList.contains('on')){box.classList.add('on');document.getElementById('suDom').focus();return;}
+      const dm=document.getElementById('suDom').value.trim().toLowerCase();if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dm)){sm('Enter your company domain, like acme.com.');return;}
+      try{const r=await fetch(SB_URL+'/auth/v1/sso',{method:'POST',headers:SBH,body:JSON.stringify({domain:dm,redirect_to:SB_BACK})});const j=await r.json();
+        if(j.url)location.href=j.url;else sm('SSO is not set up for that domain yet. Contact hello@aviqoai.com.');}catch(e){sm('Network error. Please try again.');}return;}
+    location.href=SB_URL+'/auth/v1/authorize?provider='+p+'&redirect_to='+encodeURIComponent(SB_BACK);}));
+  suGo.addEventListener('click',async()=>{const em=suEm.value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){sm('Please enter a valid email address.');return;}
+    suGo.disabled=true;suGo.textContent='Sending...';
+    try{const r=await fetch(SB_URL+'/auth/v1/otp',{method:'POST',headers:SBH,body:JSON.stringify({email:em,create_user:true,email_redirect_to:SB_BACK})});
+      if(r.ok)sm('Check your inbox: we sent a secure sign-in link to '+em+'.',true);else{const j=await r.json().catch(()=>({}));sm(j.msg||'Could not send the email. Try again.');}}
+    catch(e){sm('Network error. Please try again.');}suGo.disabled=false;suGo.textContent='Continue with email';});
+  suEm.addEventListener('keydown',e=>{if(e.key==='Enter')suGo.click();});
+  (function(){const h=new URLSearchParams(location.hash.slice(1));const tk=h.get('access_token');if(!tk)return;history.replaceState(null,'',location.pathname+location.search);
+    fetch(SB_URL+'/auth/v1/user',{headers:{apikey:SB_KEY,Authorization:'Bearer '+tk}}).then(r=>r.json()).then(u=>{if(!u||!u.email)return;const m=u.user_metadata||{};
+      saveLocalUser({name:m.full_name||m.name||u.email.split('@')[0],email:u.email,picture:m.avatar_url||m.picture||'',verified:true,googleId:u.id});
+      openSignup(true);googleBtnContainer.style.display='none';suSkip.style.display='none';suNote.style.display='none';document.querySelector('.su-more').style.display='none';
+      suSuccess.style.display='block';setTimeout(closeSignup,2400);}).catch(()=>{});})();
+
   function openSignup(standalone){
     standaloneMode = !!standalone;
     suTitle.textContent = standaloneMode ? 'Sign up for Aviqo AI' : 'Sign up to chat with Aviqo AI';
     suSubtitle.textContent = standaloneMode
-      ? "Continue with Google — we'll set up your free account instantly."
+      ? "Choose how you'd like to continue — we'll set up your free account instantly."
       : 'Continue with your Google account to start creating images, videos, websites, apps, and more with Aviqo.';
     suSkip.style.display = standaloneMode ? 'none' : '';
     suError.style.display = 'none';
