@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign up for Aviqo AI</title><meta name="description" content="Sign up or log in to Aviqo AI with Google, GitHub, Apple, SSO or email.">
+<link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--tx:#0c0c0c;--mu:#5f5f66;--bd:#e4e4e8;--sf:#f3f3f5}
+*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;color:var(--tx);font:16px/1.6 Inter,sans-serif;-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+a{color:inherit}.wrap{display:grid;grid-template-columns:1fr 1fr;height:100vh}
+.vis{position:relative;overflow:hidden;background:#050505}.sl{position:absolute;inset:0;opacity:0;transform:scale(1.06);transition:opacity 1s ease,transform 4.2s ease-out}.sl.on{opacity:1;transform:none}.sl img{width:100%;height:100%;object-fit:cover}
+.form{position:relative;overflow-y:auto;display:flex;padding:56px clamp(24px,5vw,72px);text-align:center}.in{width:100%;max-width:380px;margin:auto;animation:up .8s cubic-bezier(.2,.8,.2,1)}@keyframes up{from{opacity:0;transform:translateY(24px)}}
+.x{position:absolute;top:22px;right:22px;width:42px;height:42px;border-radius:12px;border:1px solid var(--bd);background:var(--sf);font-size:15px;cursor:pointer;transition:transform .35s}.x:hover{transform:rotate(90deg)}
+.logo{width:66px;height:66px;border-radius:18px;margin:0 auto 24px;display:block;animation:fl 4s ease-in-out infinite}@keyframes fl{50%{transform:translateY(-6px)}}
+h1{font:700 34px/1.15 'Space Grotesk',sans-serif;letter-spacing:-.02em;margin-bottom:10px}.sub{color:var(--mu);margin-bottom:20px;font-size:15.5px}
+.perks{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:24px}.perks span{padding:7px 14px;border-radius:99px;background:var(--sf);border:1px solid var(--bd);font:500 12.5px 'JetBrains Mono',monospace}
+.pv{position:relative;width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:13px 16px;margin-bottom:11px;border-radius:99px;border:1.5px solid var(--bd);background:#fff;font:600 15px Inter;color:var(--tx);cursor:pointer;transition:.25s}
+.pv:hover:not(:disabled){border-color:var(--tx);transform:translateY(-2px);box-shadow:0 12px 24px -14px rgba(0,0,0,.4)}.pv svg{width:20px;height:20px;flex:none}.pv:disabled{opacity:.5;cursor:not-allowed}
+.tag{position:absolute;right:14px;top:50%;transform:translateY(-50%);font:600 10.5px Inter;padding:2px 9px;border-radius:99px;background:var(--sf);color:var(--mu)}.tag.lu{background:#e4f8ee;color:#168553}
+.sso{max-height:0;overflow:hidden;transition:max-height .4s}.sso.on{max-height:90px}
+.or{display:flex;align-items:center;gap:14px;color:var(--mu);font-size:13px;margin:16px 0}.or:before,.or:after{content:'';flex:1;height:1px;background:var(--bd)}
+input{width:100%;padding:14px 20px;border-radius:99px;border:1.5px solid var(--bd);font:inherit;font-size:15px;outline:0;transition:.25s;margin-bottom:11px}input:focus{border-color:var(--tx);box-shadow:0 0 0 4px rgba(0,0,0,.07)}
+.go{width:100%;padding:14px;border:0;border-radius:99px;background:var(--tx);color:#fff;font:600 15px Inter;cursor:pointer;transition:.3s}.go:hover{transform:translateY(-2px);box-shadow:0 16px 28px -14px rgba(0,0,0,.6)}.go:disabled{opacity:.7;cursor:wait}
+.msg{min-height:22px;margin-top:10px;font-size:13.5px;color:#d6336c}.msg.ok{color:#168553}
+.note{margin-top:18px;font:400 13.5px/1.7 'JetBrains Mono',monospace;color:var(--mu)}.sw{margin-top:14px;font-size:14px;color:var(--mu)}.sw a{font-weight:600;color:var(--tx)}
+.legal{margin-top:18px;font-size:14px;color:var(--mu)}.legal a{color:var(--tx);text-decoration:underline}
+.done{display:none}.done b{display:grid;place-items:center;width:70px;height:70px;margin:0 auto 16px;border-radius:50%;background:var(--tx);color:#fff;font-size:32px;animation:pop .5s}@keyframes pop{from{transform:scale(0)}}
+.sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;vertical-align:-3px;margin-right:8px}@keyframes rot{to{transform:rotate(360deg)}}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}.vis{display:none}body{overflow:auto;height:auto}.wrap,.form{min-height:100vh;height:auto}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div class="wrap">
+<aside class="vis" aria-hidden="true"><div class="sl on"><img alt="" src="signup/signup-1.jpg"></div><div class="sl"><img alt="" src="signup/signup-2.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-3.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-4.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-5.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-6.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-7.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-8.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-9.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-10.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-11.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-12.jpg" loading="lazy"></div><div class="sl"><img alt="" src="signup/signup-13.jpg" loading="lazy"></div></aside>
+<section class="form"><button class="x" id="x" type="button" aria-label="Close">&#10005;</button><div class="in" id="card">
+<div id="form"><img class="logo" src="/favicon-192.png" alt="Aviqo AI">
+<h1 id="t">Sign up for Aviqo AI</h1><p class="sub" id="s">Choose how you'd like to continue — we'll set up your free account instantly.</p>
+<div class="perks"><span>10 free credits</span><span>Upgrade anytime</span></div>
+<button class="pv" data-p="google" type="button"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.45a5.5 5.5 0 0 1-2.39 3.62v3h3.87c2.27-2.09 3.57-5.17 3.57-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.87-3c-1.07.72-2.45 1.15-4.08 1.15-3.13 0-5.78-2.11-6.73-4.95H1.27v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.27 14.29A7.2 7.2 0 0 1 4.9 12c0-.8.14-1.57.37-2.29v-3.1H1.27A12 12 0 0 0 0 12c0 1.94.46 3.77 1.27 5.39l4-3.1z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.61l4 3.1C6.22 6.86 8.87 4.75 12 4.75z"/></svg>Continue with Google</button><button class="pv" data-p="github" type="button"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>Continue with GitHub</button><button class="pv" data-p="apple" type="button"><svg viewBox="0 0 24 24"><path d="M16.37 12.6c-.03-2.7 2.2-4 2.3-4.07-1.25-1.83-3.2-2.08-3.9-2.1-1.66-.17-3.24.98-4.08.98-.84 0-2.14-.96-3.52-.93-1.81.03-3.48 1.05-4.41 2.67-1.88 3.26-.48 8.1 1.35 10.75.9 1.3 1.97 2.76 3.37 2.7 1.35-.05 1.86-.87 3.5-.87 1.63 0 2.09.87 3.52.84 1.45-.03 2.37-1.32 3.26-2.62 1.03-1.5 1.45-2.96 1.48-3.03-.03-.01-2.84-1.09-2.87-4.32zM13.7 4.6c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.36.71-3.13 1.61-.69.8-1.29 2.07-1.13 3.29 1.19.09 2.4-.6 3.16-1.5z"/></svg>Continue with Apple</button><button class="pv" data-p="sso" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 18a4.5 4.5 0 1 1 1.2-8.8A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 18 18z"/><circle cx="12" cy="14" r="1.3"/><path d="M12 15.3V17"/></svg>Continue with SSO</button>
+<div class="sso" id="sso"><input id="dom" placeholder="Your company domain, e.g. acme.com" autocomplete="organization"></div>
+<div class="or">or</div><input id="em" type="email" placeholder="example@email.com" autocomplete="email"><button class="go" id="go" type="button">Continue with email</button>
+<div class="msg" id="msg" role="status"></div>
+<p class="note">We only use your name, email and photo to set up your account.</p>
+<p class="sw" id="sw">Already have an account? <a href="#" data-m="in">Log in</a></p>
+<p class="legal">By continuing, you agree to our <a href="terms.html">Terms of Service</a> and acknowledge our <a href="privacy.html">Privacy Policy</a>.</p></div>
+<div class="done" id="done"><b>✓</b><h1 id="dt"></h1><p class="sub" id="ds"></p><button class="go" id="dgo" type="button"></button></div>
+</div></section></div>
+<script>
+const SB='https://iiktxvssnwaonzbdikta.supabase.co',KEY='sb_publishable_VJdIQ1D3_AxmoboLq8eH7A_tOcHEgE3',HOME='index_45_.html';
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s),H={apikey:KEY,'Content-Type':'application/json'};
+const back=location.origin+location.pathname;let mode='up';
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+function msg(t,ok){const m=$('#msg');m.textContent=t;m.className='msg'+(ok?' ok':'')}
+function setMode(m){mode=m;$('#t').textContent=m=='in'?'Welcome back':'Sign up for Aviqo AI';
+$('#s').textContent=m=='in'?'Log in to continue to Aviqo AI.':"Choose how you'd like to continue — we'll set up your free account instantly.";
+$('#sw').innerHTML=m=='in'?'New here? <a href="#" data-m="up">Sign up</a>':'Already have an account? <a href="#" data-m="in">Log in</a>';$('.perks').style.display=m=='in'?'none':'flex';msg('')}
+$('#sw').onclick=e=>{const a=e.target.closest('a');if(a){e.preventDefault();setMode(a.dataset.m)}};
+$('#x').onclick=()=>location.href=HOME;
+const SL=$$('.sl');let si=0;setInterval(()=>{SL[si].classList.remove('on');si=(si+1)%SL.length;SL[si].classList.add('on')},4200);
+
+// mark last used + disable providers not enabled yet
+const lu=ls.get('aviqo_last');if(lu){const b=$(`[data-p="${lu}"]`);if(b)b.insertAdjacentHTML('beforeend','<span class="tag lu">Last used</span>')}
+fetch(SB+'/auth/v1/settings',{headers:H}).then(r=>r.json()).then(d=>{const e=d.external||{};$$('.pv').forEach(b=>{const p=b.dataset.p;if(p!='sso'&&e[p]===false){b.disabled=true;b.insertAdjacentHTML('beforeend','<span class="tag">Coming soon</span>')}});
+if(e.email===false){$('#go').disabled=true;msg('Email login is not enabled yet.')}}).catch(()=>{});
+$$('.pv').forEach(b=>b.onclick=async()=>{const p=b.dataset.p;
+if(p=='sso'){const s=$('#sso');if(!s.classList.contains('on')){s.classList.add('on');$('#dom').focus();return}
+const d=$('#dom').value.trim().toLowerCase();if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)){msg('Enter your company domain, like acme.com.');return}
+b.disabled=true;try{const r=await fetch(SB+'/auth/v1/sso',{method:'POST',headers:H,body:JSON.stringify({domain:d,redirect_to:back})}),j=await r.json();
+if(j.url){ls.set('aviqo_last','sso');location.href=j.url}else msg('SSO is not set up for that domain yet. Contact hello@aviqoai.com.')}catch(e){msg('Network error. Please try again.')}b.disabled=false;return}
+ls.set('aviqo_last',p);location.href=SB+'/auth/v1/authorize?provider='+p+'&redirect_to='+encodeURIComponent(back)});
+$('#go').onclick=async()=>{const e=$('#em').value.trim();if(!/^\S+@\S+\.\S+$/.test(e)){msg('Please enter a valid email address.');return}
+const g=$('#go');g.disabled=true;g.innerHTML='<span class="sp"></span>Sending...';
+try{const r=await fetch(SB+'/auth/v1/otp',{method:'POST',headers:H,body:JSON.stringify({email:e,create_user:mode=='up',email_redirect_to:back})});
+if(r.ok){ls.set('aviqo_last','email');show('Check your email','We sent a secure login link to '+e+'. Open it on this device to continue.','Back to home',()=>location.href=HOME)}
+else{const j=await r.json().catch(()=>({}));msg(j.msg||j.error_description||(mode=='in'?'No account found. Try Sign up.':'Could not send the email. Try again.'))}}
+catch(x){msg('Network error. Please try again.')}g.disabled=false;g.textContent='Continue with email'};
+$('#em').onkeydown=e=>{if(e.key=='Enter')$('#go').click()};
+function show(t,s,b,f){$('#form').style.display='none';$('#done').style.display='block';$('#dt').textContent=t;$('#ds').textContent=s;$('#dgo').textContent=b;$('#dgo').onclick=f}
+// returning from provider / magic link
+const h=new URLSearchParams(location.hash.slice(1));
+if(h.get('access_token')){history.replaceState(null,'',location.pathname);
+fetch(SB+'/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+h.get('access_token')}}).then(r=>r.json()).then(u=>{ls.set('aviqo_session',JSON.stringify({t:h.get('access_token'),r:h.get('refresh_token'),e:u.email}));
+show("You're in!",'Signed in as '+(u.email||'your account')+'.','Continue to Aviqo AI',()=>location.href=HOME)}).catch(()=>msg('Sign in failed. Please try again.'))}
+else if(h.get('error_description'))msg(decodeURIComponent(h.get('error_description').replace(/\+/g,' ')));
+</script></body></html>
