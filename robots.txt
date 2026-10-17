@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /account.html
 
 Sitemap: https://synaptron-ai.vercel.app/sitemap.xml
