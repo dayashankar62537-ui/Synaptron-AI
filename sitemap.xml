@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://synaptron-ai.vercel.app/</loc><priority>1.0</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/about.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/blog.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/careers.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/company-legal.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/explore.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/faq.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/learn.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/mission.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/models.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/privacy.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/started.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/support.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/team.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/terms.html</loc><priority>0.7</priority></url>
-  <url><loc>https://synaptron-ai.vercel.app/vision.html</loc><priority>0.7</priority></url>
+  <url><loc>https://synaptron-ai.vercel.app/</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/pricing.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/models.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/api-reference.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/faq.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/support.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/contact.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/changelog.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/status.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/security.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/privacy.html</loc><lastmod>2026-10-17</lastmod></url>
+  <url><loc>https://synaptron-ai.vercel.app/terms.html</loc><lastmod>2026-10-17</lastmod></url>
 </urlset>
