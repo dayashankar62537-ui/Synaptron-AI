@@ -329,8 +329,8 @@
 <main>
 <!-- ================= HERO ================= -->
 <section class="hero" id="top">
-  <div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
-  <canvas id="net" aria-hidden="true"></canvas>
+  
+  
   <div class="wrap hero-grid">
     <div>
       <div class="pill rv"><i>NEW</i>10 free credits when you sign up</div>
@@ -490,7 +490,7 @@
 <!-- ================= FINAL CTA ================= -->
 <div class="final"><div class="wrap">
   <div class="final-box rv">
-    <canvas id="fx" aria-hidden="true"></canvas>
+    
     <h2>Your next idea is <span class="grad">one message away.</span></h2>
     <p>Join Aviqo AI today and try image and video creation with 10 free credits. Chatting is always free.</p>
     <div class="cta-row" style="justify-content:center;margin:0">
@@ -631,8 +631,6 @@
     if(reduce){ frame(0); cancelAnimationFrame(raf); return; }
     if('IntersectionObserver' in window){ new IntersectionObserver(function(es){ var v=es[0].isIntersecting; if(v&&!raf){ raf=requestAnimationFrame(frame); } else if(!v){ cancelAnimationFrame(raf); raf=0; } }).observe(canvas); } else raf=requestAnimationFrame(frame);
   }
-  field($('net'),{max:70,density:16000,speed:.35,link:130,rgb:'170,170,170'});
-  field($('fx'),{max:60,density:9000,speed:.5,link:120,rgb:'235,235,235'});
 
   /* hero demo: types a prompt, "sends" it and shows an illustrative result */
   var SC=[
