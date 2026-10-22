@@ -1473,6 +1473,80 @@
   .profile-pill:hover{border-color:var(--border-hi);}
   .profile-pill:focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
   .profile-logout{cursor:pointer;}
+/* ---- scroll cards: each card arrives as you reach it ---- */
+.awc{position:relative; padding:120px 0 110px; background:#000; color:#fff;}
+.awc-wrap{width:min(1180px,calc(100% - 48px)); margin:0 auto; display:grid; grid-template-columns:.9fr 1.1fr; gap:64px; align-items:start;}
+.awc-side{position:sticky; top:120px;}
+.awc-eyebrow{font:600 12px 'JetBrains Mono',monospace; letter-spacing:.14em; text-transform:uppercase; color:#8a8a9a; margin-bottom:14px;}
+.awc h2{font:600 clamp(32px,4vw,52px)/1.05 'Space Grotesk',sans-serif; letter-spacing:-.025em; color:#fff; margin-bottom:18px;}
+.awc-side > p{color:#a4a4b4; font-size:16px; line-height:1.7; max-width:420px;}
+.awc-count{margin-top:34px; display:flex; align-items:baseline; gap:10px; font:600 13px 'JetBrains Mono',monospace; color:#8a8a9a;}
+.awc-count b{font:700 48px 'Space Grotesk',sans-serif; color:#fff; letter-spacing:-.03em; line-height:1;}
+.awc-bar{margin-top:14px; height:3px; width:min(260px,100%); border-radius:3px; background:rgba(255,255,255,.12); overflow:hidden;}
+.awc-bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#fff,#b79cff); transition:width .7s cubic-bezier(.2,.8,.2,1);}
+.awc-stack{display:flex; flex-direction:column; padding-bottom:14vh;}
+.awc-card{position:relative; overflow:hidden; border-radius:26px; padding:26px 26px 28px; background:#0d0d12; border:1px solid rgba(255,255,255,.1); color:#fff; opacity:0; transition:border-color .4s ease, box-shadow .4s ease;}
+.awc-card.in{animation:awcIn 1s cubic-bezier(.2,.9,.25,1.12) both;}
+.awc-card:hover{border-color:rgba(255,255,255,.24); box-shadow:0 30px 60px -30px rgba(0,0,0,.9);}
+.awc-card{position:sticky; top:calc(120px + var(--i,0) * 22px); z-index:calc(var(--i,0) + 1); margin-bottom:26px; transform-origin:50% 0; will-change:scale;}
+.awc-card:last-child{margin-bottom:0;}
+.awc-card::after{content:''; position:absolute; top:-40%; bottom:-40%; left:-60%; width:40%; pointer-events:none; background:linear-gradient(100deg,transparent,rgba(255,255,255,.12),transparent); transform:skewX(-20deg);}
+.awc-card.in::after{animation:awcSheen 2.6s ease .9s 1 both;}
+@keyframes awcIn{from{opacity:0; translate:0 70px; filter:blur(10px);} to{opacity:1; translate:0 0; filter:none;}}
+@keyframes awcSheen{from{left:-60%;} to{left:130%;}}
+@keyframes awcGrow{from{width:0;} to{width:var(--w);}}
+.awc-head{display:flex; align-items:center; gap:10px; font:600 15px 'Space Grotesk',sans-serif; letter-spacing:-.01em; margin-bottom:18px;}
+.awc-chip{margin-left:auto; padding:4px 11px; border-radius:100px; font:600 11px 'JetBrains Mono',monospace; background:rgba(255,255,255,.14); color:inherit;}
+.awc-live{width:8px; height:8px; border-radius:50%; background:#7ef0b0; box-shadow:0 0 0 0 rgba(126,240,176,.7); animation:awcPulse 1.8s infinite;}
+@keyframes awcPulse{0%{box-shadow:0 0 0 0 rgba(126,240,176,.6);} 70%{box-shadow:0 0 0 9px rgba(126,240,176,0);} 100%{box-shadow:0 0 0 0 rgba(126,240,176,0);}}
+.awc-big b{display:block; font:700 clamp(34px,4vw,46px)/1 'Space Grotesk',sans-serif; letter-spacing:-.03em;}
+.awc-big span{display:block; margin-top:8px; color:rgba(255,255,255,.7); font-size:14px;}
+.awc-prog{margin:22px 0 20px; height:6px; border-radius:6px; background:rgba(255,255,255,.18); overflow:hidden;}
+.awc-prog i{display:block; height:100%; width:0; border-radius:6px; background:#fff;}
+.awc-card.in .awc-prog i{animation:awcGrow 1.6s cubic-bezier(.2,.8,.2,1) .5s both;}
+.awc-rows{display:grid; gap:10px;}
+.awc-row{display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:16px; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12);}
+.awc-row b{display:block; font:600 14px 'Inter',sans-serif;} .awc-row span{display:block; font:500 11.5px 'JetBrains Mono',monospace; color:rgba(255,255,255,.65); margin-top:2px;}
+.awc-row .th{width:40px; height:40px; border-radius:12px; flex:none;}
+.th1{background:radial-gradient(circle at 35% 35%,#fff 0 22%,#3a2a5c 23% 60%,#15091f 61%);} .th2{background:linear-gradient(135deg,#1b1030,#8f5cff 60%,#ff8ad8);}
+.c-run{background:radial-gradient(120% 90% at 18% 0%,#8b4dff 0%,#3b1077 42%,#12051e 100%); border-color:rgba(200,170,255,.28);}
+.awc-pillbar{display:inline-flex; gap:4px; padding:6px; border-radius:100px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); flex-wrap:wrap;}
+.awc-pillbar button{padding:10px 18px; border-radius:100px; border:0; background:none; color:#c9c9d6; font:600 13.5px 'Inter',sans-serif; cursor:pointer; transition:background .25s, color .25s, transform .2s;}
+.awc-pillbar button:hover{color:#fff; transform:translateY(-1px);}
+.awc-pillbar button.on{background:linear-gradient(180deg,#fff,#d6d6e0); color:#000; box-shadow:inset 0 1px 0 #fff, 0 8px 18px -8px rgba(0,0,0,.8);}
+.awc-note{margin-top:18px; color:#9a9aab; font-size:14px; line-height:1.6;}
+.c-light{background:#f2f2f5; color:#0b0b12; border-color:transparent;}
+.c-light .awc-head{color:#0b0b12;}
+.awc-tl{list-style:none; display:grid; gap:0; position:relative;}
+.awc-tl li{display:flex; gap:14px; padding:12px 0; position:relative;}
+.awc-tl li + li{border-top:1px solid rgba(0,0,0,.08);}
+.awc-tl i{width:12px; height:12px; border-radius:50%; background:#0b0b12; margin-top:6px; flex:none; box-shadow:0 0 0 4px rgba(0,0,0,.08);}
+.awc-tl li:nth-child(2) i{background:#6b6b78;} .awc-tl li:nth-child(3) i{background:#b8b8c4;}
+.awc-tl b{display:block; font:600 15px 'Inter',sans-serif;} .awc-tl span{display:block; margin-top:3px; font:500 12px 'JetBrains Mono',monospace; color:#6b6b78;}
+.c-credits{background:#0d0d12;}
+.awc-seg{display:grid; grid-template-columns:repeat(10,1fr); gap:6px; margin-top:22px;}
+.awc-seg i{height:26px; border-radius:7px; background:rgba(255,255,255,.1);}
+.awc-card.in .awc-seg i:nth-child(-n+7){animation:awcFill .5s ease both;}
+.awc-card.in .awc-seg i:nth-child(1){animation-delay:.6s;} .awc-card.in .awc-seg i:nth-child(2){animation-delay:.7s;} .awc-card.in .awc-seg i:nth-child(3){animation-delay:.8s;} .awc-card.in .awc-seg i:nth-child(4){animation-delay:.9s;} .awc-card.in .awc-seg i:nth-child(5){animation-delay:1s;} .awc-card.in .awc-seg i:nth-child(6){animation-delay:1.1s;} .awc-card.in .awc-seg i:nth-child(7){animation-delay:1.2s;}
+@keyframes awcFill{from{background:rgba(255,255,255,.1);} to{background:#fff;}}
+.awc-input{display:flex; align-items:center; gap:10px; padding:8px 8px 8px 20px; border-radius:100px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); color:#8e8ea0; font-size:14.5px;}
+.awc-input span{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.awc-input button{width:40px; height:40px; border-radius:50%; border:0; background:linear-gradient(180deg,#fff,#d6d6e0); color:#000; display:grid; place-items:center; cursor:pointer; flex:none; box-shadow:inset 0 1px 0 #fff, 0 8px 16px -8px rgba(0,0,0,.8);}
+.awc-chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
+.awc-chips span{padding:7px 13px; border-radius:100px; border:1px solid rgba(255,255,255,.16); font:500 12px 'JetBrains Mono',monospace; color:#c9c9d6;}
+
+@media (max-width:900px){
+  .awc-wrap{grid-template-columns:1fr; gap:38px;}
+  .awc-side{position:static;}
+  .awc-card{top:calc(96px + var(--i,0) * 14px);}
+  .awc-card{margin-bottom:20px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .awc-card{opacity:1; transform:none; filter:none;}
+  .awc-card.in,.awc-card::after,.awc-prog i,.awc-seg i,.awc-live{animation:none !important;}
+  .awc-prog i{width:72%;}
+  .awc-seg i:nth-child(-n+7){background:#fff;}
+}
 </style>
 
 <style id="aviqo-flip-typing">
@@ -1517,7 +1591,9 @@
 .aq-tile{container-type:inline-size; position:relative; width:100%; border-radius:6px; overflow:hidden; filter:brightness(.5) saturate(.85);
   transition:filter .45s ease, transform .45s ease; box-shadow:0 18px 40px rgba(0,0,0,.5); cursor:pointer; flex:none;}
 .aq-col:nth-child(3) .aq-tile{filter:brightness(.36) saturate(.8);}
-.aq-tile:hover{filter:brightness(1) saturate(1.05); transform:translateZ(60px) scale(1.04); z-index:5;}
+.aq-tile:hover{filter:brightness(1) saturate(1.05); transform:scale(1.04); z-index:5;}
+.aq-slot{position:absolute; left:50%; top:50%; transform-style:flat; backface-visibility:hidden; -webkit-backface-visibility:hidden;}
+.aq-slot .aq-tile{width:100%; height:100%; aspect-ratio:auto;}
 .aq-bar{display:flex; align-items:center; justify-content:space-between; padding:3.4cqw 5cqw; font-size:4.2cqw; font-weight:700; letter-spacing:.04em; opacity:.9;}
 .aq-bar i{display:flex; gap:2cqw;} .aq-bar i b{width:6cqw; height:1.2cqw; background:currentColor; opacity:.5; border-radius:2px;}
 .aq-t-hero{padding:0 6cqw 6cqw; display:flex; flex-direction:column; justify-content:flex-end; height:calc(100% - 11cqw);}
@@ -1536,6 +1612,28 @@
 .aq-t-poster em{display:block; width:22cqw; height:1.4cqw; margin:4cqw auto 0; border-radius:2px;}
 .aq-made{position:absolute; left:0; right:0; top:46%; transform:translateY(-50%); text-align:center; z-index:20; pointer-events:none;
   font-family:Georgia,'Times New Roman',serif; font-size:clamp(20px,2.7vw,36px); line-height:1.12; color:#fff; text-shadow:0 2px 22px rgba(0,0,0,.65);}
+
+/* ---- straight, creative wall: three rows moving in opposite directions ---- */
+.aq-wall{position:relative; height:clamp(500px,46vw,580px); overflow:hidden; margin-top:10px; perspective:none;
+  -webkit-mask-image:linear-gradient(transparent 0,#000 14%,#000 86%,transparent 100%); mask-image:linear-gradient(transparent 0,#000 14%,#000 86%,transparent 100%);}
+.aq-wall::before{content:''; position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse 62% 60% at 50% 50%, transparent 35%, #000 100%);}
+.aq-track{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:28px; transform-style:flat;}
+.aq-row{display:flex; width:max-content; will-change:transform; animation:awL 62s linear infinite;}
+.aq-row.r2{animation-name:awR; animation-duration:74s;}
+.aq-row.r3{animation-duration:56s;}
+.aq-row:hover{animation-play-state:paused;}
+@keyframes awL{to{transform:translateX(-50%);}}
+@keyframes awR{from{transform:translateX(-50%);} to{transform:translateX(0);}}
+.aq-cell{position:relative; flex:none; width:clamp(190px,21vw,290px); margin-right:24px;}
+.aq-cell .aq-tile{width:100%; height:auto; border-radius:18px; border:1px solid rgba(255,255,255,.08); filter:brightness(.4) saturate(.7);
+  transform:translateY(0) scale(1); transition:filter .5s ease, transform .5s cubic-bezier(.2,.8,.2,1), box-shadow .5s ease; box-shadow:0 18px 40px -20px rgba(0,0,0,.9);}
+.aq-row.r2 .aq-tile{filter:brightness(.8) saturate(.95);}
+.aq-cell:hover .aq-tile{filter:brightness(1) saturate(1.05); transform:translateY(-10px) scale(1.035); box-shadow:0 34px 60px -22px rgba(0,0,0,.95), 0 0 0 1px rgba(255,255,255,.28);}
+.aq-cap{position:absolute; top:12px; right:12px; z-index:9; padding:6px 11px; border-radius:100px; background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.2); color:#fff; font:600 11px 'JetBrains Mono',monospace; letter-spacing:.04em; white-space:nowrap; opacity:0; transform:translateY(-6px); transition:opacity .35s ease, transform .35s ease; pointer-events:none; backdrop-filter:blur(8px);}
+.aq-cell:hover .aq-cap{opacity:1; transform:none;}
+.aq-made{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:5; pointer-events:none; text-align:center;
+  padding:20px 34px; border-radius:24px; background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.2); backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.9); font-family:Georgia,'Times New Roman',serif; font-size:clamp(22px,2.6vw,34px); line-height:1.1; color:#fff; text-shadow:none;}
 
 /* accordion */
 .aq-acc{max-width:1180px; margin:0 auto; padding:0 22px;}
@@ -2534,6 +2632,69 @@ body{animation:avPageIn .8s var(--ease-out) both;}
     <div class="as-duo">
       <a class="as-big" href="#try-ai"><div class="as-prompt"><i></i><span id="asType"></span></div><b>Start with AI &rarr;</b></a>
       <a class="as-big" href="#capabilities"><div class="as-mini" id="asMini"></div><b>Explore what it builds &rarr;</b></a>
+    </div>
+  </div>
+</section>
+
+<!-- ======== SCROLL CARDS (cards arrive one by one) ======== -->
+<section class="awc" id="aq-cards" aria-label="Workspace cards">
+  <div class="awc-wrap">
+    <aside class="awc-side">
+      <div class="awc-eyebrow">UI cards</div>
+      <h2>Your whole workspace, one card at a time.</h2>
+      <p>Keep scrolling and the workspace builds itself: live runs, timelines, credits and prompts, each card arriving as you reach it.</p>
+      <div class="awc-count"><b id="awcNum">00</b><span>/ 05 cards</span></div>
+      <div class="awc-bar"><i id="awcBar"></i></div>
+    </aside>
+
+    <div class="awc-stack">
+      <!-- 1 · live run (purple) -->
+      <article class="awc-card c-run" data-n="1">
+        <div class="awc-head"><span class="awc-live"></span>Generating<span class="awc-chip">Studio</span></div>
+        <div class="awc-big"><b>24 images</b><span>31 minutes saved this week</span></div>
+        <div class="awc-prog"><i style="--w:72%"></i></div>
+        <div class="awc-rows">
+          <div class="awc-row"><i class="th th1"></i><div><b>Coffee brand logo</b><span>Done · 1 credit</span></div></div>
+          <div class="awc-row"><i class="th th2"></i><div><b>Rainy street video</b><span>Rendering · 5 credits</span></div></div>
+        </div>
+      </article>
+
+      <!-- 2 · pill navigation -->
+      <article class="awc-card c-pill" data-n="2">
+        <div class="awc-head">Jump anywhere</div>
+        <div class="awc-pillbar" role="tablist">
+          <button class="on" type="button">Create</button>
+          <button type="button">Chat</button>
+          <button type="button">Studio</button>
+          <button type="button">Settings</button>
+        </div>
+        <p class="awc-note">One tap moves you between create, chat and your studio, without losing your place.</p>
+      </article>
+
+      <!-- 3 · timeline (light) -->
+      <article class="awc-card c-light" data-n="3">
+        <div class="awc-head">Timeline</div>
+        <ol class="awc-tl">
+          <li><i></i><div><b>Logo generated</b><span>1 credit · just now</span></div></li>
+          <li><i></i><div><b>Website draft ready</b><span>Studio · 2 min ago</span></div></li>
+          <li><i></i><div><b>Video delivered</b><span>5 credits · 1 hour ago</span></div></li>
+        </ol>
+      </article>
+
+      <!-- 4 · credits -->
+      <article class="awc-card c-credits" data-n="4">
+        <div class="awc-head">Credits left</div>
+        <div class="awc-big"><b>10</b><span>free on sign up</span></div>
+        <div class="awc-seg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="awc-note">Chat is always free. Credits are used only for images and videos.</p>
+      </article>
+
+      <!-- 5 · prompt -->
+      <article class="awc-card c-prompt" data-n="5">
+        <div class="awc-head">Start with one line</div>
+        <div class="awc-input"><span>Ask Aviqo to create anything...</span><button type="button" aria-label="Send"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
+        <div class="awc-chips"><span>Logo</span><span>Video</span><span>Website</span><span>Study plan</span></div>
+      </article>
     </div>
   </div>
 </section>
@@ -3939,36 +4100,22 @@ body{animation:avPageIn .8s var(--ease-out) both;}
     d.innerHTML = h;
     return d;
   }
-  var track = $('#aqTrack'), cols = [], N = 5;
-  for(var c=0;c<N;c++){
-    var col = document.createElement('div');
-    col.className = 'aq-col';
-    col.style.left = (1.5 + c*20) + '%';
-    for(var r=0;r<6;r++){ col.appendChild(tile(sites[(c*3 + r*5) % sites.length], c*7+r, c===0||c===N-1)); }
-    track.appendChild(col); cols.push(col);
-  }
-  var wall = $('#aqWall'), mx = 0, visible = false, t0 = performance.now();
-  function frame(now){
-    if(!visible){ return; }
-    var rect = wall.getBoundingClientRect(), vh = window.innerHeight;
-    var prog = (vh - rect.top) / (vh + rect.height);   // 0..1 as the wall crosses the screen
-    var t = (now - t0) / 1000;
-    cols.forEach(function(col, c){
-      var ang = (2 - c) * 26 + mx * 6;
-      var dir = (c % 2 === 0) ? 1 : -1;
-      var y = (reduce ? 0 : Math.sin(t*0.55 + c*1.3) * 16) + dir * (prog - .5) * 150 + (c%2 ? 40 : 0);
-      col.style.transform = 'rotateY(' + ang.toFixed(2) + 'deg) translateY(' + y.toFixed(1) + 'px)';
+  var track = $('#aqTrack'), wall = $('#aqWall');
+  /* three rows, each rotated through the list so they do not match; every row is doubled for a seamless loop */
+  var rows = [{cls:'r1', off:0}, {cls:'r2', off:4}, {cls:'r3', off:8}];
+  rows.forEach(function(rc){
+    var row = document.createElement('div'); row.className = 'aq-row ' + rc.cls;
+    var list = sites.slice(rc.off).concat(sites.slice(0, rc.off));
+    list = list.concat(list);
+    list.forEach(function(sv, idx){
+      var cell = document.createElement('div'); cell.className = 'aq-cell';
+      var tl = tile(sv, idx, false); tl.style.aspectRatio = '1.42';
+      var cap = document.createElement('span'); cap.className = 'aq-cap'; cap.textContent = '\u2726 Made with Aviqo AI';
+      cell.appendChild(tl); cell.appendChild(cap); row.appendChild(cell);
     });
-    requestAnimationFrame(frame);
-  }
-  new IntersectionObserver(function(es){
-    var was = visible; visible = es[0].isIntersecting;
-    if(visible && !was) requestAnimationFrame(frame);
-  }, {rootMargin:'120px'}).observe(wall);
-  wall.addEventListener('mousemove', function(e){ var r = wall.getBoundingClientRect(); mx = ((e.clientX - r.left)/r.width - .5) * 2; });
-  wall.addEventListener('mouseleave', function(){ mx = 0; });
+    track.appendChild(row);
+  });
   wall.style.pointerEvents = 'auto';
-  frame(performance.now());
 
   /* ---- accordions ---- */
   $$('#aqAcc > .aq-item > .aq-q').forEach(function(b){
@@ -4654,6 +4801,49 @@ body.dark-theme #avq-root{--bt:#8d98ff}
   x.addEventListener('click',close);
   o.addEventListener('click',function(e){ if(e.target===o) close(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&o.classList.contains('on')) close(); });
+})();
+</script>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.awc-card'));
+  cards.forEach(function(c, i){ c.style.setProperty('--i', i); });
+  var ticking = false;
+  function stackFx(){
+    ticking = false;
+    cards.forEach(function(c, i){
+      var next = cards[i + 1]; if(!next) return;
+      var h = c.offsetHeight, stickyTop = 120 + i * 22;
+      var covered = Math.min(1, Math.max(0, (stickyTop + h - next.getBoundingClientRect().top) / h));
+      c.style.scale = (1 - covered * .05).toFixed(4);
+      c.style.filter = covered > 0 ? 'brightness(' + (1 - covered * .35).toFixed(3) + ')' : '';
+    });
+  }
+  function onScroll(){ if(!ticking){ ticking = true; requestAnimationFrame(stackFx); } }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  stackFx();
+  var num = document.getElementById('awcNum'), bar = document.getElementById('awcBar'), best = 0;
+  function mark(n){
+    if(n<=best) return; best = n;
+    num.textContent = ('0' + n).slice(-2);
+    bar.style.width = (n / cards.length * 100) + '%';
+  }
+  if(!('IntersectionObserver' in window)){ cards.forEach(function(c){ c.classList.add('in'); }); mark(cards.length); return; }
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      e.target.classList.add('in'); mark(+e.target.getAttribute('data-n')); io.unobserve(e.target);
+    });
+  }, {threshold:.3, rootMargin:'0px 0px -6% 0px'});
+  cards.forEach(function(c){ io.observe(c); });
+  /* pill tabs */
+  document.querySelectorAll('.awc-pillbar button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.awc-pillbar button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+    });
+  });
 })();
 </script>
 </body>
