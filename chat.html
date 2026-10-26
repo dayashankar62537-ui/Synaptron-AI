@@ -1278,6 +1278,23 @@
   .cc .chat-send:hover{opacity:.85;}
   .cc .chat-send svg{width:17px; height:17px; stroke:var(--on-brand); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 
+  /* ---------- "+" actions menu above the composer ---------- */
+  .cc .cc-plus{position:relative; flex:none;}
+  .cc .cc-menu{
+    display:none; position:absolute; left:-6px; bottom:calc(100% + 12px); z-index:30;
+    min-width:248px; padding:6px; background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,0.14);
+  }
+  .cc .cc-menu.open{display:block;}
+  .cc .cc-menu-item{
+    display:flex; align-items:center; gap:12px; width:100%; padding:9px 10px; border:0; border-radius:9px;
+    background:none; color:var(--text); font:500 14px 'Inter',sans-serif; text-align:left; cursor:pointer; white-space:nowrap;
+  }
+  .cc .cc-menu-item:hover, .cc .cc-menu-item:focus-visible{background:var(--surface-2); outline:none;}
+  .cc .cc-menu-item svg{width:18px; height:18px; flex:none; stroke:var(--text); fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+  .cc .cc-menu-item kbd{margin-left:auto; font:12px 'Inter',sans-serif; color:var(--muted-2);}
+  .cc .cc-menu-sep{height:1px; background:var(--border); margin:6px 4px;}
+
   /* ---------- messages ---------- */
   .cc .msg{display:flex; gap:12px; align-items:flex-start;}
   .cc .msg.intro{display:none !important;}
@@ -1438,9 +1455,34 @@
 
         <div class="chat-input-row">
           <input type="file" id="attachInput" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" style="display:none;">
-          <button class="chat-attach" id="chatAttachBtn" type="button" title="Attach a photo" aria-label="Attach a photo">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
+          <div class="cc-plus">
+            <button class="chat-attach" id="chatAttachBtn" type="button" title="Add" aria-label="Add" aria-haspopup="menu" aria-expanded="false">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="cc-menu" id="ccPlusMenu" role="menu">
+              <button class="cc-menu-item" type="button" role="menuitem" data-act="upload">
+                <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                <span>Upload or add photo</span><kbd>Ctrl+U</kbd>
+              </button>
+              <div class="cc-menu-sep"></div>
+              <button class="cc-menu-item" type="button" role="menuitem" data-chip="Generate an image of a futuristic city">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                <span>Generate an image</span>
+              </button>
+              <button class="cc-menu-item" type="button" role="menuitem" data-chip="Create a short video ad for my brand">
+                <svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="2.5"/><path d="M21 8l-4.5 3 4.5 3z"/></svg>
+                <span>Create a video</span>
+              </button>
+              <button class="cc-menu-item" type="button" role="menuitem" data-chip="Build a website for my bakery">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
+                <span>Build a website</span>
+              </button>
+              <button class="cc-menu-item" type="button" role="menuitem" data-chip="Build an app for tracking expenses">
+                <svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 19h3"/></svg>
+                <span>Build an app</span>
+              </button>
+            </div>
+          </div>
           <input type="text" id="chatInput" placeholder="How can Aviqo help you today?" autocomplete="off">
           <button class="chat-send" id="chatSend" type="button" aria-label="Send">
             <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
@@ -1674,7 +1716,7 @@
   function scrollBottom(){ body.scrollTop = body.scrollHeight; }
 
   // --- Photo attach ---
-  attachBtn.addEventListener('click', ()=>attachInput.click());
+  // + button opens the actions menu (see layout script)
   attachInput.addEventListener('change', ()=>{
     const file = attachInput.files && attachInput.files[0];
     if(!file) return;
@@ -1996,6 +2038,37 @@
     var dark = !document.body.classList.contains('dark-theme');
     applyTheme(dark);
     try { localStorage.setItem('aviqo_theme', dark ? 'dark' : 'light'); } catch(e){}
+  });
+
+  // "+" menu: upload, or pick one of the quick actions (reuses the existing suggestion chips)
+  var plusBtn = document.getElementById('chatAttachBtn');
+  var menu = document.getElementById('ccPlusMenu');
+  var fileIn = document.getElementById('attachInput');
+  function setMenu(open){
+    menu.classList.toggle('open', open);
+    plusBtn.setAttribute('aria-expanded', String(open));
+  }
+  plusBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    setMenu(!menu.classList.contains('open'));
+  });
+  document.addEventListener('click', function(e){
+    if(!menu.contains(e.target)) setMenu(false);
+  });
+  menu.addEventListener('click', function(e){
+    var item = e.target.closest('.cc-menu-item');
+    if(!item) return;
+    setMenu(false);
+    if(item.dataset.act === 'upload'){ fileIn.click(); return; }
+    var chip = document.querySelector('#chatQuick .qchip[data-msg="' + item.dataset.chip + '"]');
+    if(chip) chip.click();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') setMenu(false);
+    if((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')){
+      e.preventDefault();
+      fileIn.click();
+    }
   });
 
   // Greeting is shown until the first real message arrives, then the conversation takes over.
