@@ -1,0 +1,62 @@
+// api/feedback.js
+// Saves like / dislike feedback for assistant replies.
+// Storage: Upstash Redis over its REST API. Set these in Vercel project settings:
+//   UPSTASH_REDIS_REST_URL
+//   UPSTASH_REDIS_REST_TOKEN
+// No user email or IP is stored. Each entry holds only the rating, a short copy of the reply, and a timestamp.
+// If the variables are missing, the endpoint answers 503 so the page can say the feedback was not saved.
+
+const MAX_REPLY_CHARS = 1500;
+const MAX_BODY_CHARS = 4000;
+const LIST_KEY = 'aviqo:feedback';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  let body;
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  } catch (e) {
+    return res.status(400).json({ error: 'Invalid request body.' });
+  }
+
+  const rating = body && body.rating;
+  if (rating !== 'up' && rating !== 'down') {
+    return res.status(400).json({ error: 'rating must be "up" or "down".' });
+  }
+
+  const reply = String((body && body.reply) || '').slice(0, MAX_REPLY_CHARS);
+  if (!reply.trim()) {
+    return res.status(400).json({ error: 'reply is required.' });
+  }
+
+  const entry = JSON.stringify({ rating, reply, ts: new Date().toISOString() });
+  if (entry.length > MAX_BODY_CHARS) {
+    return res.status(400).json({ error: 'Feedback is too large.' });
+  }
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    return res.status(503).json({ error: 'Feedback storage is not configured.' });
+  }
+
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['LPUSH', LIST_KEY, entry])
+    });
+    if (!r.ok) {
+      return res.status(502).json({ error: 'Could not save feedback.' });
+    }
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    return res.status(502).json({ error: 'Could not save feedback.' });
+  }
+}
