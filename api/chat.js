@@ -670,11 +670,17 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await geminiRes.json();
+    const data = await geminiRes.json().catch(() => null);
 
     if (!geminiRes.ok) {
-      const errMsg = (data && data.error && data.error.message) || 'Gemini API request failed.';
-      return res.status(geminiRes.status).json({ error: errMsg });
+      // Google sometimes wraps errors in an array, so look at the first item too.
+      const raw = Array.isArray(data) ? data[0] : data;
+      const detail = raw && raw.error ? raw.error : raw;
+      const msg = detail && typeof detail.message === 'string' ? detail.message : null;
+      console.error('Gemini error', geminiRes.status, JSON.stringify(data).slice(0, 800));
+      return res.status(geminiRes.status).json({
+        error: msg || ('Gemini returned HTTP ' + geminiRes.status + '.')
+      });
     }
 
     const reply =
