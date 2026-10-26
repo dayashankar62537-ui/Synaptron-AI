@@ -635,9 +635,10 @@ export default async function handler(req, res) {
   }
 
   // Try the newest model first. If Google says it is not available, fall back to the stable one.
+  // Last entry is retried once more after a short wait, for temporary "high demand" errors.
   const candidates = image
-    ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL]
-    : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL];
+    ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
+    : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL];
 
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
@@ -663,6 +664,7 @@ export default async function handler(req, res) {
     let geminiRes = null;
     let data = null;
     for (let i = 0; i < candidates.length; i++) {
+      if (i > 0) await new Promise((r) => setTimeout(r, 1500));
       geminiRes = await fetch(GEMINI_CHAT_URL, {
         method: 'POST',
         headers: {
@@ -677,8 +679,9 @@ export default async function handler(req, res) {
         })
       });
       data = await geminiRes.json().catch(() => null);
-      // Only move to the next model when this one does not exist or is not available to the key.
-      if (geminiRes.ok || (geminiRes.status !== 404 && geminiRes.status !== 400)) break;
+      // Stop on success or on auth errors (a bad key will not fix itself on retry).
+      // Anything else (model missing, high demand, rate limit, server error) tries the next candidate.
+      if (geminiRes.ok || geminiRes.status === 401 || geminiRes.status === 403) break;
       console.error('Gemini model failed, trying next', candidates[i], geminiRes.status);
     }
 
