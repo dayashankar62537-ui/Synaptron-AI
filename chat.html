@@ -2051,6 +2051,12 @@
     return null;
   }
 
+  // Shown when the browser cannot reach the server at all (no internet, server down, request blocked)
+  const CONNECTION_MSG = "Looks like there's a connection issue. Please check your internet and try again.";
+  function isConnectionError(err){
+    return !navigator.onLine || (err instanceof TypeError);   // fetch() throws TypeError on network failure
+  }
+
   async function askAviqo(message, image){
     const payload = { message };
     if(image) payload.image = { mimeType: image.mimeType, data: image.data };
@@ -2164,6 +2170,7 @@
         window.open('explore.html?generated=1', '_blank');
       }).catch(err=>{
         removeTyping();
+        if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
         addAiMsg("I couldn't generate that image right now (" + err.message + "). Please try again in a moment.");
       });
       return;
@@ -2189,6 +2196,7 @@
       addAiMsg(reply);
     }).catch(err=>{
       removeTyping();
+      if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
       addAiMsg("I couldn't reach the AI backend just now (" + err.message + "). Please try again in a moment.");
     });
   }
