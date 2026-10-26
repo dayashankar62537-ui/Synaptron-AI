@@ -1,7 +1,7 @@
 // api/chat.js
 // Secure backend endpoint — deployed on Vercel.
-// The OpenRouter API key lives ONLY here, as a server-side environment variable
-// (OPENROUTER_API_KEY). It is never sent to the browser, never appears in the
+// The Gemini API key lives ONLY here, as a server-side environment variable
+// (GEMINI_API_KEY). It is never sent to the browser, never appears in the
 // page source, and never appears in the frontend JavaScript.
 //
 // Features:
@@ -595,16 +595,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Google AI Studio (Gemini) is used when GEMINI_API_KEY is set. Otherwise OpenRouter is used.
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openrouterKey = process.env.OPENROUTER_API_KEY;
-  if (!geminiKey && !openrouterKey) {
+  // All chat traffic goes to Google AI Studio (Gemini). OpenRouter is kept for later use.
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
     return res.status(500).json({
       error: 'Server is not configured. Add GEMINI_API_KEY (Google AI Studio) in your Vercel project settings.'
     });
   }
-  const useGemini = !!geminiKey;
-  const apiKey = useGemini ? geminiKey : openrouterKey;
 
   let message = '';
   let image = null; // { mimeType, data } — data is base64 WITHOUT the data: prefix
@@ -636,9 +633,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Message is too long.' });
   }
 
-  const model = useGemini
-    ? (image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL)
-    : (image ? VISION_MODEL : TEXT_MODEL);
+  const model = image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
 
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
@@ -661,29 +656,25 @@ export default async function handler(req, res) {
   ];
 
   try {
-    const orRes = await fetch(
-      useGemini ? GEMINI_CHAT_URL : 'https://openrouter.ai/api/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          ...(useGemini ? {} : { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' })
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.7,
-          max_tokens: MAX_REPLY_TOKENS
-        })
-      }
-    );
+    const geminiRes = await fetch(GEMINI_CHAT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: MAX_REPLY_TOKENS
+      })
+    });
 
-    const data = await orRes.json();
+    const data = await geminiRes.json();
 
-    if (!orRes.ok) {
-      const errMsg = (data && data.error && data.error.message) || 'OpenRouter API request failed.';
-      return res.status(orRes.status).json({ error: errMsg });
+    if (!geminiRes.ok) {
+      const errMsg = (data && data.error && data.error.message) || 'Gemini API request failed.';
+      return res.status(geminiRes.status).json({ error: errMsg });
     }
 
     const reply =
@@ -692,6 +683,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ reply });
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to reach OpenRouter API.' });
+    return res.status(500).json({ error: 'Failed to reach Gemini API.' });
   }
 }
