@@ -1,7 +1,7 @@
 // api/chat.js
 // Secure backend endpoint — deployed on Vercel.
-// The Groq API key lives ONLY here, as a server-side environment variable
-// (GROQ_API_KEY). It is never sent to the browser, never appears in the
+// The OpenRouter API key lives ONLY here, as a server-side environment variable
+// (OPENROUTER_API_KEY). It is never sent to the browser, never appears in the
 // page source, and never appears in the frontend JavaScript.
 //
 // Features:
@@ -24,9 +24,15 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const TEXT_MODEL = 'openai/gpt-oss-20b';
 
 // Vision-capable model — used automatically when the user attaches a photo.
-// Check https://console.groq.com/docs/models for the current vision model
+// Check https://openrouter.ai/models for the current vision model
 // name if this one is ever retired.
 const VISION_MODEL = 'qwen/qwen3.6-27b';
+
+// Google AI Studio (Gemini) through its OpenAI-compatible endpoint.
+// Used when GEMINI_API_KEY is set.
+const GEMINI_CHAT_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+const GEMINI_TEXT_MODEL = 'gemini-3.8-flash';
+const GEMINI_VISION_MODEL = 'gemini-3.8-flash';
 
 const MAX_MESSAGE_CHARS = 2000;      // max length of the current user message
 const MAX_HISTORY_MESSAGES = 20;     // max previous turns sent to the model
@@ -589,12 +595,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
+  // Google AI Studio (Gemini) is used when GEMINI_API_KEY is set. Otherwise OpenRouter is used.
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (!geminiKey && !openrouterKey) {
     return res.status(500).json({
-      error: 'Server is not configured. Add GROQ_API_KEY in your Vercel project settings.'
+      error: 'Server is not configured. Add GEMINI_API_KEY (Google AI Studio) in your Vercel project settings.'
     });
   }
+  const useGemini = !!geminiKey;
+  const apiKey = useGemini ? geminiKey : openrouterKey;
 
   let message = '';
   let image = null; // { mimeType, data } — data is base64 WITHOUT the data: prefix
@@ -626,7 +636,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Message is too long.' });
   }
 
-  const model = image ? VISION_MODEL : TEXT_MODEL;
+  const model = useGemini
+    ? (image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL)
+    : (image ? VISION_MODEL : TEXT_MODEL);
 
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
@@ -649,25 +661,29 @@ export default async function handler(req, res) {
   ];
 
   try {
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.7,
-        max_completion_tokens: MAX_REPLY_TOKENS
-      })
-    });
+    const orRes = await fetch(
+      useGemini ? GEMINI_CHAT_URL : 'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          ...(useGemini ? {} : { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' })
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.7,
+          max_tokens: MAX_REPLY_TOKENS
+        })
+      }
+    );
 
-    const data = await groqRes.json();
+    const data = await orRes.json();
 
-    if (!groqRes.ok) {
-      const errMsg = (data && data.error && data.error.message) || 'Groq API request failed.';
-      return res.status(groqRes.status).json({ error: errMsg });
+    if (!orRes.ok) {
+      const errMsg = (data && data.error && data.error.message) || 'OpenRouter API request failed.';
+      return res.status(orRes.status).json({ error: errMsg });
     }
 
     const reply =
@@ -676,6 +692,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ reply });
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to reach Groq API.' });
+    return res.status(500).json({ error: 'Failed to reach OpenRouter API.' });
   }
 }
