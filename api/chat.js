@@ -33,6 +33,7 @@ const VISION_MODEL = 'qwen/qwen3.6-27b';
 const GEMINI_CHAT_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const GEMINI_TEXT_MODEL = 'gemini-3.8-flash';
 const GEMINI_VISION_MODEL = 'gemini-3.8-flash';
+const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash';
 
 const MAX_MESSAGE_CHARS = 2000;      // max length of the current user message
 const MAX_HISTORY_MESSAGES = 20;     // max previous turns sent to the model
@@ -633,7 +634,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Message is too long.' });
   }
 
-  const model = image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
+  // Try the newest model first. If Google says it is not available, fall back to the stable one.
+  const candidates = image
+    ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL]
+    : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL];
 
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
@@ -656,21 +660,27 @@ export default async function handler(req, res) {
   ];
 
   try {
-    const geminiRes = await fetch(GEMINI_CHAT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.7,
-        max_tokens: MAX_REPLY_TOKENS
-      })
-    });
-
-    const data = await geminiRes.json().catch(() => null);
+    let geminiRes = null;
+    let data = null;
+    for (let i = 0; i < candidates.length; i++) {
+      geminiRes = await fetch(GEMINI_CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: candidates[i],
+          messages,
+          temperature: 0.7,
+          max_tokens: MAX_REPLY_TOKENS
+        })
+      });
+      data = await geminiRes.json().catch(() => null);
+      // Only move to the next model when this one does not exist or is not available to the key.
+      if (geminiRes.ok || (geminiRes.status !== 404 && geminiRes.status !== 400)) break;
+      console.error('Gemini model failed, trying next', candidates[i], geminiRes.status);
+    }
 
     if (!geminiRes.ok) {
       // Google sometimes wraps errors in an array, so look at the first item too.
