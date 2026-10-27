@@ -2530,6 +2530,72 @@
       bar.classList.toggle('is-last', m === lastMsg && !hasMedia && !m.classList.contains('cc-shared'));
     });
   }
+  // ---- read aloud: clean the answer, pick a natural voice, and speak it in short parts ----
+  function ccSpeakable(text){
+    var t = String(text);
+    t = t.replace(/```[\s\S]*?```/g, ' (code is shown in the chat) ');
+    t = t.replace(/\\\(|\\\)|\\\[|\\\]/g, ' ');
+    t = t.replace(/^\s*#{1,6}\s*/gm, '');
+    t = t.replace(/^\s*[-*•]\s+/gm, '');
+    t = t.replace(/\*\*|__|`|\*/g, '');
+    t = t.replace(/\|/g, ' ').replace(/-{3,}/g, ' ');
+    t = t.replace(/\\times|\\cdot|×/g, ' times ').replace(/\\div|÷/g, ' divided by ').replace(/[−–]|\\-/g, ' minus ')
+         .replace(/\\%|%/g, ' percent ').replace(/₹/g, ' rupees ').replace(/\\?=/g, ' equals ').replace(/\\?\+/g, ' plus ')
+         .replace(/(\d)\s+-\s+(\d)/g, '$1 minus $2').replace(/\s-\s/g, ' minus ');
+    return t.replace(/\\[a-zA-Z]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function ccSplitForSpeech(t){
+    // split after a full stop, ! or ? that is followed by a space (keeps decimals like 0.20 together)
+    var parts = t.split(/(?<=[.!?।])\s+/);
+    var out = [], cur = '';
+    parts.forEach(function(p){
+      p = p.trim();
+      if(!p) return;
+      if((cur + ' ' + p).trim().length > 180){ if(cur) out.push(cur); cur = p; }
+      else { cur = (cur + ' ' + p).trim(); }
+    });
+    if(cur) out.push(cur);
+    return out;
+  }
+  function ccPickVoice(lang){
+    var voices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [];
+    var pool = voices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(lang) === 0; });
+    if(!pool.length) pool = voices;
+    var pref = pool.find(function(v){ return /natural|google|samantha|aria|jenny|neural/i.test(v.name); });
+    return pref || pool[0] || null;
+  }
+  var ccSpeakQueue = [];
+  var ccSpeakBtn = null;
+  function ccStopSpeaking(){
+    ccSpeakQueue = [];
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    if(ccSpeakBtn){ ccSpeakBtn.classList.remove('on'); ccSpeakBtn = null; }
+  }
+  function ccSpeakNext(){
+    var part = ccSpeakQueue.shift();
+    if(!part){ ccStopSpeaking(); return; }
+    var u = new SpeechSynthesisUtterance(part.text);
+    u.lang = part.lang;
+    if(part.voice) u.voice = part.voice;
+    u.rate = 1;
+    u.pitch = 1;
+    u.onend = ccSpeakNext;
+    u.onerror = function(){ ccStopSpeaking(); };
+    window.speechSynthesis.speak(u);
+  }
+  function ccSpeak(btn, text){
+    var clean = ccSpeakable(text);
+    if(!clean) return;
+    var hindi = /[ऀ-ॿ]/.test(clean);
+    var lang = hindi ? 'hi' : 'en';
+    var voice = ccPickVoice(lang);
+    var tag = hindi ? 'hi-IN' : 'en-IN';
+    ccSpeakQueue = ccSplitForSpeech(clean).map(function(s){ return { text: s, lang: tag, voice: voice }; });
+    ccSpeakBtn = btn;
+    btn.classList.add('on');
+    ccSpeakNext();
+  }
+
   // ---- like / dislike: save to the server, and show a short confirmation ----
   function ccSendFeedback(rating, text){
     return fetch('/api/feedback', {
@@ -2658,12 +2724,8 @@
       }
     } else if(a === 'speak'){
       if(!('speechSynthesis' in window)) return;
-      if(window.speechSynthesis.speaking){ window.speechSynthesis.cancel(); btn.classList.remove('on'); return; }
-      var u = new SpeechSynthesisUtterance(text);
-      u.onend = function(){ btn.classList.remove('on'); };
-      u.onerror = function(){ btn.classList.remove('on'); };
-      btn.classList.add('on');
-      window.speechSynthesis.speak(u);
+      if(window.speechSynthesis.speaking || ccSpeakQueue.length){ ccStopSpeaking(); return; }
+      ccSpeak(btn, text);
     } else if(a === 'share'){
       if(!text) return;
       e.stopPropagation();
