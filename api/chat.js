@@ -24,7 +24,7 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const TEXT_MODEL = 'openai/gpt-oss-20b';
 
 // Vision-capable model — used automatically when the user attaches a photo.
-// Check https://openrouter.ai/models for the current vision model
+// Check https://console.groq.com/docs/models for the current vision model
 // name if this one is ever retired.
 const VISION_MODEL = 'qwen/qwen3.6-27b';
 
@@ -597,11 +597,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Groq is the first provider, then Gemini (Google AI Studio), then OpenRouter.
+  // Groq is the first provider, then Gemini (Google AI Studio).
   const geminiKey = process.env.GEMINI_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
-  const openrouterKey = process.env.OPENROUTER_API_KEY;
-  if (!geminiKey && !groqKey && !openrouterKey) {
+  if (!geminiKey && !groqKey) {
     return res.status(500).json({
       error: 'Server is not configured. Add GEMINI_API_KEY (Google AI Studio) in your Vercel project settings.'
     });
@@ -658,7 +657,7 @@ export default async function handler(req, res) {
   ];
 
   try {
-    // Providers in order: Groq first, then Gemini, then OpenRouter (text only).
+    // Providers in order: Groq first, then Gemini.
     // Each provider with a key is tried; a busy model is retried with a growing wait.
     const attempts = [];
     if (groqKey) {
@@ -681,15 +680,8 @@ export default async function handler(req, res) {
           : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
       });
     }
-    if (openrouterKey && !image) {
-      attempts.push({
-        name: 'OpenRouter',
-        url: 'https://openrouter.ai/api/v1/chat/completions',
-        key: openrouterKey,
-        headers: { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' },
-        models: [TEXT_MODEL]
-      });
-    }
+    // Share the load: when both keys exist, pick which one goes first at random for each message.
+    if (attempts.length === 2 && Math.random() < 0.5) attempts.reverse();
 
     let lastStatus = null;
     let lastData = null;
