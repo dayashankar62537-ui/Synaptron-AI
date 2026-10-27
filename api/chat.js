@@ -1,7 +1,7 @@
 // api/chat.js
 // Secure backend endpoint — deployed on Vercel.
-// The Gemini API key lives ONLY here, as a server-side environment variable
-// (GEMINI_API_KEY). It is never sent to the browser, never appears in the
+// The Groq API key lives ONLY here, as a server-side environment variable
+// (GROQ_API_KEY). It is never sent to the browser, never appears in the
 // page source, and never appears in the frontend JavaScript.
 //
 // Features:
@@ -27,14 +27,6 @@ const TEXT_MODEL = 'openai/gpt-oss-20b';
 // Check https://console.groq.com/docs/models for the current vision model
 // name if this one is ever retired.
 const VISION_MODEL = 'qwen/qwen3.6-27b';
-
-// Google AI Studio (Gemini) through its OpenAI-compatible endpoint.
-// Used when GEMINI_API_KEY is set.
-const GEMINI_CHAT_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-const GEMINI_TEXT_MODEL = 'gemini-3.8-flash';
-const GEMINI_VISION_MODEL = 'gemini-3.8-flash';
-// gemini-2.5-flash is retired for new users, so the fallback is the same model, tried again after a short wait.
-const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash';
 
 const MAX_MESSAGE_CHARS = 2000;      // max length of the current user message
 const MAX_HISTORY_MESSAGES = 20;     // max previous turns sent to the model
@@ -597,12 +589,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Groq is the first provider, then Gemini (Google AI Studio).
-  const geminiKey = process.env.GEMINI_API_KEY;
+  // Chat runs on Groq only.
   const groqKey = process.env.GROQ_API_KEY;
-  if (!geminiKey && !groqKey) {
+  if (!groqKey) {
     return res.status(500).json({
-      error: 'Server is not configured. Add GEMINI_API_KEY (Google AI Studio) in your Vercel project settings.'
+      error: 'Server is not configured. Add GROQ_API_KEY in your Vercel project settings.'
     });
   }
 
@@ -657,7 +648,7 @@ export default async function handler(req, res) {
   ];
 
   try {
-    // Providers in order: Groq first, then Gemini.
+    // Groq only. Each message is tried up to 2 times if Groq is busy.
     // Each provider with a key is tried; a busy model is retried with a growing wait.
     const attempts = [];
     if (groqKey) {
@@ -669,20 +660,6 @@ export default async function handler(req, res) {
         models: image ? [VISION_MODEL, VISION_MODEL] : [TEXT_MODEL, TEXT_MODEL]
       });
     }
-    if (geminiKey) {
-      attempts.push({
-        name: 'Gemini',
-        url: GEMINI_CHAT_URL,
-        key: geminiKey,
-        headers: {},
-        models: image
-          ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
-          : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
-      });
-    }
-    // Share the load: when both keys exist, pick which one goes first at random for each message.
-    if (attempts.length === 2 && Math.random() < 0.5) attempts.reverse();
-
     let lastStatus = null;
     let lastData = null;
 
