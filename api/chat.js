@@ -597,7 +597,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Gemini (Google AI Studio) is the main provider. Groq and OpenRouter are fallbacks.
+  // Groq is the first provider, then Gemini (Google AI Studio), then OpenRouter.
   const geminiKey = process.env.GEMINI_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
   const openrouterKey = process.env.OPENROUTER_API_KEY;
@@ -637,11 +637,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Message is too long.' });
   }
 
-  // Try the newest model first. If Google says it is not available, fall back to the stable one.
-  // Temporary "high demand" errors are common, so the model is tried several times with a growing wait.
-  const primary = image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
-  const candidates = [primary, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL];
-
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
   let userContent;
@@ -663,93 +658,86 @@ export default async function handler(req, res) {
   ];
 
   try {
-    let geminiRes = null;
-    let data = null;
-    for (let i = 0; geminiKey && i < candidates.length; i++) {
-      if (i > 0) await new Promise((r) => setTimeout(r, 1500 * i));
-      geminiRes = await fetch(GEMINI_CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${geminiKey}`
-        },
-        body: JSON.stringify({
-          model: candidates[i],
-          messages,
-          temperature: 0.7,
-          max_tokens: MAX_REPLY_TOKENS
-        })
+    // Providers in order: Groq first, then Gemini, then OpenRouter (text only).
+    // Each provider with a key is tried; a busy model is retried with a growing wait.
+    const attempts = [];
+    if (groqKey) {
+      attempts.push({
+        name: 'Groq',
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        key: groqKey,
+        headers: {},
+        models: image ? [VISION_MODEL, VISION_MODEL] : [TEXT_MODEL, TEXT_MODEL]
       });
-      data = await geminiRes.json().catch(() => null);
-      // Stop on success or on auth errors (a bad key will not fix itself on retry).
-      // Anything else (model missing, high demand, rate limit, server error) tries the next candidate.
-      if (geminiRes.ok || geminiRes.status === 401 || geminiRes.status === 403) break;
-      console.error('Gemini model failed, trying next', candidates[i], geminiRes.status);
+    }
+    if (geminiKey) {
+      attempts.push({
+        name: 'Gemini',
+        url: GEMINI_CHAT_URL,
+        key: geminiKey,
+        headers: {},
+        models: image
+          ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
+          : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
+      });
+    }
+    if (openrouterKey && !image) {
+      attempts.push({
+        name: 'OpenRouter',
+        url: 'https://openrouter.ai/api/v1/chat/completions',
+        key: openrouterKey,
+        headers: { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' },
+        models: [TEXT_MODEL]
+      });
     }
 
-    const geminiFailed = !geminiRes || !geminiRes.ok;
+    let lastStatus = null;
+    let lastData = null;
 
-    // If Gemini is unavailable, try Groq, then OpenRouter. Photos use the Groq vision model.
-    if (geminiFailed) {
-      const fallbacks = [
-        {
-          name: 'Groq',
-          key: groqKey,
-          url: 'https://api.groq.com/openai/v1/chat/completions',
-          model: image ? VISION_MODEL : TEXT_MODEL,
-          headers: {}
-        },
-        {
-          name: 'OpenRouter',
-          key: openrouterKey,
-          url: 'https://openrouter.ai/api/v1/chat/completions',
-          model: image ? null : TEXT_MODEL, // no vision model confirmed on OpenRouter yet
-          headers: { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' }
-        }
-      ];
-      for (const p of fallbacks) {
-        if (!p.key || !p.model) continue;
+    for (const p of attempts) {
+      for (let i = 0; i < p.models.length; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 1500 * i));
+        let r;
+        let d;
         try {
-          const r = await fetch(p.url, {
+          r = await fetch(p.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${p.key}`, ...p.headers },
-            body: JSON.stringify({ model: p.model, messages, temperature: 0.7, max_tokens: MAX_REPLY_TOKENS })
+            body: JSON.stringify({ model: p.models[i], messages, temperature: 0.7, max_tokens: MAX_REPLY_TOKENS })
           });
-          const d = await r.json().catch(() => null);
-          if (r.ok && d?.choices?.[0]?.message?.content) {
-            return res.status(200).json({ reply: d.choices[0].message.content });
-          }
-          console.error(p.name + ' fallback failed', r.status);
+          d = await r.json().catch(() => null);
         } catch (e) {
-          console.error(p.name + ' fallback error', e);
+          console.error(p.name + ' network error', e);
+          break;
         }
-      }
 
-      // Everything failed because of load or no provider available: show a friendly message.
-      if (!geminiRes || geminiRes.status >= 500 || geminiRes.status === 429) {
-        return res.status(503).json({
-          error: 'Aviqo is very busy right now. Please try again in a minute.'
-        });
+        if (r.ok && d?.choices?.[0]?.message?.content) {
+          return res.status(200).json({ reply: d.choices[0].message.content });
+        }
+
+        lastStatus = r.status;
+        lastData = d;
+        console.error(p.name + ' failed', p.models[i], r.status);
+        // A bad key will not fix itself on retry, so move on to the next provider.
+        if (r.status === 401 || r.status === 403) break;
       }
     }
 
-    if (geminiFailed) {
-      // Google sometimes wraps errors in an array, so look at the first item too.
-      const raw = Array.isArray(data) ? data[0] : data;
-      const detail = raw && raw.error ? raw.error : raw;
-      const msg = detail && typeof detail.message === 'string' ? detail.message : null;
-      console.error('Gemini error', geminiRes.status, JSON.stringify(data).slice(0, 800));
-      return res.status(geminiRes.status).json({
-        error: msg || ('Gemini returned HTTP ' + geminiRes.status + '.')
+    // Load problems, or no provider working: show a friendly message.
+    if (lastStatus === null || lastStatus >= 500 || lastStatus === 429) {
+      return res.status(503).json({
+        error: 'Aviqo is very busy right now. Please try again in a minute.'
       });
     }
 
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn't generate a response just now. Please try again.";
-
-    return res.status(200).json({ reply });
+    // Other errors: show the provider's reason.
+    const raw = Array.isArray(lastData) ? lastData[0] : lastData;
+    const detail = raw && raw.error ? raw.error : raw;
+    const msg = detail && typeof detail.message === 'string' ? detail.message : null;
+    return res.status(lastStatus).json({
+      error: msg || ('AI provider returned HTTP ' + lastStatus + '.')
+    });
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to reach Gemini API.' });
+    return res.status(500).json({ error: 'Failed to reach the AI service.' });
   }
 }
