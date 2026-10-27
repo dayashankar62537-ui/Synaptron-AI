@@ -33,7 +33,8 @@ const VISION_MODEL = 'qwen/qwen3.6-27b';
 const GEMINI_CHAT_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const GEMINI_TEXT_MODEL = 'gemini-3.8-flash';
 const GEMINI_VISION_MODEL = 'gemini-3.8-flash';
-const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash';
+// gemini-2.5-flash is retired for new users, so the fallback is the same model, tried again after a short wait.
+const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash';
 
 const MAX_MESSAGE_CHARS = 2000;      // max length of the current user message
 const MAX_HISTORY_MESSAGES = 20;     // max previous turns sent to the model
