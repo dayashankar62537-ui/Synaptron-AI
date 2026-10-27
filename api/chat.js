@@ -597,9 +597,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // All chat traffic goes to Google AI Studio (Gemini). OpenRouter is kept for later use.
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  // Gemini (Google AI Studio) is the main provider. Groq and OpenRouter are fallbacks.
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (!geminiKey && !groqKey && !openrouterKey) {
     return res.status(500).json({
       error: 'Server is not configured. Add GEMINI_API_KEY (Google AI Studio) in your Vercel project settings.'
     });
@@ -663,13 +665,13 @@ export default async function handler(req, res) {
   try {
     let geminiRes = null;
     let data = null;
-    for (let i = 0; i < candidates.length; i++) {
+    for (let i = 0; geminiKey && i < candidates.length; i++) {
       if (i > 0) await new Promise((r) => setTimeout(r, 1500 * i));
       geminiRes = await fetch(GEMINI_CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${geminiKey}`
         },
         body: JSON.stringify({
           model: candidates[i],
@@ -685,36 +687,53 @@ export default async function handler(req, res) {
       console.error('Gemini model failed, trying next', candidates[i], geminiRes.status);
     }
 
-    // Last resort for text messages: if Gemini is still failing, try OpenRouter (when its key is set).
-    if (!geminiRes.ok && !image && process.env.OPENROUTER_API_KEY) {
-      try {
-        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer': 'https://synaptron-ai.vercel.app',
-            'X-Title': 'Aviqo AI'
-          },
-          body: JSON.stringify({ model: TEXT_MODEL, messages, temperature: 0.7, max_tokens: MAX_REPLY_TOKENS })
-        });
-        const orData = await orRes.json().catch(() => null);
-        if (orRes.ok && orData?.choices?.[0]?.message?.content) {
-          return res.status(200).json({ reply: orData.choices[0].message.content });
+    const geminiFailed = !geminiRes || !geminiRes.ok;
+
+    // If Gemini is unavailable, try Groq, then OpenRouter. Photos use the Groq vision model.
+    if (geminiFailed) {
+      const fallbacks = [
+        {
+          name: 'Groq',
+          key: groqKey,
+          url: 'https://api.groq.com/openai/v1/chat/completions',
+          model: image ? VISION_MODEL : TEXT_MODEL,
+          headers: {}
+        },
+        {
+          name: 'OpenRouter',
+          key: openrouterKey,
+          url: 'https://openrouter.ai/api/v1/chat/completions',
+          model: image ? null : TEXT_MODEL, // no vision model confirmed on OpenRouter yet
+          headers: { 'HTTP-Referer': 'https://synaptron-ai.vercel.app', 'X-Title': 'Aviqo AI' }
         }
-        console.error('OpenRouter fallback failed', orRes.status);
-      } catch (e) {
-        console.error('OpenRouter fallback error', e);
+      ];
+      for (const p of fallbacks) {
+        if (!p.key || !p.model) continue;
+        try {
+          const r = await fetch(p.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${p.key}`, ...p.headers },
+            body: JSON.stringify({ model: p.model, messages, temperature: 0.7, max_tokens: MAX_REPLY_TOKENS })
+          });
+          const d = await r.json().catch(() => null);
+          if (r.ok && d?.choices?.[0]?.message?.content) {
+            return res.status(200).json({ reply: d.choices[0].message.content });
+          }
+          console.error(p.name + ' fallback failed', r.status);
+        } catch (e) {
+          console.error(p.name + ' fallback error', e);
+        }
+      }
+
+      // Everything failed because of load or no provider available: show a friendly message.
+      if (!geminiRes || geminiRes.status >= 500 || geminiRes.status === 429) {
+        return res.status(503).json({
+          error: 'Aviqo is very busy right now. Please try again in a minute.'
+        });
       }
     }
 
-    if (!geminiRes.ok && (geminiRes.status === 503 || geminiRes.status === 429)) {
-      return res.status(503).json({
-        error: 'Aviqo is very busy right now. Please try again in a minute.'
-      });
-    }
-
-    if (!geminiRes.ok) {
+    if (geminiFailed) {
       // Google sometimes wraps errors in an array, so look at the first item too.
       const raw = Array.isArray(data) ? data[0] : data;
       const detail = raw && raw.error ? raw.error : raw;
