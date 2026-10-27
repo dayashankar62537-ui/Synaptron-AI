@@ -685,6 +685,35 @@ export default async function handler(req, res) {
       console.error('Gemini model failed, trying next', candidates[i], geminiRes.status);
     }
 
+    // Last resort for text messages: if Gemini is still failing, try OpenRouter (when its key is set).
+    if (!geminiRes.ok && !image && process.env.OPENROUTER_API_KEY) {
+      try {
+        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://synaptron-ai.vercel.app',
+            'X-Title': 'Aviqo AI'
+          },
+          body: JSON.stringify({ model: TEXT_MODEL, messages, temperature: 0.7, max_tokens: MAX_REPLY_TOKENS })
+        });
+        const orData = await orRes.json().catch(() => null);
+        if (orRes.ok && orData?.choices?.[0]?.message?.content) {
+          return res.status(200).json({ reply: orData.choices[0].message.content });
+        }
+        console.error('OpenRouter fallback failed', orRes.status);
+      } catch (e) {
+        console.error('OpenRouter fallback error', e);
+      }
+    }
+
+    if (!geminiRes.ok && (geminiRes.status === 503 || geminiRes.status === 429)) {
+      return res.status(503).json({
+        error: 'Aviqo is very busy right now. Please try again in a minute.'
+      });
+    }
+
     if (!geminiRes.ok) {
       // Google sometimes wraps errors in an array, so look at the first item too.
       const raw = Array.isArray(data) ? data[0] : data;
