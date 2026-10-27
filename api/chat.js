@@ -636,10 +636,9 @@ export default async function handler(req, res) {
   }
 
   // Try the newest model first. If Google says it is not available, fall back to the stable one.
-  // Last entry is retried once more after a short wait, for temporary "high demand" errors.
-  const candidates = image
-    ? [GEMINI_VISION_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL]
-    : [GEMINI_TEXT_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL];
+  // Temporary "high demand" errors are common, so the model is tried several times with a growing wait.
+  const primary = image ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
+  const candidates = [primary, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL];
 
   // Build the current user turn. Images are only attached to the current turn;
   // earlier turns are sent as plain text to keep the request small.
@@ -665,7 +664,7 @@ export default async function handler(req, res) {
     let geminiRes = null;
     let data = null;
     for (let i = 0; i < candidates.length; i++) {
-      if (i > 0) await new Promise((r) => setTimeout(r, 1500));
+      if (i > 0) await new Promise((r) => setTimeout(r, 1500 * i));
       geminiRes = await fetch(GEMINI_CHAT_URL, {
         method: 'POST',
         headers: {
