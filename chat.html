@@ -1337,6 +1337,8 @@
   .cc-toast.show{opacity:1; transform:translate(-50%, 0);}
   .cc-share-hint{margin-top:12px; font-size:12px; color:var(--muted-2);}
   .cc .cc-disclaimer{order:5; width:100%; max-width:768px; margin:0 auto; padding:0 20px 14px; text-align:center; font-size:12px; color:var(--muted-2);}
+  .cc .cc-disclaimer a{color:var(--muted); text-decoration:underline; text-underline-offset:2px;}
+  .cc .cc-disclaimer a:hover{color:var(--text);}
   @media (max-width:820px){ .cc .cc-disclaimer{padding:0 12px 14px;} }
 
   /* ---------- "+" actions menu above the composer ---------- */
@@ -1571,7 +1573,7 @@
         </div>
       </div>
 
-      <p class="cc-disclaimer">Aviqo can make mistakes. Check important info.</p>
+      <p class="cc-disclaimer"><a href="ai-mistakes.html" target="_blank" rel="noopener">Aviqo AI can make mistakes</a>. Check important info.</p>
 
       <!-- suggestion chips -->
       <div class="chat-quick" id="chatQuick">
