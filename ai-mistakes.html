@@ -83,12 +83,26 @@
 
   .cta{display:inline-flex;align-items:center;gap:8px;margin-top:24px;background:var(--accent);color:var(--accent-text);text-decoration:none;padding:11px 18px;border-radius:999px;font-weight:600;font-size:15px;}
 
+  /* sidebar tree */
+  .tree details{margin:2px 0;}
+  .tree summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;font-weight:600;font-size:14.5px;}
+  .tree summary::-webkit-details-marker{display:none;}
+  .tree summary::after{content:"⌄";color:var(--muted-2);font-size:15px;transition:transform .2s;}
+  .tree details:not([open]) > summary::after{transform:rotate(-90deg);}
+  .tree details > a{display:block;padding:7px 10px 7px 22px;border-radius:8px;text-decoration:none;color:var(--muted);font-size:14px;line-height:1.4;}
+  .tree details details > a{padding-left:34px;}
+  .tree details > a:hover, .tree summary:hover{background:var(--chip);color:var(--text);}
+  .tree .lvl1{padding-left:14px !important;}
+
   @media (max-width:880px){
     .wrap{grid-template-columns:minmax(0,1fr);}
     aside, main{min-width:0;}
     aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border);padding:10px 16px;overflow:visible;}
     aside .group{display:none;}
-    aside .list{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+    aside .list{display:block;}
+    aside .list > a, aside .list > .group{display:inline-block;}
+    aside .list > a{margin:0 6px 6px 0;border:1px solid var(--border);}
+    aside .tree details > a, aside .tree summary{white-space:normal;border:0;margin:0;}
     aside a{white-space:nowrap;border:1px solid var(--border);}
     aside a span.chev{display:none;}
     aside a.sub{padding-left:10px;}
@@ -126,9 +140,31 @@
 <div class="wrap">
   <aside>
     <div class="list">
-      <div class="group">Getting started</div>
-      <a href="#getting-started">Getting started <span class="chev">›</span></a>
-      <a class="sub" href="#first-chat">Your first chat</a>
+      <div class="tree">
+        <details open>
+          <summary>Aviqo</summary>
+          <a class="lvl1" href="#release-notes">Release notes</a>
+          <details open>
+            <summary>Get started with Aviqo</summary>
+            <a href="#getting-started">Get started with Aviqo</a>
+            <a href="#uses">What can I use Aviqo for?</a>
+            <a href="#access">Where can I access Aviqo?</a>
+            <a href="#knowledge">How up-to-date is Aviqo's knowledge?</a>
+            <a href="#interfaces">What interfaces can I use?</a>
+            <a href="#verify">Verify your email</a>
+          </details>
+          <details>
+            <summary>Account management</summary>
+            <a href="#account">Account and login</a>
+            <a href="#privacy">Chat history and privacy</a>
+          </details>
+          <details>
+            <summary>Conversation management</summary>
+            <a href="#conversations">New chats and recents</a>
+            <a href="#chat">Buttons under an answer</a>
+          </details>
+        </details>
+      </div>
 
       <div class="group">Using Aviqo</div>
       <a href="#chat">Chat <span class="chev">›</span></a>
@@ -222,6 +258,65 @@
     </section>
 
     <!-- CATEGORY SECTIONS -->
+    <section class="cat" id="release-notes">
+      <h2>Release notes</h2>
+      <p class="cat-desc">What has changed in Aviqo recently.</p>
+      <h3>Latest updates</h3>
+      <p>New features and fixes are described here as they launch. Reload the chat page after an update to see the latest version.</p>
+    </section>
+
+    <section class="cat" id="uses">
+      <h2>What can I use Aviqo for?</h2>
+      <p class="cat-desc">Common things people do with Aviqo.</p>
+      <ul>
+        <li>Ask quick questions and get clear explanations in your own language.</li>
+        <li>Write and improve emails, posts, captions, and documents.</li>
+        <li>Study with step-by-step solutions, notes, and practice questions.</li>
+        <li>Generate images and short videos from a description.</li>
+        <li>Ask questions about a photo you upload.</li>
+        <li>Plan projects and build simple websites or apps.</li>
+      </ul>
+    </section>
+
+    <section class="cat" id="access">
+      <h2>Where can I access Aviqo?</h2>
+      <p class="cat-desc">Aviqo works in your web browser.</p>
+      <p>Open the Aviqo website and start the <a href="chat.html">chat page</a>. Aviqo works on a computer or a phone, in a current browser such as Chrome, Edge, Firefox, or Safari.</p>
+    </section>
+
+    <section class="cat" id="knowledge">
+      <h2>How up-to-date is Aviqo's knowledge?</h2>
+      <p class="cat-desc">Aviqo learns from information collected up to a cutoff date.</p>
+      <p>Because of this cutoff, Aviqo may not know very recent news, prices, offers, or rules. Chat answers do not browse the internet live, so for current information check an official website or a trusted source. Aviqo can still help you understand the topic and plan what to check.</p>
+    </section>
+
+    <section class="cat" id="interfaces">
+      <h2>What interfaces can I use to access Aviqo?</h2>
+      <p class="cat-desc">Ways to talk to Aviqo.</p>
+      <ul>
+        <li><b>Chat page:</b> the full conversation view with history, buttons, and the <b>+</b> menu.</li>
+        <li><b>Home page chatbox:</b> type a message on the home page and it opens in the chat page.</li>
+        <li><b>Phone browser:</b> the same chat page works on a phone.</li>
+      </ul>
+    </section>
+
+    <section class="cat" id="verify">
+      <h2>Verify your email</h2>
+      <p class="cat-desc">Confirm your email after you sign up.</p>
+      <p>After sign-up, the sidebar may show <b>Check email to verify</b>. Open the email from Aviqo and follow the link. If you cannot find the email, check your spam or promotions folder. If it still does not arrive, sign up again with the correct email address.</p>
+    </section>
+
+    <section class="cat" id="conversations">
+      <h2>Conversation management</h2>
+      <p class="cat-desc">Start new chats, find old ones, and remove them.</p>
+      <h3>New chats and recents</h3>
+      <p>Click <b>New chat</b> in the sidebar to start a fresh conversation. Your earlier chats appear under <b>Recents</b>. Click one to open it again.</p>
+      <h3>Delete a chat</h3>
+      <p>Hover over a chat under <b>Recents</b> and click the <b>✕</b> to remove it. Deleted chats are removed from this browser.</p>
+      <h3>Chat history</h3>
+      <p>Chats are saved in your browser, separately for each signed-in email. Clearing your browser's site data removes them.</p>
+    </section>
+
     <section class="cat" id="getting-started">
       <h2>Getting started</h2>
       <p class="cat-desc">Everything you need for your first conversation.</p>
