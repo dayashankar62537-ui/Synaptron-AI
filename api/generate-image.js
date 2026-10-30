@@ -48,50 +48,57 @@ export default async function handler(req, res) {
   }
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${MODEL}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ prompt, steps: 4 }),
-      signal: controller.signal
-    });
+  // One automatic retry for temporary failures (rate limit or server error).
+  let lastError = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, steps: 4 }),
+        signal: controller.signal
+      });
+      const type = r.headers.get('content-type') || '';
 
-    const type = r.headers.get('content-type') || '';
-    let base64 = '';
-    let mime = 'image/png';
-
-    if (type.includes('application/json')) {
-      const data = await r.json().catch(() => null);
-      if (!r.ok || !data || !data.success) {
-        console.error('Cloudflare image error', r.status, JSON.stringify(data && data.errors));
-        return res.status(502).json({ error: 'Image could not be generated right now. Please try again in a minute.' });
+      if (type.includes('application/json')) {
+        const data = await r.json().catch(() => null);
+        if (!r.ok || !data || !data.success) {
+          const cfMsg = data && Array.isArray(data.errors) && data.errors[0] && data.errors[0].message;
+          lastError = { status: r.status, message: cfMsg || ('Cloudflare returned HTTP ' + r.status) };
+        } else {
+          const base64 = data.result && data.result.image;
+          if (!base64) {
+            lastError = { status: 502, message: 'Cloudflare returned no image data.' };
+          } else {
+            return res.status(200).json({ image: 'data:image/png;base64,' + base64, model: MODEL });
+          }
+        }
+      } else if (r.ok) {
+        const buf = Buffer.from(await r.arrayBuffer());
+        const mime = type.startsWith('image/') ? type : 'image/png';
+        return res.status(200).json({ image: `data:${mime};base64,${buf.toString('base64')}`, model: MODEL });
+      } else {
+        const text = (await r.text().catch(() => '')).slice(0, 200);
+        lastError = { status: r.status, message: 'Cloudflare returned HTTP ' + r.status + (text ? ': ' + text : '') };
       }
-      base64 = data.result && data.result.image;
-      if (!base64) return res.status(502).json({ error: 'No image was returned. Please try a different description.' });
-    } else {
-      if (!r.ok) {
-        console.error('Cloudflare image error', r.status);
-        return res.status(502).json({ error: 'Image could not be generated right now. Please try again in a minute.' });
-      }
-      const buf = Buffer.from(await r.arrayBuffer());
-      base64 = buf.toString('base64');
-      mime = type.startsWith('image/') ? type : 'image/png';
+    } catch (err) {
+      lastError = err && err.name === 'AbortError'
+        ? { status: 504, message: 'Image generation timed out after 55 seconds. Try a simpler description.' }
+        : { status: 503, message: 'Network error while calling Cloudflare: ' + (err && err.message ? err.message : 'unknown') };
+    } finally {
+      clearTimeout(timer);
     }
 
-    return res.status(200).json({ image: `data:${mime};base64,${base64}` });
-  } catch (err) {
-    console.error('Image generation failed', err && err.name);
-    const msg = err && err.name === 'AbortError'
-      ? 'Image generation took too long. Please try a simpler description.'
-      : 'Image generation failed. Please try again in a minute.';
-    return res.status(503).json({ error: msg });
-  } finally {
-    clearTimeout(timer);
+    const retryable = lastError && (lastError.status === 429 || lastError.status >= 500);
+    if (!retryable || attempt === 2) break;
+    console.error('Cloudflare image attempt failed, retrying', lastError.status);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
   }
+
+  console.error('Cloudflare image failed', lastError && lastError.status, lastError && lastError.message);
+  const status = lastError && lastError.status >= 400 && lastError.status < 600 ? (lastError.status === 429 ? 429 : 502) : 502;
+  return res.status(status).json({ error: lastError ? lastError.message : 'Image generation failed.' });
 }
