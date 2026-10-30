@@ -945,6 +945,64 @@ function sanitizeFile(raw) {
   return { name, text: full.slice(0, MAX_FILE_CHARS), truncated };
 }
 
+// ---------------------------------------------------------------------
+// Credits. Every new user starts with FREE_CREDITS. Each chat reply uses
+// creditCost(mode) credits. Balances are kept in Upstash Redis (the same
+// UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN used by feedback).
+// Key = credits:<email> for signed-in users, credits:ip:<ip> otherwise.
+// To top up a user, INCRBY their key in the Upstash console.
+// ---------------------------------------------------------------------
+const FREE_CREDITS = 10;
+
+function creditCost(mode) {
+  return mode.search === 'deep' ? 3 : 1;
+}
+
+function creditKey(user, ip) {
+  const email = user && typeof user.email === 'string' ? user.email.trim().toLowerCase() : '';
+  if (email.length <= 200 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'credits:' + email;
+  return 'credits:ip:' + ip;
+}
+
+async function redisCmd(cmd) {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) throw new Error('Credits store is not configured');
+  const r = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cmd)
+  }, 8000);
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !d || d.error) throw new Error('Credits store error');
+  return d.result;
+}
+
+// Gives a new user the starting balance (only once), then returns the balance.
+async function getCredits(key) {
+  await redisCmd(['SETNX', key, String(FREE_CREDITS)]);
+  return Number(await redisCmd(['GET', key])) || 0;
+}
+
+// Takes `cost` credits. Returns the new balance, or null if there are not enough.
+async function spendCredits(key, cost) {
+  await getCredits(key);
+  const left = Number(await redisCmd(['DECRBY', key, String(cost)]));
+  if (left < 0) {
+    await redisCmd(['INCRBY', key, String(cost)]);
+    return null;
+  }
+  return left;
+}
+
+async function refundCredits(key, cost) {
+  try {
+    await redisCmd(['INCRBY', key, String(cost)]);
+  } catch (e) {
+    console.error('Credits refund failed', e && e.message);
+  }
+}
+
 function aiError(res, err) {
   const status = err && err.status;
   if (status === null || status === undefined || status >= 500 || status === 429) {
@@ -981,11 +1039,17 @@ export default async function handler(req, res) {
   let history = [];
   let file = null;
   let modeId = DEFAULT_MODE;
+  let balanceOnly = false;
+  let creditId = '';
+  let replyLang = null;
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 
     message = body && body.message ? String(body.message).trim() : '';
+    balanceOnly = !!(body && body.balanceOnly === true);
+    if (body && ['English', 'Hinglish', 'Hindi'].includes(body.lang)) replyLang = body.lang;
+    creditId = creditKey(body && body.user, ip);
     history = sanitizeHistory(body && body.history);
     file = sanitizeFile(body && body.file);
     if (body && typeof body.mode === 'string' && Object.prototype.hasOwnProperty.call(MODES, body.mode)) {
@@ -1003,6 +1067,15 @@ export default async function handler(req, res) {
     }
   } catch (e) {
     return res.status(400).json({ error: 'Invalid request body.' });
+  }
+
+  if (balanceOnly) {
+    try {
+      return res.status(200).json({ credits: await getCredits(creditId) });
+    } catch (e) {
+      console.error('Credits read error', e && e.message);
+      return res.status(503).json({ error: 'Could not check your credits right now.' });
+    }
   }
 
   if (!message && !image && !file) {
@@ -1066,6 +1139,7 @@ export default async function handler(req, res) {
 
   // ---- 2. Build the prompt ----
   let system = SYSTEM_PROMPT + '\n\n' + mode.addendum;
+  if (replyLang) system += '\n\nREPLY LANGUAGE: Reply in ' + replyLang + ' for this request, unless the user clearly asks for another language.';
   if (sources.length) {
     system += '\n\nTOOL STATE FOR THIS REQUEST (overrides any earlier statement that you cannot browse): live web search was run and its results are below.\n' + sourcesPrompt(sources);
   } else if (wantsSearch) {
@@ -1095,6 +1169,23 @@ export default async function handler(req, res) {
     { role: 'user', content: userContent }
   ];
 
+  // ---- 2b. Spend credits before calling the model (refunded if the model fails) ----
+  const cost = creditCost(mode);
+  let creditsLeft;
+  try {
+    creditsLeft = await spendCredits(creditId, cost);
+  } catch (e) {
+    console.error('Credits write error', e && e.message);
+    return res.status(503).json({ error: 'Could not check your credits right now. Please try again.' });
+  }
+  if (creditsLeft === null) {
+    return res.status(402).json({
+      error: 'You have used your free credits. Upgrade to a paid plan to keep chatting.',
+      credits: 0,
+      upgrade: true
+    });
+  }
+
   // ---- 3. Ask the model ----
   try {
     let reply = await groqChat(groqKey, messages, {
@@ -1109,11 +1200,13 @@ export default async function handler(req, res) {
     return res.status(200).json({
       reply,
       mode: modeId,
+      credits: creditsLeft,
       searched: sources.length > 0,
       steps,
       sources: sources.map((s) => ({ id: s.id, title: s.title, url: s.url, domain: s.domain }))
     });
   } catch (err) {
+    await refundCredits(creditId, cost);
     return aiError(res, err);
   }
 }
