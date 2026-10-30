@@ -1489,6 +1489,28 @@
   .cc .cc-steps ol{margin:6px 0 0; padding-left:20px; line-height:1.55;}
   /* suggestion chips under the chatbox removed; the + menu still uses them as hidden triggers */
   .chat-quick{display:none !important;}
+  /* ---- account menu (opens from the profile pill) ---- */
+  .cc .cc-side-foot{position:relative;}
+  .acct-menu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 40px -18px rgba(0,0,0,.35);padding:8px;z-index:60;}
+  .acct-menu[hidden], .acct-modal[hidden]{display:none !important;}
+  .acct-head{padding:8px 10px 10px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+  .acct-email{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .acct-credits{font-size:13px;margin-top:6px;color:var(--text);font-weight:600;}
+  .acct-bar{height:6px;background:var(--chip);border-radius:99px;margin-top:8px;overflow:hidden;}
+  .acct-bar i{display:block;height:100%;background:var(--text);border-radius:99px;}
+  .acct-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;background:none;border-radius:9px;font:inherit;font-size:14px;color:var(--text);text-decoration:none;cursor:pointer;text-align:left;}
+  .acct-item:hover{background:var(--chip);}
+  .acct-item .kbd{margin-left:auto;font-size:12px;color:var(--muted-2);}
+  .acct-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  .acct-sep{height:1px;background:var(--border);margin:6px 0;}
+  .acct-modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .acct-card{background:var(--surface);color:var(--text);border-radius:16px;padding:22px;width:min(440px,100%);border:1px solid var(--border);}
+  .acct-card h3{margin:0 0 10px;font-size:18px;}
+  .acct-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .acct-row select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);max-width:60%;}
+  .acct-btn{font:inherit;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}
+  .acct-btn.danger{color:#b91c1c;}
+  .acct-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
 </style>
 </head>
 <body class="cc">
@@ -1522,6 +1544,39 @@
     <div class="cc-side-foot">
       <a href="#" id="navGetAccess" hidden></a>
       <button class="cc-cta" id="navSignupBtn" type="button">Sign up free</button>
+      <div class="acct-menu" id="acctMenu" hidden role="menu">
+        <div class="acct-head">
+          <div class="acct-email" id="acctEmail">Guest</div>
+          <div class="acct-credits" id="acctCredits">Free plan · 10 credits left</div>
+          <div class="acct-bar"><i id="acctBar" style="width:100%"></i></div>
+        </div>
+        <button class="acct-item" type="button" data-act="settings" role="menuitem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+          Settings <span class="kbd">Ctrl+Shift+,</span>
+        </button>
+        <button class="acct-item" type="button" data-act="language" role="menuitem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
+          Language <span class="kbd" id="acctLangVal">Auto</span>
+        </button>
+        <button class="acct-item" type="button" data-act="help" role="menuitem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/></svg>
+          Get help
+        </button>
+        <div class="acct-sep"></div>
+        <button class="acct-item" type="button" data-act="upgrade" role="menuitem">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          Upgrade plan
+        </button>
+        <button class="acct-item" type="button" data-act="learn" role="menuitem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
+          Learn more
+        </button>
+        <div class="acct-sep"></div>
+        <button class="acct-item" type="button" data-act="logout" role="menuitem">
+          <svg viewBox="0 0 24 24"><path d="M15 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M10 17l-5-5 5-5M5 12h11"/></svg>
+          Log out
+        </button>
+      </div>
       <div class="profile-pill" id="profilePill" style="display:none;">
         <div class="profile-avatar" id="profileAvatar">S</div>
         <div class="profile-info">
@@ -1532,6 +1587,20 @@
       </div>
     </div>
   </aside>
+  <div class="acct-modal" id="acctModal" hidden>
+    <div class="acct-card" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+      <h3 id="acctTitle">Settings</h3>
+      <div class="acct-row"><span>Theme</span>
+        <select id="setTheme"><option value="light">Light</option><option value="dark">Dark</option></select></div>
+      <div class="acct-row"><span>Default mode</span>
+        <select id="setModeSel"></select></div>
+      <div class="acct-row"><span>Reply language</span>
+        <select id="setLang"><option value="auto">Match my message</option><option value="English">English</option><option value="Hinglish">Hinglish</option><option value="Hindi">Hindi (Devanagari)</option></select></div>
+      <div class="acct-row"><span>Chats saved on this browser</span>
+        <button class="acct-btn danger" id="setClear" type="button">Clear chats</button></div>
+      <div class="acct-actions"><button class="acct-btn" id="setClose" type="button">Done</button></div>
+    </div>
+  </div>
   <div class="cc-scrim" id="ccScrim"></div>
 
   <!-- MAIN CHAT AREA -->
@@ -1540,7 +1609,7 @@
       <button class="cc-icon-btn" id="ccSideBtn" type="button" title="Toggle sidebar" aria-label="Toggle sidebar">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
       </button>
-      <span class="cc-plan">Free plan</span>
+      <span class="cc-plan" id="ccPlan">Free plan</span>
       <button class="cc-icon-btn" id="ccTheme" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
         <svg class="ico-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
         <svg class="ico-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
@@ -1747,6 +1816,99 @@
     } catch(e){ /* offline or backend not ready — keep cached view */ }
   }
 
+  // ---- Account menu: opens from the profile pill ----
+  const acctMenu = document.getElementById('acctMenu');
+  const acctModal = document.getElementById('acctModal');
+  const setTheme = document.getElementById('setTheme');
+  const setModeSel = document.getElementById('setModeSel');
+  const setLang = document.getElementById('setLang');
+  const setClear = document.getElementById('setClear');
+  const setClose = document.getElementById('setClose');
+  const CREDIT_MAX = 10;
+
+  function replyLang(){
+    try{ var v = localStorage.getItem('aviqo_lang'); return ['English','Hinglish','Hindi'].indexOf(v) >= 0 ? v : null; }
+    catch(e){ return null; }
+  }
+
+  function updateAcctMenu(){
+    var u = null;
+    try{ u = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }catch(e){}
+    document.getElementById('acctEmail').textContent = u && u.email ? u.email : 'Guest';
+    var n = creditsLeft === null ? CREDIT_MAX : creditsLeft;
+    document.getElementById('acctCredits').textContent = n <= 0
+      ? 'Free plan · 0 credits left'
+      : 'Free plan · ' + n + (n === 1 ? ' credit' : ' credits') + ' left';
+    document.getElementById('acctBar').style.width = Math.max(0, Math.min(100, n / CREDIT_MAX * 100)) + '%';
+    document.getElementById('acctLangVal').textContent = replyLang() || 'Auto';
+  }
+
+  function setAcctMenu(open){
+    acctMenu.hidden = !open;
+    if(open) updateAcctMenu();
+  }
+
+  function openSettings(focusLang){
+    setAcctMenu(false);
+    var t = 'light';
+    try{ t = localStorage.getItem('aviqo_theme') || 'light'; }catch(e){}
+    setTheme.value = t === 'dark' ? 'dark' : 'light';
+    if(!setModeSel.options.length) setModeSel.innerHTML = modeSelect.innerHTML;
+    setModeSel.value = currentMode;
+    setLang.value = replyLang() || 'auto';
+    acctModal.hidden = false;
+    if(focusLang) setLang.focus();
+  }
+
+  function closeSettings(){ acctModal.hidden = true; }
+
+  profilePill.addEventListener('click', function(e){
+    if(e.target.closest('#profileLogout')) return;
+    e.stopPropagation();
+    setAcctMenu(acctMenu.hidden);
+  });
+
+  acctMenu.addEventListener('click', function(e){
+    var item = e.target.closest('.acct-item');
+    if(!item) return;
+    var act = item.dataset.act;
+    if(act === 'settings') openSettings(false);
+    else if(act === 'language') openSettings(true);
+    else if(act === 'upgrade'){ setAcctMenu(false); window.location.href = 'mailto:helloaviqoai@gmail.com?subject=' + encodeURIComponent('Upgrade plan request'); }
+    else if(act === 'logout'){ setAcctMenu(false); profileLogout.click(); }
+    else if(act === 'help' || act === 'learn') { /* plain links handled below */ }
+  });
+  acctMenu.querySelectorAll('a.acct-item').forEach(function(a){ a.addEventListener('click', function(){ setAcctMenu(false); }); });
+
+  document.addEventListener('click', function(e){
+    if(!acctMenu.hidden && !acctMenu.contains(e.target) && !profilePill.contains(e.target)) setAcctMenu(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ setAcctMenu(false); closeSettings(); }
+    if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === ','){ e.preventDefault(); openSettings(false); }
+  });
+
+  setTheme.addEventListener('change', function(){
+    var dark = setTheme.value === 'dark';
+    document.body.classList.toggle('dark-theme', dark);
+    try{ localStorage.setItem('aviqo_theme', dark ? 'dark' : 'light'); }catch(e){}
+  });
+  setModeSel.addEventListener('change', function(){ setMode(setModeSel.value); });
+  setLang.addEventListener('change', function(){
+    try{
+      if(setLang.value === 'auto') localStorage.removeItem('aviqo_lang');
+      else localStorage.setItem('aviqo_lang', setLang.value);
+    }catch(e){}
+    updateAcctMenu();
+  });
+  setClear.addEventListener('click', function(){
+    if(!confirm('Delete all chats saved on this browser for this account?')) return;
+    try{ localStorage.removeItem(CC_CHATS_KEY + ccOwner()); }catch(e){}
+    location.reload();
+  });
+  setClose.addEventListener('click', closeSettings);
+  acctModal.addEventListener('click', function(e){ if(e.target === acctModal) closeSettings(); });
+
   profileLogout.addEventListener('click', ()=>{
     try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
     hideProfile();
@@ -1798,6 +1960,7 @@
   function completeChatSignup(name){
     isSignedUp = true;
     closeSignup();
+    refreshCredits();
     if(name){
       firstMsg.textContent = `Hi ${name}! I'm Aviqo. Tell me what you'd like to create — an image, a video, a website, an app, a study plan, or just ask me anything.`;
     }
@@ -2198,8 +2361,43 @@
     }catch(e){ return []; }
   }
 
+  // ---- Credits: 10 free on sign-up, each reply uses 1 (Deep Research uses 3) ----
+  const CC_PLAN_EL = document.getElementById('ccPlan');
+  const UPGRADE_TEXT = 'You have used your free credits. To keep chatting, upgrade to a paid plan. Email helloaviqoai@gmail.com to get one.';
+  let creditsLeft = null;
+
+  function currentUserEmail(){
+    try{ var u = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); return u && u.email ? String(u.email).toLowerCase() : null; }
+    catch(e){ return null; }
+  }
+
+  function showCredits(n){
+    creditsLeft = n;
+    updateAcctMenu();
+    if(!CC_PLAN_EL) return;
+    CC_PLAN_EL.textContent = n <= 0 ? 'Free plan · 0 credits left' : 'Free plan · ' + n + (n === 1 ? ' credit' : ' credits') + ' left';
+  }
+
+  async function refreshCredits(){
+    try{
+      const res = await fetch('/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ balanceOnly: true, user: { email: currentUserEmail() } })
+      });
+      const data = await res.json().catch(()=>null);
+      if(res.ok && data && typeof data.credits === 'number') showCredits(data.credits);
+    }catch(e){ /* keep the default label if the check fails */ }
+  }
+
+  function addUpgradeMsg(){
+    addAiMsg(UPGRADE_TEXT);
+  }
+
+  refreshCredits();
+
   async function askAviqo(message, image, file){
-    const payload = { message, mode: currentMode, history: ccHistory() };
+    const payload = { message, mode: currentMode, history: ccHistory(), user: { email: currentUserEmail() } };
+    if(replyLang()) payload.lang = replyLang();
     if(image) payload.image = { mimeType: image.mimeType, data: image.data };
     if(file) payload.file = { name: file.name, text: file.text };
     const res = await fetch('/api/chat', {
@@ -2208,6 +2406,8 @@
       body: JSON.stringify(payload)
     });
     const data = await res.json().catch(()=>null);
+    if(data && typeof data.credits === 'number') showCredits(data.credits);
+    if(res.status === 402) showCredits(0);
     if(!res.ok){
       throw new Error(data && data.error ? data.error
         : (res.status === 504 ? 'The request took too long. Please try again, or use Web Search for a faster answer.' : 'Request failed (' + res.status + ')'));
@@ -2291,6 +2491,7 @@
     addUserMsg((fileToSend ? '[' + fileToSend.name + '] ' : '') + trimmed, imageToSend ? imageToSend.dataUrl : null);
     input.value = '';
     if(imageToSend || fileToSend){ clearAttachment(); }
+    if(creditsLeft !== null && creditsLeft <= 0){ addUpgradeMsg(); return; }
     // image / video generation is only offered in Quick Answer and Creative Studio
     const mediaOk = currentMode === 'quick' || currentMode === 'creative';
 
