@@ -2543,8 +2543,10 @@
 
   // Real image generation via OpenAI (separate from the Gemini text chat)
   function detectImageIntent(raw){
-    return /\b(generate|create|make|draw|design)\b.*\b(image|photo|picture|logo|poster|artwork|thumbnail|illustration)\b/i.test(raw)
-      || /\b(image|photo|picture)\s+of\b/i.test(raw);
+    const t = String(raw || '').toLowerCase();
+    const subject = /\b(image|images|photo|photos|picture|logo|poster|artwork|thumbnail|illustration|tasveer|chitra)\b|तस्वीर|चित्र|फोटो/;
+    const verb = /\b(generate|create|make|draw|design|banao|banaao|banaiye|bana|bnao|bnaiye|dikhao|dikha|chahiye|bhejo)\b|बनाओ|बनाइए|बनाएं|बनाओ/;
+    return (subject.test(t) && verb.test(t)) || /\b(image|photo|picture)\s+of\b/.test(t);
   }
 
   async function generateImage(prompt){
