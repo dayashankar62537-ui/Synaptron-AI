@@ -2556,11 +2556,13 @@
     const res = await fetch('/api/generate-image', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt, user: { email: currentUserEmail() } })
     });
-    const data = await res.json();
+    const data = await res.json().catch(()=>null);
     if(!res.ok){
-      throw new Error(data && data.error ? data.error : 'Image generation failed');
+      const err = new Error(data && data.error ? data.error : 'Image generation failed (HTTP ' + res.status + ')');
+      err.upgrade = !!(data && data.upgrade);
+      throw err;
     }
     return data.image;
   }
@@ -2609,8 +2611,9 @@
     }).catch(err=>{
       removeTyping();
       if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
+      if(err && err.upgrade){ addAiMsg(err.message); return; }
       addImageError(prompt, (err && err.message) || 'Unknown error');
-    });
+    }).finally(()=>{ refreshCredits(); });
   }
 
   // Real video generation via Luma AI — this is a slow, async job:
