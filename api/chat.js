@@ -119,15 +119,22 @@ Write a structured research report from the supplied web results. Use this layou
 Rules: every important factual claim needs a [n] citation. Label each key point as Verified (multiple or primary sources), Estimate, Opinion, or Uncertain. Never fill gaps from memory without saying it is from general knowledge.`
   },
   solver: {
-    label: 'Problem Solver', model: 'strong', temperature: 0.4, maxTokens: 4096, search: 'none',
-    addendum: `MODE: PROBLEM SOLVER
-Work like a careful consultant:
-1. Restate the goal and constraints in one or two lines (state assumptions if something is missing).
-2. Break the problem into numbered tasks.
-3. Solve each task. Show calculations and check them once.
-4. Give a practical recommendation with 3 to 7 concrete next steps (who/what/when where possible).
-5. End with "Risks and limits": what could go wrong and what you could not verify.
-Ask at most one clarifying question, and only if the answer would change the plan materially.`
+    label: 'Problem Solver', model: 'strong', temperature: 0.4, maxTokens: 2500, search: 'basic',
+    addendum: `MODE: PROBLEM SOLVER (Aviqo DeepSolve)
+Think, research, analyze, calculate, compare, verify, then solve. Use this structure, skipping a part only when it truly does not apply:
+1. Problem Understanding: goal, constraints, and assumptions (state missing details; ask at most one question only if it changes the plan).
+2. Root Cause Analysis: separate symptoms from causes and explain why the problem exists.
+3. Research and Evidence: use the supplied web results and cite them with [n]. Say clearly when something could not be verified.
+4. Possible Solutions: at least 3 options, each with pros and cons on cost, feasibility, time and impact.
+5. Best Recommended Solution: the most practical option and why.
+6. Estimated Budget: low, medium and high budget versions where useful, plus free or low-cost alternatives. Use the currency the user mentions; otherwise use USD and say so.
+7. Required Technology and Resources.
+8. Step-by-Step Implementation: phases, timeline, responsible people, testing and maintenance.
+9. Risk Analysis: technical, financial, operational, security and safety risks, each with a mitigation.
+10. Expected Impact: benefits, with assumptions and uncertainty stated.
+11. Success Measurement: how the user will know it worked.
+12. Final Recommendation.
+Show formulas and calculation steps. Mark estimates as estimates. Never invent numbers, citations or test results.`
   },
   study: {
     label: 'Study Mode', model: 'text', temperature: 0.6, maxTokens: 3500, search: 'none',
@@ -173,7 +180,7 @@ Adapt to the learner's level. Use formulas in LaTeX as described in the formatti
 };
 const DEFAULT_MODE = 'quick';
 
-const MAX_FILE_CHARS = 12000;        // text from an attached TXT/CSV/MD/JSON file
+const MAX_FILE_CHARS = 8000;         // text from an attached TXT/CSV/MD/JSON file
 const MAX_SOURCES = 5;               // sources sent to the model for Web Search
 const MAX_DEEP_SOURCES = 6;         // sources sent to the model for Deep Research
 const SEARCH_TIMEOUT_MS = 20000;
@@ -491,6 +498,14 @@ async function redisCmd(cmd) {
 }
 
 // Gives a new user the starting balance (only once), then returns the balance.
+// Paid users (plan:<email> = "paid") are not charged credits.
+async function isPaidUser(key) {
+  const id = key.replace(/^credits:/, '');
+  if (id.startsWith('ip:')) return false;
+  const v = await redisCmd(['GET', 'plan:' + id]);
+  return v === 'paid';
+}
+
 async function getCredits(key) {
   await redisCmd(['SETNX', key, String(FREE_CREDITS)]);
   return Number(await redisCmd(['GET', key])) || 0;
@@ -583,7 +598,8 @@ export default async function handler(req, res) {
 
   if (balanceOnly) {
     try {
-      return res.status(200).json({ credits: await getCredits(creditId) });
+      const paidUser = await isPaidUser(creditId);
+      return res.status(200).json({ credits: await getCredits(creditId), paid: paidUser });
     } catch (e) {
       console.error('Credits read error', e && e.message);
       // Credits store is down: the chat still works, the counter just shows nothing.
@@ -688,8 +704,13 @@ export default async function handler(req, res) {
   let creditsLeft;
   let charged = false;
   try {
-    creditsLeft = await spendCredits(creditId, cost);
-    charged = creditsLeft !== null;
+    const paidUser = await isPaidUser(creditId);
+    if (paidUser) {
+      creditsLeft = undefined;
+    } else {
+      creditsLeft = await spendCredits(creditId, cost);
+      charged = creditsLeft !== null;
+    }
   } catch (e) {
     console.error('Credits store unavailable, allowing reply', e && e.message);
     creditsLeft = undefined;
@@ -707,7 +728,7 @@ export default async function handler(req, res) {
     let reply = await groqChat(groqKey, messages, {
       models: modelsFor(mode, !!image),
       temperature: mode.temperature,
-      maxTokens: Math.min(mode.maxTokens, 2000)
+      maxTokens: Math.min(mode.maxTokens, 2500)
     });
 
     if (sources.length) reply = fixCitations(reply, sources.length);
