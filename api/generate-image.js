@@ -35,25 +35,50 @@ function setCors(req, res) {
 }
 
 // ---- Upstash Redis (same store and key style as api/chat.js) ----
-async function redisCmd(cmd) {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) throw new Error('Credits store is not configured');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+// ---- Credits store: Cloudflare Workers KV (free). Uses CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+// and CLOUDFLARE_KV_NAMESPACE_ID. Same command shape as the old Upstash helper, so callers did not change.
+async function kvRequest(method, key, value, ttl) {
+  const acc = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  const ns = process.env.CLOUDFLARE_KV_NAMESPACE_ID;
+  if (!acc || !token || !ns) throw new Error('Credits store is not configured');
+  let url = `https://api.cloudflare.com/client/v4/accounts/${acc}/storage/kv/namespaces/${ns}/values/${encodeURIComponent(key)}`;
+  if (ttl) url += '?expiration_ttl=' + ttl;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(cmd),
-      signal: controller.signal
-    });
-    const d = await r.json().catch(() => null);
-    if (!r.ok || !d || d.error) throw new Error('Credits store error');
-    return d.result;
+    const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+    if (method === 'PUT') { opts.headers['Content-Type'] = 'text/plain'; opts.body = String(value); }
+    const r = await fetch(url, Object.assign(opts, { signal: ctrl.signal }));
+    if (method === 'GET' && r.status === 404) return null;
+    if (!r.ok) throw new Error('Credits store error ' + r.status);
+    return method === 'GET' ? await r.text() : true;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function redisCmd(cmd) {
+  const op = cmd[0];
+  const key = cmd[1];
+  const arg = cmd[2];
+  // Daily image counters expire automatically after about 25 hours.
+  const ttl = key.startsWith('imgday:') ? 90000 : undefined;
+  if (op === 'GET') return await kvRequest('GET', key);
+  if (op === 'SETNX') {
+    const cur = await kvRequest('GET', key);
+    if (cur === null) { await kvRequest('PUT', key, arg, ttl); return 1; }
+    return 0;
+  }
+  if (op === 'DECRBY' || op === 'INCRBY' || op === 'INCR') {
+    const delta = op === 'INCR' ? 1 : Number(arg) * (op === 'DECRBY' ? -1 : 1);
+    const cur = Number(await kvRequest('GET', key)) || 0;
+    const next = cur + delta;
+    await kvRequest('PUT', key, String(next), ttl);
+    return next;
+  }
+  if (op === 'EXPIRE') return 1; // TTL is set when the key is written
+  throw new Error('Unsupported store command');
 }
 
 function creditKeyFor(user, ip) {
