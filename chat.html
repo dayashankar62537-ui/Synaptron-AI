@@ -697,6 +697,12 @@
   .bubble ul{margin:6px 0 2px 18px; padding:0;}
   .bubble li{margin-bottom:5px;}
   .msg.user{flex-direction:row-reverse; margin-left:auto;}
+  .msg.user{flex-wrap:wrap;}
+  .msg.user > .user-acts{flex:0 0 100% !important; width:100% !important; max-width:100% !important; order:2; display:flex; justify-content:flex-end; gap:4px; margin-top:4px;}
+  .ua-btn{width:28px; height:28px; border:0; border-radius:8px; background:transparent; color:#8a8a8f; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .15s, color .15s;}
+  .ua-btn:hover{background:rgba(127,127,135,.14); color:inherit;}
+  .ua-btn svg{width:16px; height:16px;}
+  .ua-btn.done{color:#16a34a;}
   .msg.user .bubble{background:var(--grad-brand); color:#fff; border:none; max-width:min(420px, 78%);}
 
   .gen-card{
@@ -2219,6 +2225,39 @@
     const imgHtml = imageDataUrl ? `<img class="attached-img" src="${imageDataUrl}" alt="attached photo">` : '';
     div.innerHTML = `<div class="av user-av"></div><div class="bubble">${imgHtml}</div>`;
     if(text) div.querySelector('.bubble').appendChild(document.createTextNode(text));
+    if(text){
+      const acts = document.createElement('div');
+      acts.className = 'user-acts';
+      acts.innerHTML = `
+        <button type="button" class="ua-btn" data-act="retry" title="Retry" aria-label="Retry">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+        </button>
+        <button type="button" class="ua-btn" data-act="edit" title="Edit" aria-label="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </button>
+        <button type="button" class="ua-btn" data-act="copy" title="Copy" aria-label="Copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>`;
+      acts.addEventListener('click', (e) => {
+        const b = e.target.closest('.ua-btn');
+        if(!b) return;
+        const act = b.dataset.act;
+        if(act === 'retry'){
+          if(!isSignedUp){ pendingMessage = text; openSignup(); return; }
+          handleSend(text);
+        } else if(act === 'edit'){
+          input.value = text;
+          input.focus();
+          input.setSelectionRange(text.length, text.length);
+        } else if(act === 'copy'){
+          const done = () => { b.classList.add('done'); setTimeout(() => b.classList.remove('done'), 1200); };
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(text).then(done).catch(() => {});
+          }
+        }
+      });
+      div.appendChild(acts);
+    }
     body.appendChild(div);
     scrollBottom();
   }
