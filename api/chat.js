@@ -1074,7 +1074,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ credits: await getCredits(creditId) });
     } catch (e) {
       console.error('Credits read error', e && e.message);
-      return res.status(503).json({ error: 'Could not check your credits right now.' });
+      // Credits store is down: the chat still works, the counter just shows nothing.
+      return res.status(200).json({ credits: null });
     }
   }
 
@@ -1170,13 +1171,16 @@ export default async function handler(req, res) {
   ];
 
   // ---- 2b. Spend credits before calling the model (refunded if the model fails) ----
+  // If the credits store is down, the reply is still allowed (fail open) and nothing is charged.
   const cost = creditCost(mode);
   let creditsLeft;
+  let charged = false;
   try {
     creditsLeft = await spendCredits(creditId, cost);
+    charged = creditsLeft !== null;
   } catch (e) {
-    console.error('Credits write error', e && e.message);
-    return res.status(503).json({ error: 'Could not check your credits right now. Please try again.' });
+    console.error('Credits store unavailable, allowing reply', e && e.message);
+    creditsLeft = undefined;
   }
   if (creditsLeft === null) {
     return res.status(402).json({
@@ -1206,7 +1210,7 @@ export default async function handler(req, res) {
       sources: sources.map((s) => ({ id: s.id, title: s.title, url: s.url, domain: s.domain }))
     });
   } catch (err) {
-    await refundCredits(creditId, cost);
+    if (charged) await refundCredits(creditId, cost);
     return aiError(res, err);
   }
 }
