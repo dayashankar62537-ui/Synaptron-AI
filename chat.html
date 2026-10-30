@@ -1397,6 +1397,9 @@
   .cc .bubble ul{padding-left:22px; margin:8px 0;}
   .cc .bubble li{margin:4px 0;}
   .cc .bubble code.inline{background:var(--surface-2); padding:2px 6px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:.88em;}
+  .img-actions{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;}
+  .img-dl,.img-retry{display:inline-block; padding:7px 14px; border-radius:999px; border:1px solid currentColor; font-size:13px; text-decoration:none; background:transparent; color:inherit; cursor:pointer;}
+  .img-retry:disabled{opacity:.5; cursor:default;}
   .cc .attached-img{max-width:280px; width:100%; border-radius:14px; display:block; margin-bottom:8px;}
 
   .cc .code-block{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#1f1f1d;}
@@ -2566,9 +2569,48 @@
     ccLog({ r:'a', t: '[Generated image]' });
     const div = document.createElement('div');
     div.className = 'msg';
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><img class="attached-img" src="${dataUrl}" alt="generated image">${caption}</div></div></div>`;
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><img class="attached-img" src="${dataUrl}" alt="generated image"><div>${escapeHtml(caption)}</div><div class="img-actions"><a class="img-dl" href="${dataUrl}" download="aviqo-image-${Date.now()}.png">Download PNG</a></div></div></div></div>`;
     body.appendChild(div);
     scrollBottom();
+  }
+
+  // Shows the real error from the server plus a retry button. Never pretends an image exists.
+  function addImageError(prompt, msg){
+    ccLog({ r:'a', t: '[Image error] ' + msg });
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble">The image could not be generated.<br><b>Error:</b> ${escapeHtml(msg)}<div class="img-actions"><button type="button" class="img-retry">Retry</button></div></div></div>`;
+    const btn = div.querySelector('.img-retry');
+    btn.addEventListener('click', () => { div.remove(); runImage(prompt); });
+    body.appendChild(div);
+    scrollBottom();
+  }
+
+  // Runs one image generation with a visible loading state.
+  function runImage(prompt){
+    addTyping();
+    const row = document.getElementById('typingRow');
+    if(row){
+      const lab = document.createElement('div');
+      lab.className = 'cc-typing-label';
+      lab.textContent = 'Generating your image with FLUX. This usually takes 5 to 30 seconds...';
+      row.appendChild(lab);
+    }
+    generateImage(prompt).then(dataUrl=>{
+      removeTyping();
+      addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
+      try{
+        sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
+          dataUrl: dataUrl,
+          prompt: prompt,
+          ts: Date.now()
+        }));
+      }catch(e){}
+    }).catch(err=>{
+      removeTyping();
+      if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
+      addImageError(prompt, (err && err.message) || 'Unknown error');
+    });
   }
 
   // Real video generation via Luma AI — this is a slow, async job:
@@ -2626,24 +2668,7 @@
     // If the user is asking to generate an image (and hasn't attached their
     // own photo), route to the real OpenAI image endpoint instead of chat.
     if(mediaOk && !imageToSend && !fileToSend && trimmed && detectImageIntent(trimmed)){
-      addTyping();
-      generateImage(trimmed).then(dataUrl=>{
-        removeTyping();
-        addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
-        // Also open the generated image on its own page (styled like Explore)
-        try{
-          sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
-            dataUrl: dataUrl,
-            prompt: trimmed,
-            ts: Date.now()
-          }));
-        }catch(e){}
-        window.open('explore.html?generated=1', '_blank');
-      }).catch(err=>{
-        removeTyping();
-        if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
-        addAiMsg("I couldn't generate that image right now (" + err.message + "). Please try again in a moment.");
-      });
+      runImage(trimmed);
       return;
     }
 
