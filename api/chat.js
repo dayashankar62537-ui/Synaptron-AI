@@ -570,6 +570,154 @@ function createStageTracker(start = Date.now()) {
 
 // ---- End of inlined research intelligence ----
 
+
+// ---- Visual learning: diagrams and images that help explain a topic ----
+// Generated diagrams are computed from their formulas. Real photos come only from Wikimedia Commons,
+// with the licence and author shown. If nothing suitable is found, no visual is sent and the text answer stands.
+const VISUAL_MODES = new Set(['quick', 'study', 'solver', 'web', 'deep']);
+const VISUAL_ASK = /\b(explain|explanation|what is|what are|how (?:does|do|is)|describe|diagram|draw|show|labell?ed|label|structure|process|steps?|parts?|kya hai|kya hota|samjha\w*|batao|dikhao)\b|क्या है|समझ/i;
+const VISUAL_TOPICS = [
+  { id: 'projectile', re: /\bprojectile|trajectory|trajectories|launch angle\b/i, gen: 'projectile' },
+  { id: 'photosynthesis', re: /\bphotosynthesis\b/i, gen: 'photosynthesis' },
+  { id: 'pythagoras', re: /\bpythagor\w*|right[- ]angled triangle|hypotenuse\b/i, gen: 'pythagoras' },
+  { id: 'heart', re: /\bheart\b/i, commons: 'human heart anatomy diagram', keys: ['heart'], caption: 'Human heart: chambers, valves and major vessels' },
+  { id: 'bonding', re: /\bchemical bond\w*|covalent|ionic bond|vsepr|molecular (?:shape|geometry)|lewis (?:structure|dot)/i, commons: 'chemical bonding molecule diagram', keys: ['bond', 'molecul', 'lewis', 'vsepr', 'covalent', 'ionic'], caption: 'Chemical bonding: how atoms share or transfer electrons' }
+];
+const visualCache = createTtlCache(100, 6 * 60 * 60 * 1000);
+export function __resetVisualCache() { visualCache.clear(); }
+
+// Returns the matching visual topic, or null for simple answers that do not need a picture.
+function detectVisualTopic(message, modeId, hasAttachment) {
+  if (hasAttachment || !VISUAL_MODES.has(modeId)) return null;
+  const wantsVisual = modeId === 'study' || VISUAL_ASK.test(message);
+  if (!wantsVisual) return null;
+  return VISUAL_TOPICS.find((t) => t.re.test(message)) || null;
+}
+
+function svgDataUrl(svg) {
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+}
+
+// Projectile motion, computed from v, angle and g. Ignores air resistance.
+function projectileVisual() {
+  const v = 20, deg = 45, g = 9.8;
+  const th = deg * Math.PI / 180;
+  const range = (v * v * Math.sin(2 * th)) / g;
+  const maxH = (v * v * Math.sin(th) ** 2) / (2 * g);
+  const T = (2 * v * Math.sin(th)) / g;
+  const W = 640, H = 320, pad = 48;
+  const scale = Math.min((W - 2 * pad) / range, (H - 2 * pad) / maxH);
+  const pts = [];
+  for (let i = 0; i <= 60; i++) {
+    const t = (T * i) / 60;
+    const x = v * Math.cos(th) * t;
+    const y = v * Math.sin(th) * t - 0.5 * g * t * t;
+    pts.push((pad + x * scale).toFixed(1) + ',' + (H - pad - y * scale).toFixed(1));
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Arial, sans-serif">
+<rect width="${W}" height="${H}" fill="#ffffff"/>
+<line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="#555" stroke-width="2"/>
+<text x="${W - pad}" y="${H - pad + 18}" font-size="12" text-anchor="end" fill="#333">ground (x)</text>
+<polyline points="${pts.join(' ')}" fill="none" stroke="#2563eb" stroke-width="3"/>
+<circle cx="${pad}" cy="${H - pad}" r="4" fill="#111"/>
+<text x="${pad + 8}" y="${H - pad - 10}" font-size="13" fill="#111">launch</text>
+<line x1="${pad + (range / 2) * scale}" y1="${H - pad - maxH * scale}" x2="${pad + (range / 2) * scale}" y2="${H - pad}" stroke="#dc2626" stroke-dasharray="5 4"/>
+<text x="${pad + (range / 2) * scale + 6}" y="${H - pad - maxH * scale + 14}" font-size="13" fill="#dc2626">max height ≈ ${maxH.toFixed(1)} m</text>
+<text x="${W / 2}" y="${H - 14}" font-size="13" text-anchor="middle" fill="#111">range ≈ ${range.toFixed(1)} m (launch angle ${deg}°)</text>
+<text x="${pad}" y="28" font-size="13" fill="#111">v = ${v} m/s, g = ${g} m/s² (air resistance ignored)</text>
+</svg>`;
+  return { kind: 'svg', title: 'Projectile trajectory', alt: 'Parabolic path of a projectile launched at 20 m/s and 45 degrees', caption: 'Projectile path. Range R = v² sin 2θ / g ≈ ' + range.toFixed(1) + ' m. Maximum height H = v² sin² θ / 2g ≈ ' + maxH.toFixed(1) + ' m. Time of flight ≈ ' + T.toFixed(2) + ' s.', source: 'Drawn by Aviqo from the formulas shown', src: svgDataUrl(svg) };
+}
+
+function photosynthesisVisual() {
+  const W = 640, H = 300;
+  const box = (x, y, w, label, fill) => `<rect x="${x}" y="${y}" width="${w}" height="46" rx="10" fill="${fill}" stroke="#374151"/><text x="${x + w / 2}" y="${y + 28}" font-size="14" text-anchor="middle" fill="#111">${label}</text>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Arial, sans-serif">
+<rect width="${W}" height="${H}" fill="#ffffff"/>
+${box(20, 50, 170, 'Carbon dioxide (6 CO₂)', '#e0f2fe')}
+${box(20, 130, 170, 'Water (6 H₂O)', '#e0f2fe')}
+${box(20, 210, 170, 'Light energy', '#fef9c3')}
+${box(245, 118, 150, 'Chloroplast (chlorophyll)', '#dcfce7')}
+${box(450, 50, 170, 'Oxygen (6 O₂)', '#f3f4f6')}
+${box(450, 210, 170, 'Glucose (C₆H₁₂O₆)', '#f3f4f6')}
+<path d="M190 73 L245 133" stroke="#374151" stroke-width="2"/>
+<path d="M190 153 L245 150" stroke="#374151" stroke-width="2"/>
+<path d="M190 233 L245 165" stroke="#374151" stroke-width="2"/>
+<path d="M395 140 L450 73" stroke="#374151" stroke-width="2"/>
+<path d="M395 160 L450 233" stroke="#374151" stroke-width="2"/>
+<text x="${W / 2}" y="${H - 16}" font-size="14" text-anchor="middle" fill="#111">6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂</text>
+</svg>`;
+  return { kind: 'svg', title: 'Photosynthesis', alt: 'Inputs and outputs of photosynthesis in a chloroplast', caption: 'Photosynthesis: carbon dioxide and water, with light energy, make glucose and oxygen inside the chloroplast.', source: 'Drawn by Aviqo (balanced equation shown)', src: svgDataUrl(svg) };
+}
+
+// Right triangle with legs 3 and 4, hypotenuse 5 (scale 40 px per unit).
+function pythagorasVisual() {
+  const s = 40, A = [60, 260], B = [60 + 3 * s, 260], C = [60, 260 - 4 * s];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="Arial, sans-serif">
+<rect width="640" height="300" fill="#ffffff"/>
+<polygon points="${A} ${B} ${C}" fill="#eff6ff" stroke="#1d4ed8" stroke-width="3"/>
+<rect x="${A[0]}" y="${A[1] - 14}" width="14" height="14" fill="none" stroke="#111"/>
+<text x="${(A[0] + B[0]) / 2}" y="${A[1] + 22}" font-size="15" text-anchor="middle" fill="#111">a = 3</text>
+<text x="${A[0] - 12}" y="${(A[1] + C[1]) / 2}" font-size="15" text-anchor="end" fill="#111">b = 4</text>
+<text x="${(B[0] + C[0]) / 2 + 14}" y="${(B[1] + C[1]) / 2 - 6}" font-size="15" fill="#111">c = 5</text>
+<text x="400" y="110" font-size="16" fill="#111">a² + b² = c²</text>
+<text x="400" y="140" font-size="16" fill="#111">9 + 16 = 25</text>
+</svg>`;
+  return { kind: 'svg', title: 'Pythagoras theorem', alt: 'Right triangle with legs 3 and 4 and hypotenuse 5', caption: 'Pythagoras theorem: in a right-angled triangle, a² + b² = c², where c is the hypotenuse (the side opposite the right angle).', source: 'Drawn by Aviqo (example with sides 3, 4, 5)', src: svgDataUrl(svg) };
+}
+
+function stripTags(v) {
+  return String(v || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+}
+
+// Real photos from Wikimedia Commons. Keeps only CC or public-domain images whose title matches the topic.
+async function commonsVisuals(topic) {
+  const cached = visualCache.get(topic.id);
+  if (cached) return cached;
+  const url = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12' +
+    '&gsrsearch=' + encodeURIComponent(topic.commons) + '&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=800';
+  let data;
+  try {
+    const r = await fetchWithTimeout(url, { headers: { 'User-Agent': 'AviqoEducation/1.0 (educational website)' } }, 6000);
+    if (!r.ok) return [];
+    data = await r.json();
+  } catch (e) {
+    return [];
+  }
+  const pages = data && data.query && data.query.pages ? Object.values(data.query.pages) : [];
+  const out = [];
+  for (const p of pages) {
+    const info = p && p.imageinfo && p.imageinfo[0];
+    if (!info || !/^image\/(jpeg|png|svg\+xml)$/.test(info.mime || '')) continue;
+    const title = String(p.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '');
+    if (!topic.keys.some((k) => new RegExp(k, 'i').test(title))) continue;
+    const meta = info.extmetadata || {};
+    const license = stripTags(meta.LicenseShortName && meta.LicenseShortName.value);
+    if (!/\bCC\b|public domain/i.test(license)) continue;
+    out.push({
+      kind: 'image',
+      title,
+      alt: title,
+      caption: topic.caption,
+      thumb: info.thumburl || info.url,
+      page: info.descriptionurl,
+      artist: stripTags(meta.Artist && meta.Artist.value) || 'author not stated',
+      license,
+      source: 'Wikimedia Commons'
+    });
+    if (out.length >= 2) break;
+  }
+  visualCache.set(topic.id, out);
+  return out;
+}
+
+async function visualsFor(topic) {
+  if (topic.gen === 'projectile') return [projectileVisual()];
+  if (topic.gen === 'photosynthesis') return [photosynthesisVisual()];
+  if (topic.gen === 'pythagoras') return [pythagorasVisual()];
+  return commonsVisuals(topic);
+}
+
 // Search results are reused for 10 minutes on a warm server instance (same query, same filters).
 const searchCache = createTtlCache(100, 10 * 60 * 1000);
 export function __resetSearchCache() { searchCache.clear(); }
@@ -1397,6 +1545,8 @@ async function handleChat(req, res) {
 
   const effectiveMessage = message || (file ? 'Summarize the attached file.' : 'Describe this image.');
   const intent = analyzeQuestion(effectiveMessage, !!(image || file));
+  const visualTopic = detectVisualTopic(effectiveMessage, modeId, !!(image || file));
+  const visualPromise = visualTopic ? visualsFor(visualTopic).catch(() => []) : null;
   const steps = [];
   let sources = [];
   let searchNote = '';
@@ -1626,6 +1776,11 @@ async function handleChat(req, res) {
       }))
     };
     if (evidence) payload.evidence = evidence;
+    if (visualPromise) {
+      // Waits at most 8 seconds for pictures. If they are slow or missing, the text answer is sent alone.
+      const visuals = await Promise.race([visualPromise, new Promise((resolve) => setTimeout(() => resolve([]), 8000))]);
+      if (visuals && visuals.length) payload.visuals = visuals;
+    }
     return res.status(200).json(payload);
   } catch (err) {
     if (charged) await refundCredits(creditId, cost);
