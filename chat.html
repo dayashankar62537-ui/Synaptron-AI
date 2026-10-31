@@ -1471,6 +1471,45 @@
   .img-retry:disabled{opacity:.5; cursor:default;}
   .img-regen,.img-edit{cursor:pointer;}
   .cc .attached-img{max-width:280px; width:100%; border-radius:14px; display:block; margin-bottom:8px;}
+  /* Image settings: only in Creative Studio > Image generation */
+  .cc-tool-wrap{display:inline-flex; align-items:center; gap:6px; margin-left:8px; font-size:13px;}
+  .cc-tool-wrap[hidden], .img-settings[hidden]{display:none !important;}
+  .img-settings{display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 16px; margin:8px auto 0; padding:10px 14px; max-width:1000px; box-sizing:border-box; border:1px solid var(--border); border-radius:14px; background:var(--surface-2); font-size:13px;}
+  .img-settings-title{width:100%; font-weight:600; font-size:12.5px; color:var(--muted);}
+  .img-set{display:flex; flex-direction:column; gap:4px; color:var(--muted); flex:1 1 200px; min-width:0;}
+  .img-set select{width:100%; padding:7px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); font:inherit;}
+  .img-set select option:disabled{color:var(--muted);}
+  .img-set-hint{width:100%; font-size:12px; color:var(--muted); line-height:1.5;}
+  @media (max-width:600px){ .img-set{flex:1 1 100%;} .cc-tool-wrap{margin-left:0; margin-top:6px;} }
+
+  /* ---- Generated images: large, real aspect ratio, own result card ---- */
+  .cc .img-msg .bubble{width:100%;}
+  .cc .img-card{box-sizing:border-box; width:min(100%, 1000px); border:1px solid var(--border); border-radius:16px; padding:14px; background:var(--surface-2); margin:2px 0 6px;}
+  .cc .img-head{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-bottom:8px;}
+  .cc .img-status{font-weight:600; padding:3px 10px; border-radius:999px; border:1px solid var(--border);}
+  .cc .img-status.done{color:#15803d;}
+  .cc .img-status.error{color:#b91c1c;}
+  .cc .img-prompt{margin:0 0 12px; font-size:15px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text);}
+  .cc .gen-img{display:block; width:min(100%, 1000px, calc(min(80vh, 1000px) * var(--r, 1))); height:auto; max-width:100%; margin:0 auto; border-radius:12px; object-fit:contain; background:var(--surface); cursor:zoom-in;}
+  .cc .img-res{font-size:12.5px; color:var(--muted); margin-top:8px;}
+  .cc .img-note{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .cc .img-skel{box-sizing:border-box; width:100%; aspect-ratio:var(--ar, 1 / 1); max-height:min(80vh, 1000px); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--muted); background:linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size:200% 100%; animation:imgShim 1.4s linear infinite;}
+  @keyframes imgShim{from{background-position:200% 0} to{background-position:-200% 0}}
+  .cc .img-err{box-sizing:border-box; padding:16px; border-radius:12px; background:var(--surface); color:#b91c1c; font-size:14px;}
+  .cc .img-card .img-actions{margin-top:12px;}
+  .cc .img-full,.cc .img-card select{cursor:pointer;}
+  .cc .img-full{display:inline-block; padding:7px 14px; border-radius:999px; border:1px solid currentColor; font-size:13px; background:transparent; color:inherit;}
+  .cc .img-aspect-sel{font-size:13px;}
+  .img-lb{position:fixed; inset:0; z-index:1000; background:rgba(6,8,12,.94); display:flex; align-items:center; justify-content:center; padding:64px 16px 16px; box-sizing:border-box;}
+  .img-lb[hidden]{display:none !important;}
+  .img-lb img{display:block; max-width:100%; max-height:calc(100vh - 96px); width:auto; height:auto; object-fit:contain; border-radius:8px;}
+  .img-lb-bar{position:absolute; top:12px; right:12px; display:flex; gap:8px;}
+  .img-lb-bar a,.img-lb-bar button{display:inline-block; padding:7px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.6); background:rgba(0,0,0,.3); color:#fff; font-size:13px; text-decoration:none; cursor:pointer;}
+  @media (max-width:600px){
+    .cc .img-card{padding:10px; border-radius:14px;}
+    .cc .img-prompt{font-size:14px;}
+    .cc .gen-img{max-height:70vh;}
+  }
 
   .cc .code-block{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#1f1f1d;}
   .cc .code-head{
@@ -1624,6 +1663,10 @@
 </style>
 </head>
 <body class="cc">
+<div id="imgLb" class="img-lb" hidden role="dialog" aria-modal="true" aria-label="Image preview">
+  <div class="img-lb-bar"><a id="imgLbDl" href="#" download="aviqo-image.png">Download PNG</a><button type="button" id="imgLbClose">Close</button></div>
+  <img id="imgLbImg" alt="">
+</div>
 
 <div class="cc-app" id="ccApp">
 
@@ -1770,6 +1813,34 @@
             <option value="creative">Creative Studio</option>
           </select>
           <span class="cc-mode-hint" id="ccModeHint"></span>
+          <span class="cc-tool-wrap" id="creativeToolWrap" hidden>
+            <label for="creativeTool">Creative tool</label>
+            <select id="creativeTool" class="cc-mode-select" aria-label="Creative tool">
+              <option value="image">Image generation</option>
+              <option value="text">Text &amp; scripts</option>
+            </select>
+          </span>
+        </div>
+        <div class="img-settings" id="imgSettings" hidden>
+          <span class="img-settings-title">Image settings</span>
+          <label class="img-set" for="imgAspect">Aspect ratio
+            <select id="imgAspect" aria-label="Aspect ratio">
+              <option value="auto" selected>Auto</option>
+              <option value="1:1">Square (1:1)</option>
+              <option value="16:9">Landscape (16:9)</option>
+              <option value="9:16">Portrait (9:16)</option>
+              <option value="4:3">Standard (4:3)</option>
+              <option value="3:4">Portrait Photo (3:4)</option>
+            </select>
+          </label>
+          <label class="img-set" for="imgRes">Resolution
+            <select id="imgRes" aria-label="Resolution">
+              <option value="standard" selected>Standard</option>
+              <option value="high" disabled>High Resolution (not supported)</option>
+              <option value="max" disabled>Maximum Available (not supported)</option>
+            </select>
+          </label>
+          <span class="img-set-hint" id="imgSetHint"></span>
         </div>
 
         <div class="cc-filters" id="ccFilters" hidden>
@@ -3148,6 +3219,7 @@
   }
 
   // ---- Image generation: real FLUX image via /api/generate-image ----
+  // Each image is its own result card in the conversation. Only a returned image is shown as a success.
   // Decides when a message is an image request.
   // 1) Strict: a visual noun plus a create verb ("make a logo"), or "image of". Works in every mode.
   // 2) Loose: an image verb (generate, draw, paint, sketch, render, imagine) plus "a/an" and a description,
@@ -3159,29 +3231,31 @@
     const verb = /\b(generate|create|make|draw|paint|sketch|render|design|imagine|banao|banaao|banaiye|bana|bnao|bnaiye|dikhao|dikha|chahiye|bhejo)\b|बनाओ|बनाइए|बनाएं/;
     const imageVerb = /\b(generate|draw|paint|sketch|render|imagine)\b/;
     const style = /\b(digital art|oil painting|watercolou?r|photorealistic|photo-?realistic|3d render|anime style|cinematic|pixel art|low poly|isometric)\b/;
-    const textWords = /\b(list|summary|summarize|text|email|code|essay|poem|story|explain|plan|script|article|caption|translate|table|report|answer|question|budget|note|notes)\b/;
+    // A request for a TEXT output (list, summary, email, a table of data...). Scene words like "on a table" do not count.
+    const textTask = /^(explain|summari[sz]e|translate|write|tell|define|what|why|how)\b|\b(make|create|generate|give|prepare|build|draw)\s+(me\s+|us\s+)?(a\s+|an\s+|the\s+|some\s+|my\s+|our\s+)?(list|summary|email|essay|poem|story|article|caption|report|budget|plan|script|code|table|todo|to-do|note|notes|answer|quiz|itinerary|schedule|outline|resume|cv|letter|data)\b/;
+    if (textTask.test(t)) return false;
     if ((subject.test(t) && verb.test(t)) || /\b(image|photo|picture|pic)\s+of\b/.test(t)) return true;
-    if (textWords.test(t)) return false;
     const hasArticle = /\b(a|an|some|ek)\b/.test(t);
     if (hasArticle && (imageVerb.test(t) || (mode === 'creative' && verb.test(t)))) return true;
     return mode === 'creative' && style.test(t);
   }
 
-  // Reads an aspect ratio from the message. Defaults to square.
-  function aspectFrom(raw){
+  // Aspect ratio written in the message ("16:9", "banner", "reel"). Null if none.
+  function aspectFromText(raw){
     const t = String(raw || '').toLowerCase();
-    const m = t.match(/\b(1:1|16:9|9:16|4:5|4:3)\b/);
+    const m = t.match(/\b(1:1|16:9|9:16|4:3|4:5)\b/);
     if (m) return m[1];
-    if (/\b(youtube|landscape|widescreen|wide|banner|cover)\b/.test(t)) return '16:9';
+    if (/\b(youtube|landscape|widescreen|banner|cover)\b/.test(t)) return '16:9';
     if (/\b(reel|reels|shorts|story|stories|portrait|vertical)\b/.test(t)) return '9:16';
-    return '1:1';
+    return null;
   }
+  const IMG_AR = { '1:1': '1 / 1', '16:9': '16 / 9', '9:16': '9 / 16', '4:3': '4 / 3', '4:5': '4 / 5' };
 
-  async function generateImage(prompt, aspect){
+  async function generateImage(prompt, aspect, resolution){
     const res = await fetch('/api/generate-image', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt, aspect, user: { email: currentUserEmail() } })
+      body: JSON.stringify({ prompt, aspect, resolution, user: { email: currentUserEmail() } })
     });
     const data = await res.json().catch(()=>null);
     if(!res.ok){
@@ -3189,98 +3263,171 @@
       err.upgrade = !!(data && data.upgrade);
       throw err;
     }
-    // Only a real image counts as success
     if(!data || typeof data.image !== 'string' || data.image.indexOf('data:image/') !== 0){
       throw new Error('The server did not return an image. Please try again.');
     }
     return data;
   }
 
-  // Shows the real image with Download, Regenerate and Edit prompt. Never a placeholder.
-  function addAiImage(dataUrl, meta){
-    ccLog({ r:'a', t: '[Generated image] ' + meta.prompt });
+  // A new card at the bottom of the conversation (chronological, like the rest of the chat)
+  function makeImgMsg(){
     const div = document.createElement('div');
-    div.className = 'msg';
-    const av = document.createElement('div');
-    av.className = 'av';
-    av.innerHTML = `<img src="${logoSrc}" alt="">`;
-    const wrap = document.createElement('div');
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    const img = document.createElement('img');
-    img.className = 'attached-img';
-    img.alt = 'Generated image: ' + meta.prompt.slice(0, 120);
-    img.src = dataUrl;
-    const cap = document.createElement('div');
-    cap.textContent = 'Here you go! Aspect ratio ' + meta.aspect + (meta.sizeApplied ? '' : ' (this model returned its default square size).') + ' Want a different style or variation?';
+    div.className = 'msg img-msg';
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><div class="img-card" data-status="pending"></div></div></div>`;
+    body.appendChild(div);
+    scrollBottom();
+    return div;
+  }
+
+  // Draws one card from its state: pending (loading), done (real image), or error (message + actions)
+  function renderImgCard(msgEl, m){
+    const card = msgEl.querySelector('.img-card');
+    card.dataset.status = m.status;
+    card.textContent = '';
+    const head = document.createElement('div');
+    head.className = 'img-head';
+    const st = document.createElement('span');
+    st.className = 'img-status ' + m.status;
+    st.textContent = m.status === 'pending' ? 'Generating' : (m.status === 'done' ? 'Completed' : 'Failed');
+    const ar = document.createElement('span');
+    ar.textContent = (ASPECT_TXT[m.aspect] || m.aspect) + ' · ' + (RES_TXT[m.resolution] || 'Standard');
+    head.append(st, ar);
+    const prompt = document.createElement('p');
+    prompt.className = 'img-prompt';
+    prompt.textContent = m.prompt;
+    card.append(head, prompt);
+
     const actions = document.createElement('div');
-    actions.className = 'img-actions';
-    const dl = document.createElement('a');
-    dl.className = 'img-dl';
-    dl.href = dataUrl;
-    dl.download = 'aviqo-image-' + Date.now() + '.png';
-    dl.textContent = 'Download PNG';
-    const regen = document.createElement('button');
-    regen.type = 'button';
-    regen.className = 'img-regen';
-    regen.textContent = 'Regenerate';
-    regen.addEventListener('click', () => { runImage(meta.prompt, { aspect: meta.aspect }); });
+    actions.className = 'img-actions btns';
+
+    if (m.status === 'pending'){
+      const sk = document.createElement('div');
+      sk.className = 'img-skel';
+      sk.style.setProperty('--ar', IMG_AR[m.aspect] || '1 / 1');
+      sk.textContent = 'Generating your image…';
+      card.appendChild(sk);
+      return;
+    }
+
+    if (m.status === 'done'){
+      const img = document.createElement('img');
+      img.className = 'gen-img';
+      img.alt = m.prompt.slice(0, 120);
+      const res = document.createElement('div');
+      res.className = 'img-res';
+      img.addEventListener('load', () => {
+        // The real pixel size, read from the returned image. Never upscaled or relabelled.
+        img.style.setProperty('--r', (img.naturalWidth / img.naturalHeight).toFixed(4));
+        res.textContent = 'Actual resolution: ' + img.naturalWidth + ' × ' + img.naturalHeight + ' px';
+      });
+      img.src = m.dataUrl;
+      img.addEventListener('click', () => openImgLb(m));
+      card.appendChild(img);
+      card.appendChild(res);
+      const note = document.createElement('div');
+      note.className = 'img-note';
+      const got = (m.width && m.height) ? m.width + ' × ' + m.height : 'an unknown size';
+      if (m.aspect === 'auto'){
+        note.textContent = 'Auto: the model\'s default size was used (' + got + ').';
+        card.appendChild(note);
+      } else if (m.sizeApplied === false){
+        note.textContent = 'The model did not apply ' + (ASPECT_TXT[m.aspect] || m.aspect) + '. It returned ' + got + '.';
+        card.appendChild(note);
+      }
+      const dl = document.createElement('a');
+      dl.className = 'img-dl';
+      dl.href = m.dataUrl;
+      dl.download = 'aviqo-image-' + Date.now() + '.png';
+      dl.textContent = 'Download PNG (original size)';
+      const regen = document.createElement('button');
+      regen.type = 'button'; regen.className = 'img-regen'; regen.textContent = 'Regenerate';
+      regen.addEventListener('click', () => runImage(m.prompt, { aspect: m.aspect, resolution: m.resolution, design: m.design }));
+      const edit = document.createElement('button');
+      edit.type = 'button'; edit.className = 'img-edit'; edit.textContent = 'Edit prompt';
+      edit.addEventListener('click', () => { input.value = m.prompt; autoGrow(); input.focus(); });
+      const full = document.createElement('button');
+      full.type = 'button'; full.className = 'img-full'; full.textContent = 'Full-screen preview';
+      full.addEventListener('click', () => openImgLb(m));
+      actions.append(dl, regen, edit, full);
+      card.appendChild(actions);
+      return;
+    }
+
+    // error
+    const err = document.createElement('div');
+    err.className = 'img-err';
+    err.textContent = m.error || 'The image could not be generated.';
+    card.appendChild(err);
     const edit = document.createElement('button');
-    edit.type = 'button';
-    edit.className = 'img-edit';
-    edit.textContent = 'Edit prompt';
-    edit.addEventListener('click', () => {
-      input.value = meta.prompt;
-      autoGrow();
-      input.focus();
-    });
-    actions.append(dl, regen, edit);
-    bubble.append(img, cap, actions);
-    wrap.appendChild(bubble);
-    div.append(av, wrap);
-    body.appendChild(div);
-    scrollBottom();
+    edit.type = 'button'; edit.className = 'img-edit'; edit.textContent = 'Edit prompt';
+    edit.addEventListener('click', () => { input.value = m.prompt; autoGrow(); input.focus(); });
+    actions.appendChild(edit);
+    if (!m.upgrade){
+      const retry = document.createElement('button');
+      retry.type = 'button'; retry.className = 'img-retry'; retry.textContent = 'Retry';
+      retry.addEventListener('click', () => runImage(m.prompt, { aspect: m.aspect, resolution: m.resolution, design: m.design, msg: msgEl }));
+      actions.prepend(retry);
+    }
+    card.appendChild(actions);
   }
 
-  // Shows the real error from the server plus a retry button. Never pretends an image exists.
-  function addImageError(prompt, msg, aspect){
-    ccLog({ r:'a', t: '[Image error] ' + msg });
-    const div = document.createElement('div');
-    div.className = 'msg';
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble">The image could not be generated.<br><b>Error:</b> ${escapeHtml(msg)}<div class="img-actions"><button type="button" class="img-retry">Retry</button></div></div></div>`;
-    const btn = div.querySelector('.img-retry');
-    btn.addEventListener('click', () => { div.remove(); runImage(prompt, { aspect: aspect }); });
-    body.appendChild(div);
-    scrollBottom();
+  // Full-screen preview of one generated image
+  const imgLb = document.getElementById('imgLb');
+  function openImgLb(m){
+    if (!m || m.status !== 'done' || !m.dataUrl) return;
+    const img = document.getElementById('imgLbImg');
+    img.src = m.dataUrl; img.alt = m.prompt.slice(0, 120);
+    const dl = document.getElementById('imgLbDl');
+    dl.href = m.dataUrl; dl.download = 'aviqo-image-' + Date.now() + '.png';
+    imgLb.hidden = false;
+    document.getElementById('imgLbClose').focus();
   }
+  function closeImgLb(){ imgLb.hidden = true; document.getElementById('imgLbImg').removeAttribute('src'); }
+  imgLb.addEventListener('click', function(e){ if (e.target === imgLb || e.target.id === 'imgLbClose') closeImgLb(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !imgLb.hidden) closeImgLb(); });
 
-  // Runs one image generation with a visible loading state.
-  // opts.design (Creative Studio only): a Design Studio link is added under the image for editable text.
+  // Runs one generation in its own card. Settings come from the panel only in Creative Studio;
+  // elsewhere the defaults (Auto, Standard) are used. opts.msg reuses a card (Retry).
   function runImage(prompt, opts){
     opts = opts || {};
-    const aspect = opts.aspect || aspectFrom(prompt);
-    addTyping();
-    addStatusTrail([
-      {label:'Understanding your prompt', at:0},
-      {label:'Generating ' + aspect + ' image with FLUX (5 to 30 seconds)', at:1200},
-      {label:'Finishing the image', at:15000}
-    ]);
-    generateImage(prompt, aspect).then(data=>{
-      removeTyping();
-      addAiImage(data.image, { prompt: prompt, aspect: data.aspect || aspect, sizeApplied: data.sizeApplied !== false });
-      if(opts.design) addDesignLink(opts.design);
+    const useSettings = opts.settings !== undefined ? !!opts.settings : imageSettingsVisible();
+    const picked = useSettings ? document.getElementById('imgAspect').value : 'auto';
+    const resolution = opts.resolution || (useSettings ? document.getElementById('imgRes').value : 'standard');
+    // Explicit choice wins; otherwise a ratio written in the message; otherwise Auto.
+    const aspect = opts.aspect || (picked !== 'auto' ? picked : (aspectFromText(prompt) || 'auto'));
+    const msgEl = opts.msg || makeImgMsg();
+    const m = { prompt: prompt, aspect: aspect, resolution: resolution, status: 'pending', design: opts.design || null };
+    renderImgCard(msgEl, m);
+    generateImage(prompt, aspect, resolution).then(data=>{
+      m.status = 'done';
+      m.dataUrl = data.image;
+      m.width = data.width;
+      m.height = data.height;
+      m.sizeApplied = data.sizeApplied === true;
+      renderImgCard(msgEl, m);
+      ccLog({ r:'a', t: '[Generated image] ' + prompt });
+      if (m.design){
+        const bubble = msgEl.querySelector('.bubble');
+        const note = document.createElement('div');
+        note.style.marginTop = '10px';
+        note.textContent = 'Want the text exact? Open this in the Design Studio to edit the words and colours.';
+        const a = document.createElement('a');
+        a.href = 'studio.html?tpl=' + encodeURIComponent(m.design.tpl) + '&title=' + encodeURIComponent(m.design.title);
+        a.className = 'ai-studio-link';
+        a.textContent = 'Open in Design Studio →';
+        a.style.cssText = 'display:inline-block; margin-top:4px; font-weight:600; color:inherit; text-decoration:underline;';
+        note.appendChild(document.createElement('br'));
+        note.appendChild(a);
+        bubble.appendChild(note);
+      }
       try{
-        sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
-          dataUrl: data.image,
-          prompt: prompt,
-          ts: Date.now()
-        }));
+        sessionStorage.setItem('aviqo_generated_image', JSON.stringify({ dataUrl: data.image, prompt: prompt, ts: Date.now() }));
       }catch(e){}
     }).catch(err=>{
-      removeTyping();
-      if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
-      if(err && err.upgrade){ addAiMsg(err.message); return; }
-      addImageError(prompt, (err && err.message) || 'Unknown error', aspect);
+      m.status = 'error';
+      m.upgrade = !!(err && err.upgrade);
+      m.error = isConnectionError(err) ? CONNECTION_MSG : ((err && err.message) || 'Unknown error');
+      renderImgCard(msgEl, m);
     }).finally(()=>{ refreshCredits(); });
   }
 
@@ -3340,13 +3487,16 @@
     // If the user is asking to generate an image (and hasn't attached their
     // own photo), route to the real OpenAI image endpoint instead of chat.
     const canImage = !imageToSend && !fileToSend && !!trimmed;
-    const wantsImage = canImage && detectImageIntent(trimmed, currentMode);
-    if(currentMode === 'creative' && canImage && !wantsImage){
+    const creativeText = currentMode === 'creative' && creativeTool === 'text';
+    // Creative Studio > Image generation: every message is an image request.
+    // Other modes: only clear image requests, with default settings (Auto / Standard).
+    const wantsImage = canImage && !creativeText && (imageSettingsVisible() || detectImageIntent(trimmed, currentMode));
+    if(currentMode === 'creative' && canImage && !creativeText && !wantsImage){
       const d = designRequest(trimmed);
       if(d){ addDesignLink(d); return; }
     }
     if(wantsImage){
-      runImage(trimmed, { design: currentMode === 'creative' ? designRequest(trimmed) : null });
+      runImage(trimmed, { design: currentMode === 'creative' ? designRequest(trimmed) : null, settings: imageSettingsVisible() });
       return;
     }
 
@@ -3598,8 +3748,41 @@
     modeHint.textContent = MODE_HINTS[m];
     const filtersEl = document.getElementById('ccFilters');
     if(filtersEl) filtersEl.hidden = !(m === 'web' || m === 'deep' || m === 'academic');
+    updateImageSettings();
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
+  // ---- Image settings: shown only for Creative Studio > Image generation ----
+  let creativeTool = 'image';
+  const ASPECT_TXT = { auto: 'Auto', '1:1': 'Square (1:1)', '16:9': 'Landscape (16:9)', '9:16': 'Portrait (9:16)', '4:3': 'Standard (4:3)', '3:4': 'Portrait Photo (3:4)', '4:5': 'Portrait (4:5)' };
+  const RES_TXT = { standard: 'Standard', high: 'High Resolution', max: 'Maximum Available' };
+  function imageSettingsVisible(){ return currentMode === 'creative' && creativeTool === 'image'; }
+  function updateImageSettings(){
+    const wrap = document.getElementById('creativeToolWrap');
+    if (wrap) wrap.hidden = currentMode !== 'creative';
+    const panel = document.getElementById('imgSettings');
+    if (panel) panel.hidden = !imageSettingsVisible();
+  }
+  document.getElementById('creativeTool').addEventListener('change', function(e){ creativeTool = e.target.value; updateImageSettings(); });
+  // Options the model supports come from the server. Unsupported ones stay disabled and say why.
+  function applyImageCaps(caps){
+    if (!caps || !Array.isArray(caps.aspects) || !Array.isArray(caps.resolutions)) return;
+    const aspect = document.getElementById('imgAspect');
+    const res = document.getElementById('imgRes');
+    caps.aspects.forEach(function(a){
+      const o = aspect.querySelector('option[value="' + a.id + '"]');
+      if (o){ o.disabled = !a.enabled; o.textContent = a.label; }
+    });
+    const notes = [];
+    caps.resolutions.forEach(function(r){
+      const o = res.querySelector('option[value="' + r.id + '"]');
+      if (o){ o.disabled = !r.enabled; o.textContent = r.enabled ? r.label : r.label + ' (not supported)'; }
+      if (!r.enabled && r.reason) notes.push(r.label + ': ' + r.reason);
+    });
+    if (caps.model) notes.unshift('Model: ' + caps.model + '.');
+    document.getElementById('imgSetHint').textContent = notes.join(' ');
+  }
+  fetch('/api/generate-image').then(function(r){ return r.ok ? r.json() : null; }).then(applyImageCaps).catch(function(){});
+
   modeSelect.addEventListener('change', ()=> setMode(modeSelect.value));
   (function(){ var saved = 'quick'; try{ saved = localStorage.getItem('aviqo_mode') || 'quick'; }catch(e){} setMode(saved); })();
 
