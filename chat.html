@@ -722,6 +722,15 @@
   .saved-item button{font:13px 'Inter',sans-serif; padding:5px 10px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer;}
   .saved-md{white-space:pre-wrap; font:13px/1.5 ui-monospace,monospace; background:#f9fafb; padding:12px; border-radius:10px;}
   .st-item.done .st-ic{border-color:#16a34a;}
+  .ai-vis-wrap{display:grid; gap:12px; margin:12px 0; grid-template-columns:1fr; max-width:100%;}
+  .ai-vis{margin:0; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); padding:10px; max-width:100%; overflow:hidden;}
+  .ai-vis img{display:block; width:100%; height:auto; max-height:360px; object-fit:contain; border-radius:8px; background:#fff;}
+  .ai-vis figcaption{font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.45;}
+  .ai-vis-src{display:block; font-size:11px; opacity:.8; margin-top:3px;}
+  .ai-vis-src a{color:inherit;}
+  .ai-vis-loading img{min-height:170px; background:linear-gradient(90deg,#e5e7eb,#f8fafc,#e5e7eb); background-size:200% 100%; animation:aiShimmer 1.2s infinite linear;}
+  @keyframes aiShimmer{from{background-position:200% 0} to{background-position:-200% 0}}
+  @media (max-width:640px){ .ai-vis img{max-height:260px;} }
   .flash-note{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:#111; color:#fff; padding:8px 14px; border-radius:999px; font:13px 'Inter',sans-serif; z-index:500; box-shadow:0 6px 18px rgba(0,0,0,.25);}
   .cc-fav{width:16px; height:16px; border-radius:4px; margin-right:6px; vertical-align:-3px;}
   .chat-send.is-stop{background:#111; color:#fff;}
@@ -1458,8 +1467,9 @@
   .cc .bubble li{margin:4px 0;}
   .cc .bubble code.inline{background:var(--surface-2); padding:2px 6px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:.88em;}
   .img-actions{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;}
-  .img-dl,.img-retry{display:inline-block; padding:7px 14px; border-radius:999px; border:1px solid currentColor; font-size:13px; text-decoration:none; background:transparent; color:inherit; cursor:pointer;}
+  .img-dl,.img-retry,.img-regen,.img-edit{display:inline-block; padding:7px 14px; border-radius:999px; border:1px solid currentColor; font-size:13px; text-decoration:none; background:transparent; color:inherit; cursor:pointer;}
   .img-retry:disabled{opacity:.5; cursor:default;}
+  .img-regen,.img-edit{cursor:pointer;}
   .cc .attached-img{max-width:280px; width:100%; border-radius:14px; display:block; margin-bottom:8px;}
 
   .cc .code-block{margin:12px 0; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#1f1f1d;}
@@ -2962,8 +2972,36 @@
       steps.map(function(st){ return '<li>' + attrEsc(st) + '</li>'; }).join('') + '</ol></details>';
   }
 
-  function addAiMsg(text, cardType, cardMeta, sources, steps, evidence){
+  // Diagrams and licensed photos. Built from data sent by the server; a picture that fails to load is removed.
+  let visSeq = 0;
+  function visualsHtml(list){
+    if(!list || !list.length) return '';
+    return '<div class="ai-vis-wrap">' + list.map(function(v){
+      const alt = attrEsc(v.alt || v.title || 'Diagram');
+      const cap = attrEsc(v.caption || '');
+      if(v.kind === 'svg'){
+        return '<figure class="ai-vis"><img alt="' + alt + '" src="' + attrEsc(v.src) + '"><figcaption>' + cap +
+          '<span class="ai-vis-src">' + attrEsc(v.source || '') + '</span></figcaption></figure>';
+      }
+      return '<figure class="ai-vis ai-vis-loading"><img alt="' + alt + '" loading="lazy" referrerpolicy="no-referrer" src="' + attrEsc(v.thumb) + '">' +
+        '<figcaption>' + cap + '<span class="ai-vis-src">Image: ' + attrEsc(v.artist || 'author not stated') + ', ' + attrEsc(v.license || '') +
+        ' · <a href="' + attrEsc(safeUrl(v.page)) + '" target="_blank" rel="noopener noreferrer">' + attrEsc(v.source || 'Source') + '</a></span></figcaption></figure>';
+    }).join('') + '</div>';
+  }
+  function wireVisuals(root){
+    root.querySelectorAll('figure.ai-vis-loading img').forEach(function(img){
+      const fig = img.closest('figure');
+      const ok = function(){ fig.classList.remove('ai-vis-loading'); };
+      const bad = function(){ fig.remove(); };
+      img.addEventListener('load', ok);
+      img.addEventListener('error', bad);
+      if(img.complete){ if(img.naturalWidth > 0) ok(); else bad(); }
+    });
+  }
+
+  function addAiMsg(text, cardType, cardMeta, sources, steps, evidence, visuals){
     var logEntry = { r:'a', t: String(text) };
+    if(visuals && visuals.length) logEntry.vis = visuals;
     if(sources && sources.length) logEntry.src = sources;
     if(steps && steps.length) logEntry.steps = steps;
     if(evidence) logEntry.ev = evidence;
@@ -2981,7 +3019,8 @@
       cardHtml = `<div class="gen-card"><div class="art">${icons[cardType]}</div><div class="meta"><b>${cardMeta.title}</b>${cardMeta.sub}</div></div>`;
     }
     const actionsHtml = (sources && sources.length) ? reportActionsHtml(text, sources) : '';
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div>${stepsHtml(steps)}<div class="bubble">${citeify(formatMessage(text), sources)}</div>${cardHtml}${sourcesHtml(sources)}${evidenceHtml(evidence)}${actionsHtml}</div>`;
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div>${stepsHtml(steps)}<div class="bubble">${citeify(formatMessage(text), sources)}</div>${visualsHtml(visuals)}${cardHtml}${sourcesHtml(sources)}${evidenceHtml(evidence)}${actionsHtml}</div>`;
+    wireVisuals(div);
     body.appendChild(div);
     scrollBottom();
   }
@@ -3108,64 +3147,131 @@
     return data;
   }
 
-  // Real image generation via OpenAI (separate from the Gemini text chat)
-  function detectImageIntent(raw){
+  // ---- Image generation: real FLUX image via /api/generate-image ----
+  // Decides when a message is an image request.
+  // 1) Strict: a visual noun plus a create verb ("make a logo"), or "image of". Works in every mode.
+  // 2) Loose: an image verb (generate, draw, paint, sketch, render, imagine) plus "a/an" and a description,
+  //    in every mode. Create/make/design count as loose only in Creative Studio.
+  // Text-task words (list, summary, email, code...) never count, so "make a todo list" stays a chat answer.
+  function detectImageIntent(raw, mode){
     const t = String(raw || '').toLowerCase();
-    const subject = /\b(image|images|photo|photos|picture|logo|poster|artwork|thumbnail|illustration|tasveer|chitra)\b|तस्वीर|चित्र|फोटो/;
-    const verb = /\b(generate|create|make|draw|design|banao|banaao|banaiye|bana|bnao|bnaiye|dikhao|dikha|chahiye|bhejo)\b|बनाओ|बनाइए|बनाएं|बनाओ/;
-    return (subject.test(t) && verb.test(t)) || /\b(image|photo|picture)\s+of\b/.test(t);
+    const subject = /\b(image|images|img|photo|photos|pic|pics|picture|pictures|logo|poster|artwork|thumbnail|illustration|wallpaper|drawing|painting|sketch|icon|sticker|avatar|cartoon|banner|tasveer|chitra)\b|तस्वीर|चित्र|फोटो/;
+    const verb = /\b(generate|create|make|draw|paint|sketch|render|design|imagine|banao|banaao|banaiye|bana|bnao|bnaiye|dikhao|dikha|chahiye|bhejo)\b|बनाओ|बनाइए|बनाएं/;
+    const imageVerb = /\b(generate|draw|paint|sketch|render|imagine)\b/;
+    const style = /\b(digital art|oil painting|watercolou?r|photorealistic|photo-?realistic|3d render|anime style|cinematic|pixel art|low poly|isometric)\b/;
+    const textWords = /\b(list|summary|summarize|text|email|code|essay|poem|story|explain|plan|script|article|caption|translate|table|report|answer|question|budget|note|notes)\b/;
+    if ((subject.test(t) && verb.test(t)) || /\b(image|photo|picture|pic)\s+of\b/.test(t)) return true;
+    if (textWords.test(t)) return false;
+    const hasArticle = /\b(a|an|some|ek)\b/.test(t);
+    if (hasArticle && (imageVerb.test(t) || (mode === 'creative' && verb.test(t)))) return true;
+    return mode === 'creative' && style.test(t);
   }
 
-  async function generateImage(prompt){
+  // Reads an aspect ratio from the message. Defaults to square.
+  function aspectFrom(raw){
+    const t = String(raw || '').toLowerCase();
+    const m = t.match(/\b(1:1|16:9|9:16|4:5|4:3)\b/);
+    if (m) return m[1];
+    if (/\b(youtube|landscape|widescreen|wide|banner|cover)\b/.test(t)) return '16:9';
+    if (/\b(reel|reels|shorts|story|stories|portrait|vertical)\b/.test(t)) return '9:16';
+    return '1:1';
+  }
+
+  async function generateImage(prompt, aspect){
     const res = await fetch('/api/generate-image', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt, user: { email: currentUserEmail() } })
+      body: JSON.stringify({ prompt, aspect, user: { email: currentUserEmail() } })
     });
     const data = await res.json().catch(()=>null);
     if(!res.ok){
-      const err = new Error(data && data.error ? data.error : 'Image generation failed (HTTP ' + res.status + ')');
+      const err = new Error(data && data.error ? data.error : (res.status === 504 ? 'Image generation timed out. Please try again.' : 'Image generation failed (HTTP ' + res.status + ')'));
       err.upgrade = !!(data && data.upgrade);
       throw err;
     }
-    return data.image;
+    // Only a real image counts as success
+    if(!data || typeof data.image !== 'string' || data.image.indexOf('data:image/') !== 0){
+      throw new Error('The server did not return an image. Please try again.');
+    }
+    return data;
   }
 
-  function addAiImage(dataUrl, caption){
-    ccLog({ r:'a', t: '[Generated image]' });
+  // Shows the real image with Download, Regenerate and Edit prompt. Never a placeholder.
+  function addAiImage(dataUrl, meta){
+    ccLog({ r:'a', t: '[Generated image] ' + meta.prompt });
     const div = document.createElement('div');
     div.className = 'msg';
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble"><img class="attached-img" src="${dataUrl}" alt="generated image"><div>${escapeHtml(caption)}</div><div class="img-actions"><a class="img-dl" href="${dataUrl}" download="aviqo-image-${Date.now()}.png">Download PNG</a></div></div></div></div>`;
+    const av = document.createElement('div');
+    av.className = 'av';
+    av.innerHTML = `<img src="${logoSrc}" alt="">`;
+    const wrap = document.createElement('div');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const img = document.createElement('img');
+    img.className = 'attached-img';
+    img.alt = 'Generated image: ' + meta.prompt.slice(0, 120);
+    img.src = dataUrl;
+    const cap = document.createElement('div');
+    cap.textContent = 'Here you go! Aspect ratio ' + meta.aspect + (meta.sizeApplied ? '' : ' (this model returned its default square size).') + ' Want a different style or variation?';
+    const actions = document.createElement('div');
+    actions.className = 'img-actions';
+    const dl = document.createElement('a');
+    dl.className = 'img-dl';
+    dl.href = dataUrl;
+    dl.download = 'aviqo-image-' + Date.now() + '.png';
+    dl.textContent = 'Download PNG';
+    const regen = document.createElement('button');
+    regen.type = 'button';
+    regen.className = 'img-regen';
+    regen.textContent = 'Regenerate';
+    regen.addEventListener('click', () => { runImage(meta.prompt, { aspect: meta.aspect }); });
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'img-edit';
+    edit.textContent = 'Edit prompt';
+    edit.addEventListener('click', () => {
+      input.value = meta.prompt;
+      autoGrow();
+      input.focus();
+    });
+    actions.append(dl, regen, edit);
+    bubble.append(img, cap, actions);
+    wrap.appendChild(bubble);
+    div.append(av, wrap);
     body.appendChild(div);
     scrollBottom();
   }
 
   // Shows the real error from the server plus a retry button. Never pretends an image exists.
-  function addImageError(prompt, msg){
+  function addImageError(prompt, msg, aspect){
     ccLog({ r:'a', t: '[Image error] ' + msg });
     const div = document.createElement('div');
     div.className = 'msg';
     div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div><div class="bubble">The image could not be generated.<br><b>Error:</b> ${escapeHtml(msg)}<div class="img-actions"><button type="button" class="img-retry">Retry</button></div></div></div>`;
     const btn = div.querySelector('.img-retry');
-    btn.addEventListener('click', () => { div.remove(); runImage(prompt); });
+    btn.addEventListener('click', () => { div.remove(); runImage(prompt, { aspect: aspect }); });
     body.appendChild(div);
     scrollBottom();
   }
 
   // Runs one image generation with a visible loading state.
-  function runImage(prompt){
+  // opts.design (Creative Studio only): a Design Studio link is added under the image for editable text.
+  function runImage(prompt, opts){
+    opts = opts || {};
+    const aspect = opts.aspect || aspectFrom(prompt);
     addTyping();
     addStatusTrail([
       {label:'Understanding your prompt', at:0},
-      {label:'Generating image with FLUX (5 to 30 seconds)', at:1200},
+      {label:'Generating ' + aspect + ' image with FLUX (5 to 30 seconds)', at:1200},
       {label:'Finishing the image', at:15000}
     ]);
-    generateImage(prompt).then(dataUrl=>{
+    generateImage(prompt, aspect).then(data=>{
       removeTyping();
-      addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
+      addAiImage(data.image, { prompt: prompt, aspect: data.aspect || aspect, sizeApplied: data.sizeApplied !== false });
+      if(opts.design) addDesignLink(opts.design);
       try{
         sessionStorage.setItem('aviqo_generated_image', JSON.stringify({
-          dataUrl: dataUrl,
+          dataUrl: data.image,
           prompt: prompt,
           ts: Date.now()
         }));
@@ -3174,7 +3280,7 @@
       removeTyping();
       if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
       if(err && err.upgrade){ addAiMsg(err.message); return; }
-      addImageError(prompt, (err && err.message) || 'Unknown error');
+      addImageError(prompt, (err && err.message) || 'Unknown error', aspect);
     }).finally(()=>{ refreshCredits(); });
   }
 
@@ -3233,8 +3339,14 @@
 
     // If the user is asking to generate an image (and hasn't attached their
     // own photo), route to the real OpenAI image endpoint instead of chat.
-    if(mediaOk && !imageToSend && !fileToSend && trimmed && detectImageIntent(trimmed)){
-      runImage(trimmed);
+    const canImage = !imageToSend && !fileToSend && !!trimmed;
+    const wantsImage = canImage && detectImageIntent(trimmed, currentMode);
+    if(currentMode === 'creative' && canImage && !wantsImage){
+      const d = designRequest(trimmed);
+      if(d){ addDesignLink(d); return; }
+    }
+    if(wantsImage){
+      runImage(trimmed, { design: currentMode === 'creative' ? designRequest(trimmed) : null });
       return;
     }
 
@@ -3258,7 +3370,7 @@
       if(!activeRequest) return;   // was stopped by the user
       activeRequest = null; setBusy(false);
       removeTyping();
-      addAiMsg(data.reply, null, null, data.sources, data.steps, data.evidence);
+      addAiMsg(data.reply, null, null, data.sources, data.steps, data.evidence, data.visuals);
     }).catch(err=>{
       removeTyping();
       if(err && err.name === 'AbortError') return;   // stopped by the user; stopRequest already replied
@@ -3307,7 +3419,7 @@
     try{
       msgs.forEach(function(m){
         if(m.r === 'u') addUserMsg(m.t, null);
-        else addAiMsg(m.t, null, null, m.src, m.steps, m.ev);
+        else addAiMsg(m.t, null, null, m.src, m.steps, m.ev, m.vis);
       });
     } finally { ccSilent = false; }
     scrollBottom();
@@ -3445,6 +3557,40 @@
   };
   const modeSelect = document.getElementById('ccMode');
   const modeHint = document.getElementById('ccModeHint');
+  // Design requests in Creative Studio open the Design Studio with the text already filled in.
+  const DESIGN_TYPES = [
+    { tpl: 'thumbnail', label: 'YouTube thumbnail', re: /\b(youtube|yt)\s*thumbnail\b|\bthumbnail\b/i },
+    { tpl: 'instagram', label: 'Instagram post', re: /\binstagram\s*(post|carousel)?\b|\binsta\s*post\b/i },
+    { tpl: 'poster', label: 'poster', re: /\bposter\b/i },
+    { tpl: 'banner', label: 'banner', re: /\bbanner\b/i },
+    { tpl: 'ad', label: 'advertisement', re: /\b(advert\w*|ad)\b(?!\s*\w+\s*(?:is|was))/i },
+    { tpl: 'presentation', label: 'presentation slide', re: /\b(presentation|slide)\b/i },
+    { tpl: 'logo', label: 'logo concept', re: /\blogo\b/i }
+  ];
+  function designRequest(text){
+    const hit = DESIGN_TYPES.find(d => d.re.test(text));
+    if (!hit) return null;
+    const title = String(text).replace(/\b(create|make|design|generate|a|an|the|please|for me|professional|launch|new|with)\b/gi, ' ')
+      .replace(/\b(youtube|yt|instagram|insta|post|carousel|thumbnail|poster|banner|advert\w*|ad|presentation|slide|logo concept|logo)\b/gi, ' ')
+      .replace(/\s+/g, ' ').replace(/^(for|of|about|called|titled)\s+(my\s+|our\s+|the\s+)?/i, '').trim().slice(0, 60);
+    return { tpl: hit.tpl, label: hit.label, title: title || 'Your title here' };
+  }
+  function addDesignLink(d){
+    const url = 'studio.html?tpl=' + encodeURIComponent(d.tpl) + '&title=' + encodeURIComponent(d.title);
+    addAiMsg('I set up a ' + d.label + ' in the Design Studio with your text (“' + d.title + '”). Adjust the text and colours there, then download it as a PNG or SVG. The text is drawn exactly as typed.');
+    // A real link element (not markdown), added to the answer just written
+    const bubble = body.lastElementChild && body.lastElementChild.querySelector('.bubble');
+    if(bubble){
+      const a = document.createElement('a');
+      a.href = url;
+      a.className = 'ai-studio-link';
+      a.textContent = 'Open in Design Studio →';
+      a.style.cssText = 'display:inline-block; margin-top:8px; font-weight:600; color:inherit; text-decoration:underline;';
+      bubble.appendChild(document.createElement('br'));
+      bubble.appendChild(a);
+    }
+  }
+
   function setMode(m){
     if(!Object.prototype.hasOwnProperty.call(MODE_HINTS, m)) m = 'quick';
     currentMode = m;
