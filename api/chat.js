@@ -16,10 +16,559 @@
 //   turns, which is forwarded to the model so it can use earlier context.
 // - Markdown-friendly replies (headings, tables, code blocks, diagram code).
 
-import {
-  classifySource, extractSourceMeta, extractClaims, verifyClaims, auditCalculations, auditSources,
-  checkUrlLive, sanitizeWebText, createTtlCache, buildEvidence, createStageTracker
-} from '../lib/research.js';
+
+// ---- Inlined research intelligence (formerly lib/research.js and lib/calc.js) ----
+// Aviqo trusted calculation engine. Pure arithmetic only: no eval, no network, no model.
+// Every result carries its formula, units and assumptions so the answer can show them.
+
+class CalcError extends Error {}
+
+function num(x, name) {
+  const n = typeof x === 'string' ? Number(x.replace(/,/g, '')) : x;
+  if (typeof n !== 'number' || !Number.isFinite(n)) throw new CalcError(name + ' must be a finite number');
+  return n;
+}
+
+function round(n, d = 4) {
+  const f = Math.pow(10, d);
+  return Math.round(n * f) / f;
+}
+
+function percentChange(from, to) {
+  const a = num(from, 'Starting value'), b = num(to, 'Ending value');
+  if (a === 0) throw new CalcError('A percentage change cannot be calculated from zero');
+  return {
+    value: round(((b - a) / Math.abs(a)) * 100),
+    formula: '(end - start) / |start| x 100',
+    units: '%',
+    assumptions: ['Start value is the base of the change']
+  };
+}
+
+function percentOf(percent, base) {
+  const p = num(percent, 'Percentage'), x = num(base, 'Base value');
+  return { value: round((p / 100) * x), formula: 'percent / 100 x base', units: 'same as base', assumptions: [] };
+}
+
+function cagr(begin, end, years) {
+  const b = num(begin, 'Beginning value'), e = num(end, 'Ending value'), y = num(years, 'Number of years');
+  if (b <= 0 || e <= 0) throw new CalcError('CAGR needs positive beginning and ending values');
+  if (y <= 0) throw new CalcError('CAGR needs more than zero years');
+  return {
+    value: round((Math.pow(e / b, 1 / y) - 1) * 100),
+    formula: '((end / begin)^(1 / years) - 1) x 100',
+    units: '% per year',
+    assumptions: ['Growth is compounded once per year', 'Years = end year minus start year']
+  };
+}
+
+// Units are grouped so only like units are converted (length to length, never length to mass).
+const UNIT_GROUPS = {
+  length: { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.344, yd: 0.9144, ft: 0.3048, in: 0.0254 },
+  mass: { kg: 1, g: 0.001, t: 1000, lb: 0.45359237, oz: 0.028349523125 },
+  volume: { l: 1, ml: 0.001, gal: 3.785411784 },
+  data: { B: 1, KB: 1e3, MB: 1e6, GB: 1e9, TB: 1e12, KiB: 1024, MiB: 1048576, GiB: 1073741824, TiB: 1099511627776 }
+};
+const TEMP_UNITS = ['C', 'F', 'K'];
+
+function convertUnits(value, from, to) {
+  const v = num(value, 'Value');
+  if (TEMP_UNITS.includes(from) && TEMP_UNITS.includes(to)) {
+    const toC = from === 'C' ? v : from === 'F' ? (v - 32) * 5 / 9 : v - 273.15;
+    const out = to === 'C' ? toC : to === 'F' ? toC * 9 / 5 + 32 : toC + 273.15;
+    return { value: round(out), formula: 'temperature scale conversion', units: to, assumptions: [] };
+  }
+  for (const [group, table] of Object.entries(UNIT_GROUPS)) {
+    if (from in table && to in table) {
+      return {
+        value: round((v * table[from]) / table[to]),
+        formula: 'value x (factor of ' + from + ' / factor of ' + to + ')',
+        units: to,
+        assumptions: group === 'data' && (from.endsWith('iB') || to.endsWith('iB')) ? ['Binary units (KiB = 1024 B) are used'] : ['Decimal factors, not rounded before conversion']
+      };
+    }
+  }
+  throw new CalcError('Cannot convert ' + from + ' to ' + to + ': the units are not the same kind');
+}
+
+// Currency needs a rate supplied by the caller. Without one the engine refuses instead of guessing.
+function convertCurrency(amount, rate, from, to) {
+  const a = num(amount, 'Amount');
+  if (rate === undefined || rate === null || rate === '') {
+    throw new CalcError('No exchange rate was provided, so ' + from + ' to ' + to + ' cannot be calculated');
+  }
+  const r = num(rate, 'Exchange rate');
+  if (r <= 0) throw new CalcError('Exchange rate must be positive');
+  return {
+    value: round(a * r),
+    formula: 'amount x rate (' + to + ' per 1 ' + from + ')',
+    units: to,
+    assumptions: ['Rate is the one supplied with the question, not a live rate', 'Rate date and source must be stated with the result']
+  };
+}
+
+function stats(values) {
+  const xs = (Array.isArray(values) ? values : []).map((x, i) => num(x, 'Value ' + (i + 1)));
+  if (!xs.length) throw new CalcError('Statistics need at least one value');
+  const sorted = xs.slice().sort((a, b) => a - b);
+  const n = xs.length;
+  const mean = xs.reduce((s, x) => s + x, 0) / n;
+  const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const stdev = n > 1 ? Math.sqrt(xs.reduce((s, x) => s + (x - mean) ** 2, 0) / (n - 1)) : null;
+  return {
+    value: { n, mean: round(mean), median: round(median), min: sorted[0], max: sorted[n - 1], stdev: stdev === null ? null : round(stdev) },
+    formula: 'mean, median, sample standard deviation (n - 1)',
+    units: 'same as input',
+    assumptions: n > 1 ? [] : ['Only one value: standard deviation is not defined']
+  };
+}
+
+// Aviqo research intelligence: source classification, dates, claim context, claim checks,
+// contradictions, self-audit and URL checks. Deterministic rules only. No model calls, no API keys.
+
+const SOURCE_TYPE_LABELS = {
+  government_primary: 'Government primary source',
+  official_technical: 'Official technical report',
+  scientific_paper: 'Scientific paper',
+  independent_research: 'Independent research organisation',
+  news: 'News source',
+  commercial: 'Commercial source',
+  secondary: 'Secondary source'
+};
+const PRIMARY_TYPES = new Set(['government_primary', 'official_technical', 'scientific_paper']);
+
+const GOV_DOMAIN = /(^|\.)(gov|gov\.[a-z]{2}|nic\.in|who\.int|un\.org|imf\.org|worldbank\.org|oecd\.org|europa\.eu|census\.gov|bls\.gov|eia\.gov)$/i;
+const SCI_DOMAIN = /(^|\.)(arxiv\.org|nature\.com|science\.org|ieee\.org|ieeexplore\.ieee\.org|sciencedirect\.com|springer\.com|link\.springer\.com|pubmed\.ncbi\.nlm\.nih\.gov|ncbi\.nlm\.nih\.gov|jstor\.org|acm\.org|plos\.org|pnas\.org|biorxiv\.org|medrxiv\.org|doi\.org|scholar\.google\.com|cell\.com|thelancet\.com|bmj\.com|wiley\.com|tandfonline\.com)$/i;
+const INDEP_DOMAIN = /(^|\.)(pewresearch\.org|brookings\.edu|rand\.org|cfr\.org|chathamhouse\.org|iea\.org|ourworldindata\.org|gallup\.com|wri\.org|carbonbrief\.org|epi\.org)$/i;
+const COMMERCIAL_DOMAIN = /(^|\.)(mckinsey\.com|gartner\.com|forrester\.com|statista\.com|deloitte\.com|pwc\.com|ey\.com|kpmg\.com|bcg\.com|hubspot\.com|salesforce\.com)$/i;
+const NEWS_DOMAIN = /(^|\.)(reuters\.com|apnews\.com|bbc\.co\.uk|bbc\.com|bloomberg\.com|ft\.com|wsj\.com|theguardian\.com|nytimes\.com|thehindu\.com|ndtv\.com|indianexpress\.com|timesofindia\.indiatimes\.com|hindustantimes\.com|economictimes\.indiatimes\.com|livemint\.com|cnbc\.com|techcrunch\.com|theverge\.com|wired\.com|arstechnica\.com|espncricinfo\.com|espn\.com|forbes\.com|cnn\.com|aljazeera\.com)$/i;
+const SECONDARY_DOMAIN = /(^|\.)(wikipedia\.org|britannica\.com|medium\.com|blogspot\.com|wordpress\.com|quora\.com|reddit\.com|substack\.com|tumblr\.com|youtube\.com|fandom\.com)$/i;
+
+function hostOf(url) {
+  try { return new URL(url).hostname.toLowerCase(); } catch (e) { return ''; }
+}
+function pathOf(url) {
+  try { return new URL(url).pathname.toLowerCase(); } catch (e) { return ''; }
+}
+
+// Classifies a source from its domain, path, title and text. Unknown sites are "secondary".
+function classifySource(source) {
+  const domain = String(source.domain || hostOf(source.url)).toLowerCase();
+  const path = pathOf(source.url);
+  const title = String(source.title || '');
+  const text = String(source.content || '');
+  let type = 'secondary';
+  if (GOV_DOMAIN.test(domain)) type = 'government_primary';
+  else if (SCI_DOMAIN.test(domain)) type = 'scientific_paper';
+  else if (INDEP_DOMAIN.test(domain)) type = 'independent_research';
+  else if (COMMERCIAL_DOMAIN.test(domain)) type = 'commercial';
+  else if (NEWS_DOMAIN.test(domain) || /\/news\//.test(path)) type = 'news';
+  else if (SECONDARY_DOMAIN.test(domain)) type = 'secondary';
+  else if (/technical report|white ?paper|specification|datasheet|documentation|api reference/i.test(title + ' ' + path) || /^(docs|developer|developers|learn)\./.test(domain)) type = 'official_technical';
+  else if (/\/(pricing|products?|buy|shop|solutions)(\/|$)/.test(path) || /\b(our products?|request a demo|free trial|buy now)\b/i.test(text)) type = 'commercial';
+  else if (/\.(org|edu)$/.test(domain) && /\b(report|study|survey|dataset|methodology)\b/i.test(title + ' ' + text)) type = 'independent_research';
+  return { type, label: SOURCE_TYPE_LABELS[type], primary: PRIMARY_TYPES.has(type) };
+}
+
+// Dates without a time zone are read as UTC, so "12 March 2026" stays 12 March everywhere.
+function isoDate(str) {
+  const clean = String(str || '').trim().replace(/(\d+)(st|nd|rd|th)/, '$1');
+  if (!clean) return null;
+  const t = /^\d{4}-\d{2}-\d{2}(T.*)?$/.test(clean) || /(Z|[+-]\d{2}:?\d{2}|UTC|GMT)$/i.test(clean) ? Date.parse(clean) : Date.parse(clean + ' UTC');
+  return Number.isNaN(t) ? null : new Date(t).toISOString().slice(0, 10);
+}
+
+// Pulls the dates, period, author and publisher a page states. Missing values stay null.
+function extractSourceMeta(source) {
+  const full = (String(source.content || '') + ' ' + String(source.raw || '').slice(0, 4000)).replace(/\s+/g, ' ');
+  const upd = full.match(/\b(?:last (?:updated|modified|reviewed)|updated on|revised on|modified on)\s*[:\-]?\s*((?:\d{1,2}\s+)?[A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}|\d{4}-\d{2}-\d{2})/i);
+  // The update date is removed first, so it is not mistaken for the measurement period.
+  const text = upd ? full.replace(upd[0], ' ') : full;
+  const period = text.match(/\b(FY\s?\d{2,4}(?:[-–\/]\d{2,4})?|Q[1-4]\s?(?:19|20)\d{2}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+(?:19|20)\d{2}|(?:19|20)\d{2}\s*[-–]\s*(?:19|20)?\d{2}|(?:for|during|through|as of)\s+(?:the\s+(?:year|period)\s+)?(?:19|20)\d{2})\b/i);
+  const author = text.match(/\b(?:[Aa]uthors?:|[Ww]ritten by|[Bb]y)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2})\b/);
+  return {
+    publishedDate: isoDate(source.published),
+    updatedDate: upd ? isoDate(upd[1]) : null,
+    dataPeriod: period ? period[1].trim() : null,
+    author: author ? author[1] : null,
+    publisher: source.domain || hostOf(source.url) || null
+  };
+}
+
+// Claim context: each claim is one of seven kinds. Projections are never treated as measurements.
+function classifyClaimContext(sentence, now = new Date()) {
+  const s = String(sentence || '');
+  const nowYear = now.getUTCFullYear();
+  const years = (s.match(/\b(19|20)\d{2}\b/g) || []).map(Number);
+  const maxYear = years.length ? Math.max(...years) : null;
+  if (/\b(target|targets|goal|goals|aims? to|aim to|commit(?:s|ted)? to|pledg\w*|net[- ]zero by)\b/i.test(s)) return 'policy_target';
+  if (/\b(i think|i believe|we believe|in my view|in my opinion|opinion|should|better than|worse than|best|worst|recommend\w*)\b/i.test(s)) return 'opinion';
+  if (/\b(projected|projection|forecast\w*|predict\w*|expected to|is expected|outlook|scenario|could reach|will reach|will grow|will be|will have)\b/i.test(s) || (maxYear && maxYear > nowYear)) return 'projection';
+  if (/\b(estimated?|approximately|roughly|about|around|circa|at least|ranges? from|between)\b/i.test(s)) return 'estimate';
+  if (/\b(currently|as of|right now|today|now|latest|this year|this month|this week)\b/i.test(s) || maxYear === nowYear) return 'current';
+  if ((maxYear && maxYear < nowYear) || /\b(was|were|had|historically|in the past|since)\b/i.test(s)) return 'historical';
+  return 'unverified';
+}
+
+const CONTEXT_LABELS = {
+  historical: 'Historical fact',
+  current: 'Current measurement',
+  projection: 'Projection',
+  estimate: 'Estimate',
+  policy_target: 'Policy target',
+  opinion: 'Opinion',
+  unverified: 'Unverified claim'
+};
+
+const STOP = new Set(['about', 'after', 'again', 'also', 'because', 'been', 'before', 'being', 'between', 'could', 'during', 'each', 'from', 'have', 'into', 'more', 'most', 'only', 'other', 'over', 'same', 'some', 'such', 'than', 'that', 'their', 'them', 'then', 'there', 'these', 'they', 'this', 'those', 'through', 'very', 'were', 'what', 'when', 'where', 'which', 'while', 'will', 'with', 'would', 'your', 'said', 'says', 'according', 'report', 'source', 'data', 'shows', 'show', 'percent']);
+
+function keywordsOf(text) {
+  const words = String(text || '').toLowerCase().replace(/\[\d{1,2}\]/g, ' ').match(/[a-z]{4,}/g) || [];
+  return Array.from(new Set(words.map((w) => w.replace(/s$/, '')).filter((w) => !STOP.has(w))));
+}
+
+function numbersIn(text) {
+  const clean = String(text || '').replace(/(\d),(?=\d{3}\b)/g, '$1');
+  return Array.from(new Set(clean.match(/\d+(?:\.\d+)?/g) || []));
+}
+
+const SCALE = { thousand: 1e3, lakh: 1e5, million: 1e6, crore: 1e7, billion: 1e9, trillion: 1e12 };
+
+// Same number, different scale (5 million vs 5 billion) is a unit mismatch.
+function scaleMismatch(claim, passage) {
+  const scaleRe = /(\d+(?:\.\d+)?)\s*(thousand|lakh|million|crore|billion|trillion)\b/gi;
+  const claimScales = [...String(claim).matchAll(scaleRe)];
+  for (const m of claimScales) {
+    const sameNumber = new RegExp('\\b' + m[1].replace('.', '\\.') + '\\s*(thousand|lakh|million|crore|billion|trillion)\\b', 'gi');
+    for (const pm of String(passage).matchAll(sameNumber)) {
+      if (pm[1].toLowerCase() !== m[2].toLowerCase()) return { claimed: m[2].toLowerCase(), found: pm[1].toLowerCase(), number: m[1] };
+    }
+  }
+  return null;
+}
+
+// Values only: calendar years are removed, so two sources that both mention 2025 are not treated as agreeing.
+function valueNumbers(text) {
+  return numbersIn(text).filter((n) => !/^(19|20)\d{2}$/.test(n));
+}
+
+function sentencesOf(text) {
+  return String(text || '').split(/(?<=[.!?])\s+|\n+/).map((s) => s.replace(/\s+/g, ' ').trim()).filter((s) => s.length >= 30).slice(0, 300);
+}
+
+// Finds the passage in a source that best matches a claim.
+function bestPassage(claim, sourceText) {
+  const kw = keywordsOf(claim);
+  let best = { passage: '', overlap: 0, hits: 0 };
+  if (!kw.length) return best;
+  for (const sent of sentencesOf(sourceText)) {
+    const low = sent.toLowerCase();
+    const hits = kw.filter((k) => low.includes(k)).length;
+    const overlap = hits / kw.length;
+    if (overlap > best.overlap || (overlap === best.overlap && overlap > 0 && numbersIn(sent).length > numbersIn(best.passage).length)) {
+      best = { passage: sent, overlap, hits };
+    }
+  }
+  return best;
+}
+
+// Checks one claim against one cited source. Returns supported | partial | unit_mismatch | unsupported.
+function checkClaimAgainstSource(claim, source) {
+  const sourceText = String(source.content || '') + ' ' + String(source.raw || '');
+  const pass = bestPassage(claim, sourceText);
+  const claimNums = numbersIn(claim);
+  const passNums = numbersIn(pass.passage);
+  const numsFound = claimNums.filter((n) => passNums.includes(n));
+  const numsOk = claimNums.length === 0 || numsFound.length === claimNums.length;
+  const mismatch = scaleMismatch(claim, pass.passage);
+  let level = 'unsupported';
+  if (mismatch) level = 'unit_mismatch';
+  else if (pass.overlap >= 0.6 && numsOk) level = 'supported';
+  else if (pass.overlap >= 0.34 || numsFound.length > 0) level = 'partial';
+  return { sourceId: source.id, url: source.url, level, passage: pass.passage, overlap: Math.round(pass.overlap * 100) / 100, numbersMissing: claimNums.filter((n) => !passNums.includes(n)), unit: mismatch };
+}
+
+function shingles(text, k = 8) {
+  const words = String(text || '').toLowerCase().match(/[a-z0-9]+/g) || [];
+  const set = new Set();
+  for (let i = 0; i + k <= words.length; i++) set.add(words.slice(i, i + k).join(' '));
+  return set;
+}
+
+// Sources that repeat the same text come from one original origin, so they count once.
+function originGroups(sources) {
+  const parent = sources.map((_, i) => i);
+  const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const sets = sources.map((s) => shingles(String(s.content || '') + ' ' + String(s.raw || '').slice(0, 3000)));
+  for (let i = 0; i < sources.length; i++) {
+    for (let j = i + 1; j < sources.length; j++) {
+      if (!sets[i].size || !sets[j].size) continue;
+      let inter = 0;
+      for (const x of sets[i]) if (sets[j].has(x)) inter++;
+      if (inter / Math.min(sets[i].size, sets[j].size) >= 0.5) parent[find(i)] = find(j);
+    }
+  }
+  const groups = new Map();
+  sources.forEach((s, i) => {
+    const g = find(i);
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(s.id);
+  });
+  return Array.from(groups.values());
+}
+
+const COUNTRY_WORDS = ['india', 'china', 'usa', 'united states', 'europe', 'eu', 'uk', 'united kingdom', 'global', 'world', 'asia', 'africa', 'japan', 'brazil'];
+const METHOD_WORDS = ['survey', 'model', 'estimate', 'census', 'sample', 'projection', 'forecast', 'audit', 'measured', 'modelled', 'modeled'];
+
+// Explains why two sources with different numbers may differ.
+function explainDifference(a, b) {
+  const reasons = [];
+  const ya = a.publishedDate ? Number(a.publishedDate.slice(0, 4)) : null;
+  const yb = b.publishedDate ? Number(b.publishedDate.slice(0, 4)) : null;
+  if (a.publishedDate && b.publishedDate && a.publishedDate !== b.publishedDate) reasons.push('Publication dates differ (' + a.publishedDate + ' vs ' + b.publishedDate + ')');
+  if (!ya || !yb) reasons.push('At least one source has no publication date');
+  if (a.dataPeriod && b.dataPeriod && a.dataPeriod !== b.dataPeriod) reasons.push('Measurement periods differ (' + a.dataPeriod + ' vs ' + b.dataPeriod + ')');
+  const pa = a.passage || '', pb = b.passage || '';
+  const unitA = /%|percent/i.test(pa), unitB = /%|percent/i.test(pb);
+  if (unitA !== unitB) reasons.push('One source reports a percentage and the other a count or amount');
+  const geoA = COUNTRY_WORDS.filter((w) => pa.toLowerCase().includes(w));
+  const geoB = COUNTRY_WORDS.filter((w) => pb.toLowerCase().includes(w));
+  if (geoA.length && geoB.length && geoA.join() !== geoB.join()) reasons.push('Geographic coverage differs (' + geoA.join(', ') + ' vs ' + geoB.join(', ') + ')');
+  const mA = METHOD_WORDS.filter((w) => pa.toLowerCase().includes(w));
+  const mB = METHOD_WORDS.filter((w) => pb.toLowerCase().includes(w));
+  if (mA.join() !== mB.join() && (mA.length || mB.length)) reasons.push('Methodology wording differs (' + (mA.join(', ') || 'none') + ' vs ' + (mB.join(', ') || 'none') + ')');
+  if (!reasons.length) reasons.push('No difference in date, period, unit, geography or method was detected. The cause needs a manual check.');
+  return reasons;
+}
+
+// Extracts the claims in an answer: sentences with a citation or a number, not questions or headings.
+function extractClaims(reply, now = new Date()) {
+  const body = String(reply || '').replace(/```[\s\S]*?```/g, ' ').replace(/^#.*$/gm, ' ');
+  const out = [];
+  for (const raw of sentencesOf(body)) {
+    if (raw.endsWith('?')) continue;
+    const citedIds = Array.from(raw.matchAll(/\[(\d{1,2})\]/g), (m) => Number(m[1]));
+    const text = raw.replace(/\[\d{1,2}\]/g, '').replace(/\s+/g, ' ').trim();
+    if (!citedIds.length && !/\d/.test(text)) continue;
+    if (text.length < 25) continue;
+    out.push({ id: out.length + 1, text, citedIds: Array.from(new Set(citedIds)), context: classifyClaimContext(text, now) });
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
+// Runs the claim pipeline. sources: all enriched sources with type and meta already attached.
+function verifyClaims(claims, sources) {
+  const byId = new Map(sources.map((s) => [s.id, s]));
+  const groups = originGroups(sources);
+  const groupOf = new Map();
+  groups.forEach((g, gi) => g.forEach((id) => groupOf.set(id, gi)));
+
+  // Contradictions: sources whose best passage shares keywords with the claim but reports other numbers.
+  const conflicts = [];
+  for (const claim of claims) {
+    const found = sources
+      .map((s) => ({ s, pass: bestPassage(claim.text, String(s.content || '') + ' ' + String(s.raw || '')) }))
+      .filter((x) => x.pass.overlap >= 0.5 && valueNumbers(x.pass.passage).length > 0);
+    for (let i = 0; i < found.length; i++) {
+      for (let j = i + 1; j < found.length; j++) {
+        const A = found[i], B = found[j];
+        const na = valueNumbers(A.pass.passage), nb = valueNumbers(B.pass.passage);
+        if (na.some((x) => nb.includes(x))) continue;
+        conflicts.push({
+          claimId: claim.id,
+          sourceA: { id: A.s.id, url: A.s.url, value: na.join(', '), passage: A.pass.passage },
+          sourceB: { id: B.s.id, url: B.s.url, value: nb.join(', '), passage: B.pass.passage },
+          reasons: explainDifference(Object.assign({}, A.s.meta, { passage: A.pass.passage }), Object.assign({}, B.s.meta, { passage: B.pass.passage }))
+        });
+      }
+    }
+  }
+  const disputedClaims = new Set(conflicts.map((c) => c.claimId));
+
+  const results = claims.map((claim) => {
+    const cited = claim.citedIds.map((id) => byId.get(id)).filter(Boolean);
+    const evals = cited.map((s) => checkClaimAgainstSource(claim.text, s));
+    const supporting = evals.filter((e) => e.level === 'supported' || e.level === 'partial');
+    const supportIds = supporting.map((e) => e.sourceId);
+    const independent = new Set(supportIds.map((id) => groupOf.get(id))).size;
+    const primary = supporting.some((e) => PRIMARY_TYPES.has(byId.get(e.sourceId).type));
+    let status;
+    let reason;
+    const mismatch = evals.find((e) => e.level === 'unit_mismatch');
+    if (!claim.citedIds.length) { status = 'unsupported'; reason = 'No source is cited for this claim.'; }
+    else if (!cited.length) { status = 'unsupported'; reason = 'The cited source numbers do not match any retrieved source.'; }
+    else if (mismatch) { status = 'disputed'; reason = 'Unit mismatch: the source says ' + mismatch.unit.found + ' where the answer says ' + mismatch.unit.claimed + '.'; }
+    else if (disputedClaims.has(claim.id)) { status = 'disputed'; reason = 'Retrieved sources report different values for this claim.'; }
+    else if (!supporting.length) { status = 'unsupported'; reason = 'The cited sources do not contain this statement.'; }
+    else if (supporting.some((e) => e.level === 'supported') && (primary || independent >= 2)) { status = 'verified'; reason = primary ? 'Supported by a primary source.' : 'Supported by two or more independent sources.'; }
+    else { status = 'partially_verified'; reason = 'Supported by one source only, or the passage is only partly matched.'; }
+    return {
+      id: claim.id,
+      text: claim.text,
+      context: claim.context,
+      contextLabel: CONTEXT_LABELS[claim.context],
+      status,
+      reason,
+      independentSources: independent,
+      evidence: evals.map((e) => ({ sourceId: e.sourceId, url: e.url, level: e.level, passage: e.passage, numbersMissing: e.numbersMissing }))
+    };
+  });
+  return { claims: results, conflicts };
+}
+
+// ---- URL checks ----
+function validateUrl(value) {
+  let u;
+  try { u = new URL(String(value)); } catch (e) { return { ok: false, reason: 'not a valid URL' }; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return { ok: false, reason: 'only http and https are allowed' };
+  if (u.username || u.password) return { ok: false, reason: 'URLs with credentials are not allowed' };
+  const h = u.hostname.toLowerCase();
+  if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal')) return { ok: false, reason: 'local host' };
+  if (/^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || h === '::1' || h.startsWith('[')) return { ok: false, reason: 'private address' };
+  if (String(value).length > 2000) return { ok: false, reason: 'URL too long' };
+  return { ok: true };
+}
+
+// Live check of a cited URL. Network errors are "unreachable", not "broken", so a slow site is not blamed.
+async function checkUrlLive(url, fetchImpl = fetch, timeoutMs = 4000) {
+  const v = validateUrl(url);
+  if (!v.ok) return { url, status: 'invalid', reason: v.reason };
+  const attempt = async (method) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetchImpl(url, { method, redirect: 'follow', signal: controller.signal, headers: { 'User-Agent': 'AviqoResearchCheck/1.0' } });
+      return r.status;
+    } finally { clearTimeout(timer); }
+  };
+  try {
+    let code = await attempt('HEAD');
+    if (code === 405 || code === 403 || code === 501) code = await attempt('GET');
+    if (code === 404 || code === 410) return { url, status: 'broken', httpStatus: code };
+    if (code === 401 || code === 403 || code === 429) return { url, status: 'blocked', httpStatus: code };
+    if (code >= 500) return { url, status: 'unreachable', httpStatus: code };
+    return { url, status: 'ok', httpStatus: code };
+  } catch (e) {
+    return { url, status: 'unreachable', reason: e && e.name === 'AbortError' ? 'timeout' : 'network error' };
+  }
+}
+
+// Removes instruction-like text from web pages before the model reads it.
+const INJECTION = /(ignore|disregard|forget)\s+(all\s+|any\s+|the\s+)?(previous|prior|above|earlier|your)\s+(instructions?|prompts?|messages?|rules)|system prompt|you are now|new instructions|<\/?(system|script|iframe)[^>]*>/i;
+function sanitizeWebText(text) {
+  return String(text || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ')
+    .split('\n')
+    .map((line) => (INJECTION.test(line) ? '[removed: instruction-like text from a web page]' : line))
+    .join('\n');
+}
+
+// Small in-memory cache for search results. It only lives while a warm server instance stays alive.
+function createTtlCache(maxEntries = 100, ttlMs = 10 * 60 * 1000) {
+  const map = new Map();
+  return {
+    get(key) {
+      const hit = map.get(key);
+      if (!hit) return undefined;
+      if (Date.now() > hit.until) { map.delete(key); return undefined; }
+      return hit.value;
+    },
+    set(key, value) {
+      if (map.size >= maxEntries) map.delete(map.keys().next().value);
+      map.set(key, { value, until: Date.now() + ttlMs });
+    },
+    size() { return map.size; },
+    clear() { map.clear(); }
+  };
+}
+
+// ---- Self-audit ----
+// Finds percentage statements like "from 100 to 121 ... 25%" and recomputes them.
+function auditCalculations(reply) {
+  const issues = [];
+  const text = String(reply || '');
+  const pctRe = /from\s+([\d,]+(?:\.\d+)?)\s+(?:to|and)\s+([\d,]+(?:\.\d+)?)[^.%\n]{0,60}?(\d+(?:\.\d+)?)\s*(?:%|percent)/gi;
+  for (const m of text.matchAll(pctRe)) {
+    try {
+      const computed = percentChange(m[1], m[2]).value;
+      const reported = Number(m[3]);
+      if (Math.abs(Math.abs(computed) - reported) > 0.5) {
+        issues.push({ type: 'calculation', text: m[0], reported, computed: Math.abs(computed), formula: '(end - start) / start x 100', fix: 'The change from ' + m[1] + ' to ' + m[2] + ' is ' + Math.abs(computed) + '%, not ' + reported + '%.' });
+      }
+    } catch (e) { /* zero base: nothing to check */ }
+  }
+  const ofRe = /(\d+(?:\.\d+)?)\s*(?:%|percent)\s+of\s+([\d,]+(?:\.\d+)?)[^.\n]{0,30}?(?:is|=|equals|are)\s+([\d,]+(?:\.\d+)?)/gi;
+  for (const m of text.matchAll(ofRe)) {
+    const computed = percentOf(m[1], m[2].replace(/,/g, '')).value;
+    const reported = Number(m[3].replace(/,/g, ''));
+    if (Math.abs(computed - reported) > Math.max(0.5, Math.abs(computed) * 0.005)) {
+      issues.push({ type: 'calculation', text: m[0], reported, computed, formula: 'percent / 100 x base', fix: m[1] + '% of ' + m[2] + ' is ' + computed + ', not ' + reported + '.' });
+    }
+  }
+  return issues;
+}
+
+function auditSources(sources, claims, now = new Date()) {
+  const issues = [];
+  const cited = new Set(claims.flatMap((c) => c.evidence.map((e) => e.sourceId)));
+  for (const s of sources) {
+    if (!cited.has(s.id)) continue;
+    if (!s.meta || !s.meta.publishedDate) issues.push({ type: 'missing_date', sourceId: s.id, text: 'Source ' + s.id + ' has no publication date.' });
+    const ref = (s.meta && (s.meta.updatedDate || s.meta.publishedDate));
+    if (ref && (now - Date.parse(ref)) > 365 * 86400000) {
+      const usedForCurrent = claims.some((c) => c.context === 'current' && c.evidence.some((e) => e.sourceId === s.id));
+      if (usedForCurrent) issues.push({ type: 'outdated', sourceId: s.id, text: 'Source ' + s.id + ' is older than one year but is used for a current claim.' });
+    }
+  }
+  for (const c of claims) {
+    if (c.status === 'unsupported') issues.push({ type: 'unsupported_conclusion', claimId: c.id, text: c.reason });
+  }
+  return issues;
+}
+
+// Builds the evidence record the dashboard shows. Every number comes from the lists passed in.
+function buildEvidence({ searched, opened, sources, claims, conflicts, audit, stages, startedAt, finishedAt }) {
+  const count = (status) => claims.filter((c) => c.status === status).length;
+  return {
+    metrics: {
+      sourcesSearched: searched,
+      sourcesOpened: opened,
+      primarySources: sources.filter((s) => s.meta && PRIMARY_TYPES.has(s.type)).length,
+      claimsChecked: claims.length,
+      verified: count('verified'),
+      partiallyVerified: count('partially_verified'),
+      disputed: count('disputed'),
+      unsupported: count('unsupported'),
+      completionMs: Math.max(0, finishedAt - startedAt)
+    },
+    stages,
+    claims,
+    conflicts,
+    audit
+  };
+}
+
+const STAGE_NAMES = ['Planning', 'Searching', 'Reading', 'Extracting', 'Cross-checking', 'Calculating', 'Writing', 'Completed'];
+
+// Records real stage timings. A stage is "done", "skipped" or "failed", set by the code that ran it.
+function createStageTracker(start = Date.now()) {
+  const stages = STAGE_NAMES.map((name) => ({ name, status: 'pending', ms: null }));
+  let last = start;
+  return {
+    done(name, status = 'done') {
+      const s = stages.find((x) => x.name === name);
+      if (!s) return;
+      const now = Date.now();
+      s.status = status;
+      s.ms = now - last;
+      last = now;
+    },
+    list() { return stages.map((s) => Object.assign({}, s)); }
+  };
+}
+
+// ---- End of inlined research intelligence ----
 
 // Search results are reused for 10 minutes on a warm server instance (same query, same filters).
 const searchCache = createTtlCache(100, 10 * 60 * 1000);
@@ -148,6 +697,14 @@ Think, research, analyze, calculate, compare, verify, then solve. Use this struc
 11. Success Measurement: how the user will know it worked.
 12. Final Recommendation.
 Show formulas and calculation steps. Mark estimates as estimates. Never invent numbers, citations or test results.`
+  },
+  academic: {
+    label: 'Academic Research', model: 'text', temperature: 0.3, maxTokens: 2500, search: 'basic',
+    addendum: `MODE: ACADEMIC RESEARCH
+- Prioritise peer-reviewed papers, university and research-institute sources. Name the study, year and authors when the sources state them.
+- Say clearly when evidence comes from a preprint, a single study or a review, and note the sample size or method when the source gives it.
+- Separate findings from interpretation. Do not claim consensus unless several independent sources agree.
+- If no academic source answers the question, say so instead of citing a general website as research.`
   },
   study: {
     label: 'Study Mode', model: 'text', temperature: 0.6, maxTokens: 3500, search: 'none',
@@ -752,7 +1309,7 @@ function annotateSources(list) {
   });
 }
 
-export default async function handler(req, res) {
+async function handleChat(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -862,7 +1419,9 @@ export default async function handler(req, res) {
   // ---- 1. Live web search (Web Search and Deep Research modes) ----
   // A file with no question typed is summarized from the file itself, so no web search runs for it.
   const fileOnly = !!file && !message;
-  const wantsSearch = !image && !fileOnly && (mode.search === 'deep' || intent.needsSearch);
+  // Academic Research always searches, and uses the academic domain filter unless the user picked another filter.
+  if (modeId === 'academic' && searchFilter === 'all') searchFilter = 'academic';
+  const wantsSearch = !image && !fileOnly && (mode.search === 'deep' || modeId === 'academic' || intent.needsSearch);
   const filterOpts = searchOptionsFor(searchFilter, searchDomain);
   const filterLabel = searchDomain ? 'domain ' + searchDomain
     : searchFilter === 'all' ? '' : searchFilter;
@@ -1009,13 +1568,16 @@ export default async function handler(req, res) {
     // ---- 4. Evidence checks (Deep Research): claims, contradictions, calculations, URLs ----
     let evidence = null;
     const urlStatus = new Map();
-    if (mode.search === 'deep' && sources.length) {
+    // Evidence checks are optional: skipped when the request is already slow, and a failure here never fails the answer.
+    if (mode.search === 'deep' && sources.length && Date.now() - startedAt < 45000) try {
       const claims = extractClaims(reply, new Date());
       const checked = verifyClaims(claims, sources);
       tracker.done('Cross-checking');
       const calcIssues = auditCalculations(reply);
       tracker.done('Calculating');
-      await Promise.all(shownSources.map(async (s) => urlStatus.set(s.id, await checkUrlLive(s.url))));
+      if (Date.now() - startedAt < 35000) {
+        await Promise.all(shownSources.map(async (s) => urlStatus.set(s.id, await checkUrlLive(s.url))));
+      }
       const audit = auditSources(sources, checked.claims, new Date());
       for (const s of shownSources) {
         const u = urlStatus.get(s.id);
@@ -1037,6 +1599,9 @@ export default async function handler(req, res) {
         startedAt,
         finishedAt: Date.now()
       });
+    } catch (e) {
+      console.error('Evidence step failed', e && e.message);
+      evidence = null;
     }
 
     const payload = {
@@ -1065,5 +1630,17 @@ export default async function handler(req, res) {
   } catch (err) {
     if (charged) await refundCredits(creditId, cost);
     return aiError(res, err);
+  }
+}
+
+// Safety wrapper: any unexpected crash returns a readable JSON error instead of a raw server failure.
+export default async function handler(req, res) {
+  try {
+    return await handleChat(req, res);
+  } catch (err) {
+    console.error('Unhandled chat error', err && err.stack ? err.stack : err);
+    if (!res.headersSent) {
+      return res.status(503).json({ error: 'Aviqo could not finish this answer. Please try again. If it keeps happening, try Web Search mode or a shorter question.' });
+    }
   }
 }
