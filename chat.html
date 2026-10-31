@@ -698,6 +698,53 @@
   .bubble li{margin-bottom:5px;}
   .msg.user{flex-direction:row-reverse; margin-left:auto;}
   .msg.user{flex-wrap:wrap;}
+  .cc-filters{display:flex; flex-wrap:wrap; gap:8px; align-items:center; font:13px 'Inter',sans-serif; margin:6px 0 0; opacity:.9;}
+  .cc-filters[hidden]{display:none;}
+  .cc-filters input{font:inherit; padding:5px 8px; border:1px solid rgba(127,127,135,.35); border-radius:8px; background:transparent; color:inherit; min-width:0;}
+  #ccDomain{width:170px;}
+  .cc-q{display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:600;}
+  .cc-q-hi{background:rgba(22,163,74,.15); color:#15803d;}
+  .cc-q-md{background:rgba(202,138,4,.15); color:#a16207;}
+  .cc-q-lo{background:rgba(127,127,135,.18); color:#6b7280;}
+  button.cc-src{font:inherit; color:inherit; text-align:left; background:transparent; cursor:pointer;}
+  .cc-report-acts{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .cc-rep-btn{font:13px 'Inter',sans-serif; padding:6px 12px; border-radius:999px; border:1px solid rgba(127,127,135,.4); background:transparent; color:inherit; cursor:pointer;}
+  .cc-rep-btn:hover{background:rgba(127,127,135,.12);}
+  .src-ov, .saved-ov{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:400; padding:16px;}
+  .src-ov[hidden], .saved-ov[hidden]{display:none;}
+  .src-card, .saved-card{position:relative; background:#fff; color:#111; border-radius:14px; max-width:560px; width:100%; max-height:82vh; overflow:auto; padding:22px 22px 18px; box-shadow:0 20px 50px rgba(0,0,0,.25); font:14px/1.55 'Inter',sans-serif;}
+  .src-x{position:absolute; top:10px; right:12px; border:0; background:transparent; font-size:18px; cursor:pointer; color:inherit;}
+  .src-meta{font-size:12px; color:#6b7280; margin-bottom:8px;}
+  .src-h{font-size:17px; margin:0 0 10px; font-weight:600;}
+  .src-ex{white-space:pre-wrap; margin:0 0 14px;}
+  .src-open{color:#2563eb; text-decoration:none; font-weight:600;}
+  .saved-item{display:flex; gap:10px; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;}
+  .saved-item button{font:13px 'Inter',sans-serif; padding:5px 10px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer;}
+  .saved-md{white-space:pre-wrap; font:13px/1.5 ui-monospace,monospace; background:#f9fafb; padding:12px; border-radius:10px;}
+  .st-item.done .st-ic{border-color:#16a34a;}
+  .ev-panel{margin-top:10px; border:1px solid rgba(127,127,135,.3); border-radius:12px; padding:8px 12px; font:13px/1.5 'Inter',sans-serif;}
+  .ev-panel > summary{cursor:pointer; font-weight:600;}
+  .ev-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin:10px 0;}
+  .ev-m{border:1px solid rgba(127,127,135,.25); border-radius:10px; padding:6px 8px;}
+  .ev-m b{display:block; font-size:18px;}
+  .ev-m span{font-size:11px; opacity:.75;}
+  .ev-sec{margin:12px 0 4px; font-weight:600; font-size:13px;}
+  .ev-row{padding:6px 0; border-top:1px solid rgba(127,127,135,.2);}
+  .ev-badge{display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:600; margin-right:6px;}
+  .ev-verified{background:rgba(22,163,74,.15); color:#15803d;}
+  .ev-partial{background:rgba(202,138,4,.15); color:#a16207;}
+  .ev-disputed{background:rgba(220,38,38,.12); color:#b91c1c;}
+  .ev-unsupported{background:rgba(127,127,135,.18); color:#4b5563;}
+  .ev-small{font-size:12px; opacity:.8;}
+  .ev-warn{color:#b45309; font-size:12px;}
+  .status-trail{display:flex; flex-direction:column; gap:7px; padding:12px 0 0; font-size:14px;}
+  .st-item{display:flex; align-items:center; gap:9px; opacity:.4; transition:opacity .3s;}
+  .st-item.active{opacity:1;}
+  .st-item.done{opacity:.75;}
+  .st-ic{width:14px; height:14px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent; flex:0 0 14px; box-sizing:border-box;}
+  .st-item.active .st-ic{animation:stSpin .8s linear infinite;}
+  .st-item.done .st-ic{border-color:#16a34a; background:#16a34a; animation:none; box-shadow:inset 0 0 0 3px #fff;}
+  @keyframes stSpin{to{transform:rotate(360deg);}}
   .msg.user > .user-acts{flex:0 0 100% !important; width:100% !important; max-width:100% !important; order:2; display:flex; justify-content:flex-end; gap:4px; margin-top:4px;}
   .ua-btn{width:28px; height:28px; border:0; border-radius:8px; background:transparent; color:#8a8a8f; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .15s, color .15s;}
   .ua-btn:hover{background:rgba(127,127,135,.14); color:inherit;}
@@ -1609,6 +1656,10 @@
           Get help
         </button>
         <div class="acct-sep"></div>
+        <button class="acct-item" type="button" data-act="research" role="menuitem">
+          <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>
+          Saved research
+        </button>
         <button class="acct-item" type="button" data-act="upgrade" role="menuitem">
           <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           Upgrade plan
@@ -1703,8 +1754,23 @@
           <span class="cc-mode-hint" id="ccModeHint"></span>
         </div>
 
+        <div class="cc-filters" id="ccFilters" hidden>
+          <label for="ccFilter">Search filter</label>
+          <select id="ccFilter" class="cc-mode-select" aria-label="Search filter">
+            <option value="all">All web</option>
+            <option value="news">News (last 7 days)</option>
+            <option value="recent">Recent (last 30 days)</option>
+            <option value="academic">Academic research</option>
+            <option value="government">Government sources</option>
+            <option value="official">Official websites</option>
+          </select>
+          <input id="ccDomain" type="text" placeholder="Domain, e.g. who.int" aria-label="Domain filter" maxlength="120">
+          <input id="ccFrom" type="date" aria-label="From date">
+          <input id="ccTo" type="date" aria-label="To date">
+        </div>
+
         <div class="chat-input-row">
-          <input type="file" id="attachInput" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.txt,.csv,.md,.json,text/plain,text/csv,application/json" style="display:none;">
+          <input type="file" id="attachInput" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.txt,.csv,.md,.json,.pdf,.docx,.xlsx,text/plain,text/csv,application/json,application/pdf" style="display:none;">
           <div class="cc-plus">
             <button class="chat-attach" id="chatAttachBtn" type="button" title="Add" aria-label="Add" aria-haspopup="menu" aria-expanded="false">
               <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -1938,6 +2004,7 @@
     else if(act === 'language') openSettings(true);
     else if(act === 'upgrade'){ setAcctMenu(false); window.location.href = 'mailto:helloaviqoai@gmail.com?subject=' + encodeURIComponent('Upgrade plan request'); }
     else if(act === 'logout'){ setAcctMenu(false); profileLogout.click(); }
+    else if(act === 'research'){ setAcctMenu(false); openSavedResearch(); }
     else if(act === 'help' || act === 'learn') { /* plain links handled below */ }
   });
   acctMenu.querySelectorAll('a.acct-item').forEach(function(a){ a.addEventListener('click', function(){ setAcctMenu(false); }); });
@@ -2167,9 +2234,27 @@
     const file = attachInput.files && attachInput.files[0];
     if(!file) return;
 
-    if(/\.(pdf|docx?|xlsx?|pptx?)$/i.test(file.name)){
-      alert('PDF and Office files are not supported yet. Please use a TXT, CSV, MD or JSON file, or an image.');
+    if(/\.(doc|xls|ppt)$/i.test(file.name)){
+      alert('Old .doc, .xls and .ppt files are not supported. Please save the file as .docx, .xlsx or PDF.');
       attachInput.value = '';
+      return;
+    }
+    if(/\.(pdf|docx|xlsx)$/i.test(file.name)){
+      if(file.size > 8 * 1024 * 1024){ alert('Please choose a PDF or Office file under 8MB.'); attachInput.value = ''; return; }
+      attachName.textContent = 'Reading ' + file.name + '...';
+      attachPreview.style.display = 'flex';
+      attachBtn.classList.add('has-file');
+      file.arrayBuffer().then(function(buf){ return extractDocument(file.name, buf); }).then(function(text){
+        if(!text || !text.trim()) throw new Error('No readable text was found in this file. Scanned PDFs need OCR, which is not supported yet.');
+        pendingImage = null;
+        pendingFile = { name: file.name, text: text };
+        attachThumb.style.display = 'none';
+        attachName.textContent = file.name + (text.length > 8000 ? ' (the first 8,000 characters will be used)' : '');
+        if(currentMode === 'quick') setMode('file');
+      }).catch(function(err){
+        alert((err && err.message) || 'Could not read that file.');
+        clearAttachment();
+      }).finally(function(){ attachInput.value = ''; });
       return;
     }
 
@@ -2217,6 +2302,140 @@
     reader.readAsDataURL(file);
   });
   attachRemove.addEventListener('click', clearAttachment);
+
+  // ---- Document reading in the browser (no external libraries) ----
+  async function inflateBytes(bytes, format){
+    if(typeof DecompressionStream === 'undefined') throw new Error('This browser cannot read Office or PDF files. Please use the latest Chrome, Edge, Firefox or Safari.');
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  async function unzipEntries(buf){
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    let eocd = -1;
+    for(let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--){
+      if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+    }
+    if(eocd < 0) throw new Error('This does not look like a valid Office file.');
+    const count = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const out = {};
+    for(let n = 0; n < count; n++){
+      if(dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true);
+      const csize = dv.getUint32(p + 20, true);
+      const nlen = dv.getUint16(p + 28, true);
+      const xlen = dv.getUint16(p + 30, true);
+      const clen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+      const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+      const raw = u8.subarray(start, start + csize);
+      out[name] = method === 0 ? raw : await inflateBytes(raw, 'deflate-raw');
+      p += 46 + nlen + xlen + clen;
+    }
+    return out;
+  }
+  function parseXmlBytes(bytes){ return new DOMParser().parseFromString(new TextDecoder('utf-8').decode(bytes), 'application/xml'); }
+  function docxTextFrom(files){
+    if(!files['word/document.xml']) throw new Error('This does not look like a valid .docx file.');
+    const doc = parseXmlBytes(files['word/document.xml']);
+    const lines = [];
+    for(const para of doc.getElementsByTagNameNS('*', 'p')){
+      const t = Array.from(para.getElementsByTagNameNS('*', 't')).map(function(x){ return x.textContent; }).join('');
+      if(t.trim()) lines.push(t);
+    }
+    return lines.join('\n');
+  }
+  function xlsxTextFrom(files){
+    if(!files['xl/workbook.xml']) throw new Error('This does not look like a valid .xlsx file.');
+    const shared = [];
+    if(files['xl/sharedStrings.xml']){
+      for(const si of parseXmlBytes(files['xl/sharedStrings.xml']).getElementsByTagNameNS('*', 'si')){
+        shared.push(Array.from(si.getElementsByTagNameNS('*', 't')).map(function(x){ return x.textContent; }).join(''));
+      }
+    }
+    const names = Array.from(parseXmlBytes(files['xl/workbook.xml']).getElementsByTagNameNS('*', 'sheet')).map(function(x){ return x.getAttribute('name'); });
+    const sheetKeys = Object.keys(files).filter(function(k){ return /^xl\/worksheets\/sheet\d+\.xml$/.test(k); })
+      .sort(function(a, b){ return Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]); });
+    const out = [];
+    sheetKeys.forEach(function(key, i){
+      out.push('## Sheet: ' + (names[i] || ('Sheet' + (i + 1))));
+      for(const row of parseXmlBytes(files[key]).getElementsByTagNameNS('*', 'row')){
+        const vals = [];
+        for(const c of row.getElementsByTagNameNS('*', 'c')){
+          const t = c.getAttribute('t');
+          const v = c.getElementsByTagNameNS('*', 'v')[0];
+          let val = '';
+          if(t === 's' && v) val = shared[Number(v.textContent)] || '';
+          else if(t === 'inlineStr') val = Array.from(c.getElementsByTagNameNS('*', 't')).map(function(x){ return x.textContent; }).join('');
+          else if(v) val = v.textContent;
+          vals.push(val);
+        }
+        if(vals.some(function(x){ return x !== ''; })) out.push(vals.join(' | '));
+      }
+    });
+    return out.join('\n');
+  }
+  function unescapePdf(t){
+    return t.replace(/\\([nrtbf()\\]|[0-7]{1,3})/g, function(m, c){
+      if(/^[0-7]/.test(c)) return String.fromCharCode(parseInt(c, 8));
+      return { n: '\n', r: '\n', t: ' ', b: '', f: '' }[c] || c;
+    });
+  }
+  function pdfOpsToText(s){
+    const parts = [];
+    const re = /\[((?:\\.|[^\]\\])*)\]\s*TJ|\(((?:\\.|[^)\\])*)\)\s*(?:Tj|')|\b(Td|TD|T\*|Tm|ET)\b/g;
+    let m;
+    while((m = re.exec(s))){
+      if(m[1] !== undefined){
+        const strs = m[1].match(/\((?:\\.|[^)\\])*\)/g) || [];
+        parts.push(strs.map(function(x){ return unescapePdf(x.slice(1, -1)); }).join(''));
+      } else if(m[2] !== undefined){
+        parts.push(unescapePdf(m[2]));
+      } else {
+        parts.push('\n');
+      }
+    }
+    return parts.join('').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  }
+  async function pdfTextFrom(u8){
+    const latin = new TextDecoder('latin1').decode(u8);
+    const pages = [];
+    let idx = 0, pageNo = 0;
+    while(true){
+      const s = latin.indexOf('stream', idx);
+      if(s < 0) break;
+      if(s >= 3 && latin.slice(s - 3, s) === 'end'){ idx = s + 6; continue; }
+      const objStart = Math.max(0, latin.lastIndexOf('obj', s));
+      const dict = latin.slice(objStart, s);
+      let dataStart = s + 6;
+      if(latin[dataStart] === '\r') dataStart++;
+      if(latin[dataStart] === '\n') dataStart++;
+      const e = latin.indexOf('endstream', dataStart);
+      if(e < 0) break;
+      idx = e + 9;
+      let end = e;
+      const lenMatch = dict.match(/\/Length\s+(\d+)(?!\s+\d+\s+R)/);
+      if(lenMatch && dataStart + Number(lenMatch[1]) <= e) end = dataStart + Number(lenMatch[1]);
+      else { while(end > dataStart && (u8[end - 1] === 10 || u8[end - 1] === 13)) end--; }
+      const raw = u8.subarray(dataStart, end);
+      let content = raw;
+      if(/\/FlateDecode/.test(dict)){
+        try{ content = await inflateBytes(raw, 'deflate'); }catch(err){ continue; }
+      }
+      const text = pdfOpsToText(new TextDecoder('latin1').decode(content)).trim();
+      if(text){ pageNo++; pages.push('[Page ' + pageNo + ' (approximate)]\n' + text); }
+    }
+    return pages.join('\n\n');
+  }
+  async function extractDocument(name, buf){
+    const lower = name.toLowerCase();
+    if(lower.endsWith('.pdf')) return pdfTextFrom(new Uint8Array(buf));
+    const files = await unzipEntries(buf);
+    if(lower.endsWith('.docx')) return docxTextFrom(files);
+    if(lower.endsWith('.xlsx')) return xlsxTextFrom(files);
+    throw new Error('Unsupported file type.');
+  }
 
   function addUserMsg(text, imageDataUrl){
     ccLog({ r:'u', t: text || (imageDataUrl ? '[photo]' : '') });
@@ -2270,9 +2489,68 @@
     body.appendChild(div);
     scrollBottom();
   }
+  let statusTimers = [];
+  function clearStatusTimers(){ statusTimers.forEach(clearTimeout); statusTimers = []; }
   function removeTyping(){
+    clearStatusTimers();
     const t = document.getElementById('typingRow');
     if(t) t.remove();
+  }
+
+  // Live status trail: shows the steps the reply goes through, one after another.
+  function addStatusTrail(stages){
+    clearStatusTimers();
+    const row = document.getElementById('typingRow');
+    if(!row || !stages || !stages.length) return;
+    const dots = row.querySelector('.typing');
+    if(dots) dots.style.display = 'none';
+    const box = document.createElement('div');
+    box.className = 'status-trail';
+    const items = stages.map(st => {
+      const el = document.createElement('div');
+      el.className = 'st-item';
+      el.innerHTML = '<span class="st-ic"></span><span class="st-txt"></span>';
+      el.querySelector('.st-txt').textContent = st.label;
+      box.appendChild(el);
+      return el;
+    });
+    row.appendChild(box);
+    stages.forEach((st, i) => {
+      statusTimers.push(setTimeout(() => {
+        items.forEach((el, j) => {
+          if(j < i){ el.classList.add('done'); el.classList.remove('active'); }
+        });
+        items[i].classList.add('active');
+        scrollBottom();
+      }, st.at));
+    });
+  }
+
+  function statusStagesFor(mode, hasImage, hasFile){
+    if(hasImage) return [{label:'Looking at your photo', at:0}, {label:'Writing answer', at:2000}];
+    if(hasFile) return [{label:'Reading the file', at:0}, {label:'Writing answer', at:1500}];
+    if(mode === 'deep') return [
+      {label:'Planning', at:0},
+      {label:'Searching', at:2500},
+      {label:'Reading', at:9000},
+      {label:'Extracting', at:14000},
+      {label:'Cross-checking', at:18000},
+      {label:'Calculating', at:22000},
+      {label:'Writing', at:25000}
+    ];
+    if(mode === 'web') return [
+      {label:'Planning', at:0},
+      {label:'Searching', at:1500},
+      {label:'Reading', at:6000},
+      {label:'Writing', at:10000}
+    ];
+    if(mode === 'solver') return [
+      {label:'Breaking down the problem', at:0},
+      {label:'Researching the web', at:2000},
+      {label:'Calculating and comparing options', at:9000},
+      {label:'Writing the solution', at:16000}
+    ];
+    return [{label:'Thinking', at:0}, {label:'Writing answer', at:2500}];
   }
 
   function escapeHtml(str){
@@ -2460,25 +2738,185 @@
       });
     }).join('');
   }
+  const SRC_STORE = {}; let srcSeq = 0;
+  const RPT_STORE = {}; let rptSeq = 0;
+  function qualityBadge(q){
+    const cls = q === 'High' ? 'hi' : q === 'Medium' ? 'md' : 'lo';
+    return '<span class="cc-q cc-q-' + cls + '">' + attrEsc(q || 'Low') + '</span>';
+  }
+  function dateText(d){ return d ? attrEsc(String(d).slice(0, 10)) : 'date unknown'; }
   function sourcesHtml(sources){
     if(!sources || !sources.length) return '';
+    const sid = ++srcSeq; SRC_STORE[sid] = sources;
     return '<div class="cc-sources"><div class="cc-sources-title">Sources</div><div class="cc-sources-list">' +
-      sources.map(function(src){
-        return '<a class="cc-src" href="' + safeUrl(src.url) + '" target="_blank" rel="noopener noreferrer">' +
+      sources.map(function(src, i){
+        return '<button type="button" class="cc-src" data-sid="' + sid + '" data-i="' + i + '">' +
           '<span class="cc-src-n">' + attrEsc(src.id) + '</span>' +
-          '<span class="cc-src-body"><span class="cc-src-t">' + attrEsc(src.title) + '</span><span class="cc-src-d">' + attrEsc(src.domain) + '</span></span></a>';
+          '<span class="cc-src-body"><span class="cc-src-t">' + attrEsc(src.title) + '</span>' +
+          '<span class="cc-src-d">' + attrEsc(src.domain) + ' · ' + dateText(src.published) + (src.typeLabel ? ' · ' + attrEsc(src.typeLabel) : '') + qualityBadge(src.quality) + '</span></span></button>';
       }).join('') + '</div></div>';
   }
+  function openSourcePreview(src){
+    let ov = document.getElementById('srcPreview');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'srcPreview';
+      ov.className = 'src-ov';
+      ov.hidden = true;
+      ov.innerHTML = '<div class="src-card" role="dialog" aria-modal="true" aria-label="Source preview"><button type="button" class="src-x" aria-label="Close">✕</button><div class="src-meta"></div><h3 class="src-h"></h3><p class="src-ex"></p><a class="src-open" target="_blank" rel="noopener noreferrer">Open source</a></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function(e){ if(e.target === ov || e.target.closest('.src-x')) ov.hidden = true; });
+    }
+    ov.querySelector('.src-h').textContent = src.title || 'Source';
+    ov.querySelector('.src-meta').textContent = (src.domain || '') + ' · ' + (src.published ? String(src.published).slice(0, 10) : 'date unknown') + ' · Quality: ' + (src.quality || 'Low');
+    const m = src.meta || {};
+    const facts = [
+      src.typeLabel ? 'Type: ' + src.typeLabel : '',
+      'Publisher: ' + (m.publisher || src.domain || 'unknown'),
+      m.author ? 'Author (as stated on page): ' + m.author : '',
+      m.updatedDate ? 'Last updated: ' + m.updatedDate : '',
+      m.dataPeriod ? 'Data period: ' + m.dataPeriod : '',
+      src.urlStatus ? 'Link check: ' + ({ ok: 'opened', broken: 'page not found (404/410)', blocked: 'site blocked the check', unreachable: 'could not be reached just now', invalid: 'invalid address' }[src.urlStatus] || src.urlStatus) : ''
+    ].filter(Boolean);
+    ov.querySelector('.src-ex').textContent = (facts.join('\n') + '\n\n' + (src.excerpt || 'No excerpt available.')).trim();
+    ov.querySelector('.src-open').href = safeUrl(src.url);
+    ov.hidden = false;
+  }
+  body.addEventListener('click', function(e){
+    const b = e.target.closest('.cc-src[data-sid]');
+    if(b){
+      const list = SRC_STORE[b.dataset.sid];
+      const src = list && list[Number(b.dataset.i)];
+      if(src) openSourcePreview(src);
+      return;
+    }
+    const rb = e.target.closest('.cc-rep-btn[data-rid]');
+    if(rb){
+      const rep = RPT_STORE[rb.dataset.rid];
+      if(!rep) return;
+      if(rb.dataset.act === 'export'){ downloadReport(rep.text, rep.sources); }
+      if(rb.dataset.act === 'save'){ saveReport(rep.text, rep.sources); rb.textContent = 'Saved'; rb.disabled = true; }
+    }
+  });
+
+  const EV_STATUS = {
+    verified: ['ev-verified', 'Verified'],
+    partially_verified: ['ev-partial', 'Partly verified'],
+    disputed: ['ev-disputed', 'Disputed'],
+    unsupported: ['ev-unsupported', 'Unsupported']
+  };
+  const EV_STAGE_ICON = { done: '✓', failed: '!', skipped: '–', pending: '·' };
+  function evidenceHtml(ev){
+    if(!ev || !ev.metrics) return '';
+    const m = ev.metrics;
+    const secs = (m.completionMs / 1000).toFixed(1);
+    const metric = (v, label) => '<div class="ev-m"><b>' + attrEsc(v) + '</b><span>' + attrEsc(label) + '</span></div>';
+    const grid = '<div class="ev-grid">' +
+      metric(m.sourcesSearched, 'Sources searched') + metric(m.sourcesOpened, 'Sources opened') +
+      metric(m.primarySources, 'Primary sources') + metric(m.claimsChecked, 'Claims checked') +
+      metric(m.verified, 'Verified') + metric(m.partiallyVerified, 'Partly verified') +
+      metric(m.disputed, 'Disputed') + metric(m.unsupported, 'Unsupported') +
+      metric(secs + 's', 'Completion time') + '</div>';
+    const stages = '<div class="ev-small">' + (ev.stages || []).map((s) =>
+      EV_STAGE_ICON[s.status] + ' ' + attrEsc(s.name)).join(' · ') + '</div>';
+    const claims = (ev.claims || []).length ? '<div class="ev-sec">Claim checks</div>' + ev.claims.map((c) => {
+      const st = EV_STATUS[c.status] || EV_STATUS.unsupported;
+      const passages = (c.evidence || []).filter((e) => e.passage).map((e) =>
+        '<div class="ev-small">Source ' + attrEsc(e.sourceId) + ' (' + attrEsc(e.level) + '): “' + attrEsc(e.passage) + '”</div>').join('');
+      return '<div class="ev-row"><span class="ev-badge ' + st[0] + '">' + st[1] + '</span>' + attrEsc(c.contextLabel) +
+        '<div>' + attrEsc(c.text) + '</div><div class="ev-small">' + attrEsc(c.reason) + '</div>' + passages + '</div>';
+    }).join('') : '';
+    const conflicts = (ev.conflicts || []).length ? '<div class="ev-sec">Conflicting sources</div>' + ev.conflicts.map((c) =>
+      '<div class="ev-row"><div>Source ' + attrEsc(c.sourceA.id) + ' says ' + attrEsc(c.sourceA.value) + ', source ' + attrEsc(c.sourceB.id) + ' says ' + attrEsc(c.sourceB.value) + '.</div>' +
+      '<div class="ev-small">Why they may differ: ' + c.reasons.map(attrEsc).join('; ') + '.</div></div>').join('') : '';
+    const audit = (ev.audit || []).length ? '<div class="ev-sec">Self-audit</div>' + ev.audit.map((a) =>
+      '<div class="ev-warn">• ' + attrEsc(a.text) + '</div>').join('') : '';
+    return '<details class="ev-panel"><summary>Evidence: ' + m.sourcesOpened + ' of ' + m.sourcesSearched + ' sources opened, ' + m.claimsChecked + ' claims checked</summary>' +
+      grid + stages + claims + conflicts + audit + '</details>';
+  }
+  function reportActionsHtml(text, sources){
+    const rid = ++rptSeq; RPT_STORE[rid] = { text: String(text || ''), sources: sources || [] };
+    return '<div class="cc-report-acts"><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="export">Export report</button><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="save">Save</button></div>';
+  }
+  function reportMarkdown(text, sources){
+    const lines = ['# Aviqo research report', '', 'Date: ' + new Date().toISOString().slice(0, 10), '', String(text).trim(), ''];
+    if(sources && sources.length){
+      lines.push('## Sources', '');
+      sources.forEach(function(s){
+        lines.push(s.id + '. [' + s.title + '](' + s.url + ') — ' + s.domain + ', ' + (s.published ? String(s.published).slice(0, 10) : 'date unknown') + ', quality: ' + (s.quality || 'Low'));
+      });
+      lines.push('', 'Quality is a rough indicator based on the source domain and whether it has a date. Check important facts against the original source.');
+    }
+    return lines.join('\n');
+  }
+  function downloadReport(text, sources){
+    const blob = new Blob([reportMarkdown(text, sources)], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'aviqo-research-' + new Date().toISOString().slice(0, 10) + '.md';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function readSaved(){
+    try{ return JSON.parse(localStorage.getItem('aviqo_saved_research') || '[]') || []; }catch(e){ return []; }
+  }
+  function saveReport(text, sources){
+    const list = readSaved();
+    list.unshift({ id: Date.now(), title: String(text).replace(/[#*_`]/g, '').trim().slice(0, 80), savedAt: new Date().toISOString(), markdown: reportMarkdown(text, sources) });
+    try{ localStorage.setItem('aviqo_saved_research', JSON.stringify(list.slice(0, 50))); }catch(e){ alert('Could not save this report in this browser.'); }
+  }
+  function openSavedResearch(){
+    let ov = document.getElementById('savedModal');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'savedModal';
+      ov.className = 'saved-ov';
+      ov.hidden = true;
+      ov.innerHTML = '<div class="saved-card" role="dialog" aria-modal="true" aria-label="Saved research"><button type="button" class="src-x" aria-label="Close">✕</button><h3 style="margin:0 0 10px">Saved research</h3><div class="saved-list"></div><div class="saved-view" hidden></div></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function(e){
+        if(e.target === ov || e.target.closest('.src-x')){ ov.hidden = true; return; }
+        const btn = e.target.closest('[data-saved-act]');
+        if(!btn) return;
+        const id = Number(btn.dataset.id);
+        let list = readSaved();
+        if(btn.dataset.savedAct === 'delete'){
+          list = list.filter(function(x){ return x.id !== id; });
+          try{ localStorage.setItem('aviqo_saved_research', JSON.stringify(list)); }catch(err){}
+          renderSaved();
+        }
+        if(btn.dataset.savedAct === 'view'){
+          const item = list.find(function(x){ return x.id === id; });
+          const view = ov.querySelector('.saved-view');
+          if(item){ view.innerHTML = ''; const pre = document.createElement('pre'); pre.className = 'saved-md'; pre.textContent = item.markdown; view.appendChild(pre); view.hidden = false; }
+        }
+      });
+    }
+    renderSaved();
+    ov.hidden = false;
+    function renderSaved(){
+      const list = readSaved();
+      const box = ov.querySelector('.saved-list');
+      ov.querySelector('.saved-view').hidden = true;
+      if(!list.length){ box.innerHTML = '<p>No saved research yet. Use "Save" under a Web Search or Deep Research answer.</p>'; return; }
+      box.innerHTML = list.map(function(x){
+        return '<div class="saved-item"><div><b>' + attrEsc(x.title || 'Report') + '</b><br><small>' + attrEsc(String(x.savedAt).slice(0, 10)) + '</small></div><div><button type="button" data-saved-act="view" data-id="' + x.id + '">Open</button> <button type="button" data-saved-act="delete" data-id="' + x.id + '">Delete</button></div></div>';
+      }).join('');
+    }
+  }
+
   function stepsHtml(steps){
     if(!steps || !steps.length) return '';
     return '<details class="cc-steps"><summary>How this was researched (' + steps.length + ' steps)</summary><ol>' +
       steps.map(function(st){ return '<li>' + attrEsc(st) + '</li>'; }).join('') + '</ol></details>';
   }
 
-  function addAiMsg(text, cardType, cardMeta, sources, steps){
+  function addAiMsg(text, cardType, cardMeta, sources, steps, evidence){
     var logEntry = { r:'a', t: String(text) };
     if(sources && sources.length) logEntry.src = sources;
     if(steps && steps.length) logEntry.steps = steps;
+    if(evidence) logEntry.ev = evidence;
     ccLog(logEntry);
     const div = document.createElement('div');
     div.className = 'msg';
@@ -2492,7 +2930,8 @@
       };
       cardHtml = `<div class="gen-card"><div class="art">${icons[cardType]}</div><div class="meta"><b>${cardMeta.title}</b>${cardMeta.sub}</div></div>`;
     }
-    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div>${stepsHtml(steps)}<div class="bubble">${citeify(formatMessage(text), sources)}</div>${cardHtml}${sourcesHtml(sources)}</div>`;
+    const actionsHtml = (sources && sources.length) ? reportActionsHtml(text, sources) : '';
+    div.innerHTML = `<div class="av"><img src="${logoSrc}" alt=""></div><div>${stepsHtml(steps)}<div class="bubble">${citeify(formatMessage(text), sources)}</div>${cardHtml}${sourcesHtml(sources)}${evidenceHtml(evidence)}${actionsHtml}</div>`;
     body.appendChild(div);
     scrollBottom();
   }
@@ -2564,7 +3003,15 @@
   refreshCredits();
 
   async function askAviqo(message, image, file){
-    const payload = { message, mode: currentMode, history: ccHistory(), user: { email: currentUserEmail() } };
+    let tz = 'Asia/Kolkata';
+    try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; }catch(e){}
+    const payload = { message, mode: currentMode, history: ccHistory(), user: { email: currentUserEmail() }, timezone: tz };
+    if(currentMode === 'web' || currentMode === 'deep'){
+      payload.filter = document.getElementById('ccFilter').value;
+      payload.domain = document.getElementById('ccDomain').value.trim();
+      payload.dateFrom = document.getElementById('ccFrom').value;
+      payload.dateTo = document.getElementById('ccTo').value;
+    }
     if(replyLang()) payload.lang = replyLang();
     if(image) payload.image = { mimeType: image.mimeType, data: image.data };
     if(file) payload.file = { name: file.name, text: file.text };
@@ -2630,13 +3077,11 @@
   // Runs one image generation with a visible loading state.
   function runImage(prompt){
     addTyping();
-    const row = document.getElementById('typingRow');
-    if(row){
-      const lab = document.createElement('div');
-      lab.className = 'cc-typing-label';
-      lab.textContent = 'Generating your image with FLUX. This usually takes 5 to 30 seconds...';
-      row.appendChild(lab);
-    }
+    addStatusTrail([
+      {label:'Understanding your prompt', at:0},
+      {label:'Generating image with FLUX (5 to 30 seconds)', at:1200},
+      {label:'Finishing the image', at:15000}
+    ]);
     generateImage(prompt).then(dataUrl=>{
       removeTyping();
       addAiImage(dataUrl, 'Here you go! Want a different style or variation?');
@@ -2729,18 +3174,10 @@
     }
 
     addTyping();
-    if(currentMode === 'web' || currentMode === 'deep'){
-      const row = document.getElementById('typingRow');
-      if(row){
-        const lab = document.createElement('div');
-        lab.className = 'cc-typing-label';
-        lab.textContent = currentMode === 'deep' ? 'Researching the web. This can take up to a minute...' : 'Searching the web...';
-        row.appendChild(lab);
-      }
-    }
+    addStatusTrail(statusStagesFor(currentMode, !!imageToSend, !!fileToSend));
     askAviqo(trimmed, imageToSend, fileToSend).then(data=>{
       removeTyping();
-      addAiMsg(data.reply, null, null, data.sources, data.steps);
+      addAiMsg(data.reply, null, null, data.sources, data.steps, data.evidence);
     }).catch(err=>{
       removeTyping();
       if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
@@ -2787,7 +3224,7 @@
     try{
       msgs.forEach(function(m){
         if(m.r === 'u') addUserMsg(m.t, null);
-        else addAiMsg(m.t, null, null, m.src, m.steps);
+        else addAiMsg(m.t, null, null, m.src, m.steps, m.ev);
       });
     } finally { ccSilent = false; }
     scrollBottom();
@@ -2921,6 +3358,8 @@
     currentMode = m;
     modeSelect.value = m;
     modeHint.textContent = MODE_HINTS[m];
+    const filtersEl = document.getElementById('ccFilters');
+    if(filtersEl) filtersEl.hidden = !(m === 'web' || m === 'deep');
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
   modeSelect.addEventListener('change', ()=> setMode(modeSelect.value));
