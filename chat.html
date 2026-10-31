@@ -722,6 +722,12 @@
   .saved-item button{font:13px 'Inter',sans-serif; padding:5px 10px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer;}
   .saved-md{white-space:pre-wrap; font:13px/1.5 ui-monospace,monospace; background:#f9fafb; padding:12px; border-radius:10px;}
   .st-item.done .st-ic{border-color:#16a34a;}
+  .flash-note{position:fixed; left:50%; bottom:96px; transform:translateX(-50%); background:#111; color:#fff; padding:8px 14px; border-radius:999px; font:13px 'Inter',sans-serif; z-index:500; box-shadow:0 6px 18px rgba(0,0,0,.25);}
+  .cc-fav{width:16px; height:16px; border-radius:4px; margin-right:6px; vertical-align:-3px;}
+  .chat-send.is-stop{background:#111; color:#fff;}
+  .chat-send.is-stop svg{fill:currentColor; stroke:none;}
+  .cc-filters .cc-rep-btn{padding:5px 10px;}
+  @media (max-width:640px){ #ccDomain{width:100%;} .cc-filters input{flex:1 1 140px;} }
   .ev-panel{margin-top:10px; border:1px solid rgba(127,127,135,.3); border-radius:12px; padding:8px 12px; font:13px/1.5 'Inter',sans-serif;}
   .ev-panel > summary{cursor:pointer; font-weight:600;}
   .ev-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin:10px 0;}
@@ -1332,11 +1338,12 @@
     box-shadow:0 2px 16px rgba(0,0,0,0.06);
   }
   .cc .chat-input-row:focus-within{border-color:var(--border-hi);}
-  .cc .chat-input-row input#chatInput{
+  .cc .chat-input-row textarea#chatInput{
+    resize:none; overflow-y:auto; max-height:180px; line-height:1.45; font:inherit;
     flex:1; min-width:0; border:0; background:transparent; color:var(--text);
     font:16px 'Inter',sans-serif; padding:10px 8px; outline:none;
   }
-  .cc .chat-input-row input#chatInput::placeholder{color:var(--muted-2);}
+  .cc .chat-input-row textarea#chatInput::placeholder{color:var(--muted-2);}
   .cc .chat-attach{
     width:36px; height:36px; border-radius:50%; border:0; background:transparent;
     cursor:pointer; display:inline-flex; align-items:center; justify-content:center; flex:none;
@@ -1744,6 +1751,7 @@
             <option value="quick">Quick Answer</option>
             <option value="web">Web Search</option>
             <option value="deep">Deep Research</option>
+            <option value="academic">Academic Research</option>
             <option value="solver">Problem Solver</option>
             <option value="study">Study Mode</option>
             <option value="coding">Coding Assistant</option>
@@ -1760,13 +1768,14 @@
             <option value="all">All web</option>
             <option value="news">News (last 7 days)</option>
             <option value="recent">Recent (last 30 days)</option>
-            <option value="academic">Academic research</option>
+            <option value="academic">Academic papers</option>
             <option value="government">Government sources</option>
             <option value="official">Official websites</option>
           </select>
           <input id="ccDomain" type="text" placeholder="Domain, e.g. who.int" aria-label="Domain filter" maxlength="120">
           <input id="ccFrom" type="date" aria-label="From date">
           <input id="ccTo" type="date" aria-label="To date">
+          <button type="button" class="cc-rep-btn" id="ccClearFilters">Clear filters</button>
         </div>
 
         <div class="chat-input-row">
@@ -1799,7 +1808,7 @@
               </button>
             </div>
           </div>
-          <input type="text" id="chatInput" placeholder="How can Aviqo help you today?" autocomplete="off">
+          <textarea id="chatInput" rows="1" placeholder="How can Aviqo help you today?" autocomplete="off" aria-label="Message Aviqo" maxlength="4000"></textarea>
           <button class="chat-send" id="chatSend" type="button" aria-label="Send">
             <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
@@ -2466,6 +2475,7 @@
           handleSend(text);
         } else if(act === 'edit'){
           input.value = text;
+          autoGrow();
           input.focus();
           input.setSelectionRange(text.length, text.length);
         } else if(act === 'copy'){
@@ -2538,7 +2548,7 @@
       {label:'Calculating', at:22000},
       {label:'Writing', at:25000}
     ];
-    if(mode === 'web') return [
+    if(mode === 'web' || mode === 'academic') return [
       {label:'Planning', at:0},
       {label:'Searching', at:1500},
       {label:'Reading', at:6000},
@@ -2752,6 +2762,7 @@
       sources.map(function(src, i){
         return '<button type="button" class="cc-src" data-sid="' + sid + '" data-i="' + i + '">' +
           '<span class="cc-src-n">' + attrEsc(src.id) + '</span>' +
+          (/^[a-z0-9.-]+$/i.test(src.domain || '') ? '<img class="cc-fav" alt="" loading="lazy" src="https://www.google.com/s2/favicons?sz=32&domain=' + encodeURIComponent(src.domain) + '">' : '') +
           '<span class="cc-src-body"><span class="cc-src-t">' + attrEsc(src.title) + '</span>' +
           '<span class="cc-src-d">' + attrEsc(src.domain) + ' · ' + dateText(src.published) + (src.typeLabel ? ' · ' + attrEsc(src.typeLabel) : '') + qualityBadge(src.quality) + '</span></span></button>';
       }).join('') + '</div></div>';
@@ -2796,6 +2807,8 @@
       if(!rep) return;
       if(rb.dataset.act === 'export'){ downloadReport(rep.text, rep.sources); }
       if(rb.dataset.act === 'save'){ saveReport(rep.text, rep.sources); rb.textContent = 'Saved'; rb.disabled = true; }
+      if(rb.dataset.act === 'pdf'){ exportPdf(rep.text, rep.sources); }
+      if(rb.dataset.act === 'cites'){ copyText(citationsText(rep.sources)); }
     }
   });
 
@@ -2836,7 +2849,7 @@
   }
   function reportActionsHtml(text, sources){
     const rid = ++rptSeq; RPT_STORE[rid] = { text: String(text || ''), sources: sources || [] };
-    return '<div class="cc-report-acts"><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="export">Export report</button><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="save">Save</button></div>';
+    return '<div class="cc-report-acts"><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="export">Export report</button><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="pdf">Export PDF</button><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="cites">Copy citations</button><button type="button" class="cc-rep-btn" data-rid="' + rid + '" data-act="save">Save</button></div>';
   }
   function reportMarkdown(text, sources){
     const lines = ['# Aviqo research report', '', 'Date: ' + new Date().toISOString().slice(0, 10), '', String(text).trim(), ''];
@@ -2848,6 +2861,43 @@
       lines.push('', 'Quality is a rough indicator based on the source domain and whether it has a date. Check important facts against the original source.');
     }
     return lines.join('\n');
+  }
+  // Small note at the bottom of the screen (used by copy, export and filter actions)
+  function flashNote(message){
+    const el = document.createElement('div');
+    el.className = 'flash-note';
+    el.setAttribute('role', 'status');
+    el.textContent = message;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 1800);
+  }
+  function citationsText(sources){
+    return (sources || []).map(function(s){
+      return '[' + s.id + '] ' + s.title + ' — ' + s.url + ' (' + (s.domain || '') + ', ' + (s.published ? String(s.published).slice(0, 10) : 'date unknown') + ')';
+    }).join('\n');
+  }
+  function copyText(text){
+    const done = function(){ flashNote('Copied'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ flashNote('Could not copy. Select the text and copy it.'); });
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ flashNote('Could not copy.'); }
+    ta.remove();
+  }
+  // Opens a print-ready page of the answer and its sources. The browser's "Save as PDF" does the file.
+  function exportPdf(text, sources){
+    const w = window.open('', '_blank');
+    if(!w){ flashNote('Allow pop-ups for this site to export a PDF.'); return; }
+    const paras = String(text || '').split(/\n{2,}/).map(function(p){ return '<p>' + attrEsc(p).replace(/\n/g, '<br>') + '</p>'; }).join('');
+    const refs = (sources || []).map(function(s){
+      return '<li>[' + attrEsc(s.id) + '] ' + attrEsc(s.title) + ' — ' + attrEsc(s.domain || '') + ', ' +
+        attrEsc(s.published ? String(s.published).slice(0, 10) : 'date unknown') + '<br><a href="' + attrEsc(safeUrl(s.url)) + '">' + attrEsc(s.url) + '</a></li>';
+    }).join('');
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Aviqo research report</title><style>body{font:14px/1.6 Georgia,serif;max-width:720px;margin:32px auto;color:#111;padding:0 16px}h1{font:600 22px sans-serif}h2{font:600 16px sans-serif;margin-top:28px}a{color:#1d4ed8;word-break:break-all}li{margin:8px 0}@media print{body{margin:0}}</style></head><body><h1>Aviqo research report</h1><p style="color:#666">' + new Date().toISOString().slice(0, 10) + '</p>' + paras + (refs ? '<h2>Sources</h2><ol>' + refs + '</ol>' : '') + '<script>window.onload=function(){window.print();}<\/script></body></html>');
+    w.document.close();
   }
   function downloadReport(text, sources){
     const blob = new Blob([reportMarkdown(text, sources)], { type: 'text/markdown;charset=utf-8' });
@@ -3002,11 +3052,38 @@
 
   refreshCredits();
 
+  // ---- Stop generation: one request at a time, abortable ----
+  let activeRequest = null;
+  const SEND_ICON = '<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  const STOP_ICON = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  function setBusy(on){
+    sendBtn.classList.toggle('is-stop', !!on);
+    sendBtn.innerHTML = on ? STOP_ICON : SEND_ICON;
+    sendBtn.setAttribute('aria-label', on ? 'Stop response' : 'Send');
+  }
+  function autoGrow(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+  }
+  function stopRequest(){
+    const c = activeRequest;
+    if(!c) return;
+    activeRequest = null;
+    c.abort();
+    removeTyping();
+    setBusy(false);
+    addAiMsg('Stopped. The answer was not shown. Your message is still in the box, so you can send it again.');
+    refreshCredits();
+  }
+
   async function askAviqo(message, image, file){
+    const ctrl = new AbortController();
+    activeRequest = ctrl;
+    setBusy(true);
     let tz = 'Asia/Kolkata';
     try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; }catch(e){}
     const payload = { message, mode: currentMode, history: ccHistory(), user: { email: currentUserEmail() }, timezone: tz };
-    if(currentMode === 'web' || currentMode === 'deep'){
+    if(currentMode === 'web' || currentMode === 'deep' || currentMode === 'academic'){
       payload.filter = document.getElementById('ccFilter').value;
       payload.domain = document.getElementById('ccDomain').value.trim();
       payload.dateFrom = document.getElementById('ccFrom').value;
@@ -3018,14 +3095,15 @@
     const res = await fetch('/api/chat', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
     });
     const data = await res.json().catch(()=>null);
     if(data && typeof data.credits === 'number') showCredits(data.credits);
     if(res.status === 402) showCredits(0);
     if(!res.ok){
       throw new Error(data && data.error ? data.error
-        : (res.status === 504 ? 'The request took too long. Please try again, or use Web Search for a faster answer.' : 'Request failed (' + res.status + ')'));
+        : (res.status === 504 ? 'The request took too long. Please try again, or use Web Search for a faster answer.' : (res.status === 500 || res.status === 503 ? 'Aviqo could not finish this answer. Please try again. If it keeps happening, try Web Search mode or a shorter question.' : 'Request failed (' + res.status + ')')));
     }
     return data;
   }
@@ -3147,6 +3225,7 @@
     const fileToSend = pendingFile;
     addUserMsg((fileToSend ? '[' + fileToSend.name + '] ' : '') + trimmed, imageToSend ? imageToSend.dataUrl : null);
     input.value = '';
+    autoGrow();
     if(imageToSend || fileToSend){ clearAttachment(); }
     if(creditsLeft !== null && creditsLeft <= 0){ addUpgradeMsg(); return; }
     // image / video generation is only offered in Quick Answer and Creative Studio
@@ -3176,10 +3255,14 @@
     addTyping();
     addStatusTrail(statusStagesFor(currentMode, !!imageToSend, !!fileToSend));
     askAviqo(trimmed, imageToSend, fileToSend).then(data=>{
+      if(!activeRequest) return;   // was stopped by the user
+      activeRequest = null; setBusy(false);
       removeTyping();
       addAiMsg(data.reply, null, null, data.sources, data.steps, data.evidence);
     }).catch(err=>{
       removeTyping();
+      if(err && err.name === 'AbortError') return;   // stopped by the user; stopRequest already replied
+      activeRequest = null; setBusy(false);
       if(isConnectionError(err)){ addAiMsg(CONNECTION_MSG); return; }
       addAiMsg("I couldn't reach the AI backend just now (" + err.message + "). Please try again in a moment.");
     });
@@ -3325,6 +3408,14 @@
     if(m && m.classList.contains('msg')) m.classList.add('cc-shared');
   })();
 
+  document.getElementById('ccClearFilters').addEventListener('click', function(){
+    document.getElementById('ccFilter').value = 'all';
+    document.getElementById('ccDomain').value = '';
+    document.getElementById('ccFrom').value = '';
+    document.getElementById('ccTo').value = '';
+    flashNote('Filters cleared');
+  });
+
   // Regenerate: replaces the last assistant reply by sending its user message again
   window.ccRegenerate = function(){
     var d = ccRead();
@@ -3344,6 +3435,7 @@
     quick: 'Short, direct answers',
     web: 'Searches the web and cites sources',
     deep: 'Several searches, then a structured report',
+    academic: 'Prioritises papers and academic sources',
     solver: 'Step-by-step plan with next actions',
     study: 'Explains, gives an example, then practice questions',
     coding: 'Complete code, fixes and tests',
@@ -3359,14 +3451,21 @@
     modeSelect.value = m;
     modeHint.textContent = MODE_HINTS[m];
     const filtersEl = document.getElementById('ccFilters');
-    if(filtersEl) filtersEl.hidden = !(m === 'web' || m === 'deep');
+    if(filtersEl) filtersEl.hidden = !(m === 'web' || m === 'deep' || m === 'academic');
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
   modeSelect.addEventListener('change', ()=> setMode(modeSelect.value));
   (function(){ var saved = 'quick'; try{ saved = localStorage.getItem('aviqo_mode') || 'quick'; }catch(e){} setMode(saved); })();
 
-  sendBtn.addEventListener('click', ()=>handleSend(input.value));
-  input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleSend(input.value); });
+  sendBtn.addEventListener('click', ()=>{ if(activeRequest){ stopRequest(); return; } handleSend(input.value); });
+  // Enter sends, Shift+Enter starts a new line
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
+      e.preventDefault();
+      if(!activeRequest) handleSend(input.value);
+    }
+  });
+  input.addEventListener('input', autoGrow);
   input.addEventListener('focus', ()=>{ if(!isSignedUp){ input.blur(); openSignup(); } });
   quick.querySelectorAll('.qchip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
