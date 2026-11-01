@@ -1843,6 +1843,7 @@
           <span class="img-set-hint" id="imgSetHint"></span>
         </div>
 
+        <button type="button" id="studyRestart" class="cc-mode-select" hidden>Restart Study Session</button>
         <div class="cc-filters" id="ccFilters" hidden>
           <label for="ccFilter">Search filter</label>
           <select id="ccFilter" class="cc-mode-select" aria-label="Search filter">
@@ -2870,8 +2871,22 @@
       m.dataPeriod ? 'Data period: ' + m.dataPeriod : '',
       src.urlStatus ? 'Link check: ' + ({ ok: 'opened', broken: 'page not found (404/410)', blocked: 'site blocked the check', unreachable: 'could not be reached just now', invalid: 'invalid address' }[src.urlStatus] || src.urlStatus) : ''
     ].filter(Boolean);
+    const p = src.paper;
+    if (p) {
+      const VER = { metadata_verified: 'verified on publisher page', partial: 'partly verified on publisher page', title_mismatch: 'title on page differs from search result', metadata_unavailable: 'metadata not available on page', unavailable: 'publisher page could not be read' };
+      facts.push(
+        'Authors: ' + (p.authors && p.authors.length ? p.authors.join('; ') : (p.verification === 'unavailable' || p.verification === 'metadata_unavailable' ? 'not available (page could not be read)' : 'not listed on the page')),
+        'Year: ' + (p.year || 'not stated'),
+        'Journal or conference: ' + (p.venue || 'not stated'),
+        'DOI: ' + (p.doi || 'not stated'),
+        'Study design (inferred from text): ' + (p.design ? p.design.label : 'not determined'),
+        'Population (inferred from text): ' + (p.population && p.population.length ? p.population.join(', ') : 'not stated'),
+        'Location (inferred from text): ' + (p.location || 'not stated'),
+        'Metadata check: ' + (VER[p.verification] || p.verification) + (p.missing && p.missing.length ? ' (missing on page: ' + p.missing.join(', ') + ')' : '')
+      );
+    }
     ov.querySelector('.src-ex').textContent = (facts.join('\n') + '\n\n' + (src.excerpt || 'No excerpt available.')).trim();
-    ov.querySelector('.src-open').href = safeUrl(src.url);
+    ov.querySelector('.src-open').href = safeUrl(p && p.doiUrl ? p.doiUrl : src.url);
     ov.hidden = false;
   }
   body.addEventListener('click', function(e){
@@ -2895,9 +2910,9 @@
 
   const EV_STATUS = {
     verified: ['ev-verified', 'Verified'],
-    partially_verified: ['ev-partial', 'Partly verified'],
-    disputed: ['ev-disputed', 'Disputed'],
-    unsupported: ['ev-unsupported', 'Unsupported']
+    partially_verified: ['ev-partial', 'Partially verified'],
+    disputed: ['ev-disputed', 'Contradicted'],
+    unsupported: ['ev-unsupported', 'Unverified']
   };
   const EV_STAGE_ICON = { done: '✓', failed: '!', skipped: '–', pending: '·' };
   function evidenceHtml(ev){
@@ -2908,9 +2923,10 @@
     const grid = '<div class="ev-grid">' +
       metric(m.sourcesSearched, 'Sources searched') + metric(m.sourcesOpened, 'Sources opened') +
       metric(m.primarySources, 'Primary sources') + metric(m.claimsChecked, 'Claims checked') +
-      metric(m.verified, 'Verified') + metric(m.partiallyVerified, 'Partly verified') +
-      metric(m.disputed, 'Disputed') + metric(m.unsupported, 'Unsupported') +
-      metric(secs + 's', 'Completion time') + '</div>';
+      metric(m.verified, 'Verified') + metric(m.partiallyVerified, 'Partially verified') +
+      metric(m.disputed, 'Contradicted') + metric(m.unsupported, 'Unverified') +
+      metric(secs + 's', 'Completion time') + '</div>' +
+      (m.latestSourceUpdate ? '<div class="ev-small">Latest source update: ' + attrEsc(m.latestSourceUpdate) + '</div>' : '');
     const stages = '<div class="ev-small">' + (ev.stages || []).map((s) =>
       EV_STAGE_ICON[s.status] + ' ' + attrEsc(s.name)).join(' · ') + '</div>';
     const claims = (ev.claims || []).length ? '<div class="ev-sec">Claim checks</div>' + ev.claims.map((c) => {
@@ -3114,6 +3130,25 @@
   }
 
   // Earlier turns of this chat (text only), so follow-up questions keep their context
+  // ---- Study Mode session: one ID per chat, stored with the chat so it survives refresh ----
+  function newSessionId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+  function ccStudySession(create){
+    try{
+      var d = ccRead();
+      var c = d.chats.find(function(x){ return x.id === d.current; });
+      if(!c) return null;
+      if(!c.study && create){ c.study = { id: newSessionId('st') }; ccWrite(d); }
+      return c.study ? c.study.id : null;
+    }catch(e){ console.error('Study session id unavailable', e); return null; }
+  }
+  // A new session ID: the next message starts a new lesson, and the old progress is no longer used.
+  function ccRestartStudy(){
+    try{
+      var d = ccRead();
+      var c = d.chats.find(function(x){ return x.id === d.current; });
+      if(c){ c.study = { id: newSessionId('st') }; ccWrite(d); }
+    }catch(e){}
+  }
   function ccHistory(){
     try{
       var d = ccRead();
@@ -3200,6 +3235,7 @@
       payload.dateTo = document.getElementById('ccTo').value;
     }
     if(replyLang()) payload.lang = replyLang();
+    if(currentMode === 'study'){ payload.studyId = ccStudySession(true) || newSessionId('st'); payload.clientMsgId = newSessionId('m'); }
     if(image) payload.image = { mimeType: image.mimeType, data: image.data };
     if(file) payload.file = { name: file.name, text: file.text };
     const res = await fetch('/api/chat', {
@@ -3240,6 +3276,19 @@
     return mode === 'creative' && style.test(t);
   }
 
+  // Problem Solver: true only when the user asks for a diagram, illustration or image in so many words.
+  // Problem text that merely mentions a figure, or uses "imagine" or "draw" in passing, does not count.
+  function explicitDiagramRequest(raw){
+    const t = String(raw || '').toLowerCase();
+    const ask = /\b(draw|generate|create|make|give|show|sketch|illustrate|render|produce)\b|banao|dikhao/;
+    const thing = /\b(diagram|diagrams|illustration|image|picture|drawing)\b/;
+    return ask.test(t) && thing.test(t);
+  }
+  // The prompt sent to the image model for a diagram request. The card still shows the user's own words.
+  function diagramPrompt(raw){
+    return 'Clear, labelled educational diagram on a plain white background, no extra text: ' + String(raw || '').slice(0, 380);
+  }
+
   // Aspect ratio written in the message ("16:9", "banner", "reel"). Null if none.
   function aspectFromText(raw){
     const t = String(raw || '').toLowerCase();
@@ -3251,16 +3300,30 @@
   }
   const IMG_AR = { '1:1': '1 / 1', '16:9': '16 / 9', '9:16': '9 / 16', '4:3': '4 / 3', '4:5': '4 / 5' };
 
+  // A hard limit on the browser side so a stuck image request can never hold a card forever.
+  const IMAGE_CLIENT_TIMEOUT_MS = 58000;
   async function generateImage(prompt, aspect, resolution){
-    const res = await fetch('/api/generate-image', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt, aspect, resolution, user: { email: currentUserEmail() } })
-    });
-    const data = await res.json().catch(()=>null);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), IMAGE_CLIENT_TIMEOUT_MS);
+    let res, data;
+    try {
+      res = await fetch('/api/generate-image', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ prompt, aspect, resolution, user: { email: currentUserEmail() } }),
+        signal: ctrl.signal
+      });
+      data = await res.json().catch(()=>null);
+    } catch(e){
+      if(e && e.name === 'AbortError'){ const t = new Error('Image generation timed out. Your written answer is not affected.'); t.timeout = true; throw t; }
+      throw e;
+    } finally { clearTimeout(timer); }
     if(!res.ok){
-      const err = new Error(data && data.error ? data.error : (res.status === 504 ? 'Image generation timed out. Please try again.' : 'Image generation failed (HTTP ' + res.status + ')'));
+      // A reply without a JSON body is a server-side failure: say so, with the status, instead of a bare message.
+      const detail = data && data.error ? data.error : (res.status === 504 ? 'Image generation timed out. Please try again.' : 'The image service returned HTTP ' + res.status + ' without details. Please try again.');
+      const err = new Error(detail);
       err.upgrade = !!(data && data.upgrade);
+      err.status = res.status;
       throw err;
     }
     if(!data || typeof data.image !== 'string' || data.image.indexOf('data:image/') !== 0){
@@ -3365,7 +3428,7 @@
     if (!m.upgrade){
       const retry = document.createElement('button');
       retry.type = 'button'; retry.className = 'img-retry'; retry.textContent = 'Retry';
-      retry.addEventListener('click', () => runImage(m.prompt, { aspect: m.aspect, resolution: m.resolution, design: m.design, msg: msgEl }));
+      retry.addEventListener('click', () => runImage(m.prompt, { aspect: m.aspect, resolution: m.resolution, design: m.design, msg: msgEl, optional: m.optional, genPrompt: m.genPrompt }));
       actions.prepend(retry);
     }
     card.appendChild(actions);
@@ -3396,9 +3459,9 @@
     // Explicit choice wins; otherwise a ratio written in the message; otherwise Auto.
     const aspect = opts.aspect || (picked !== 'auto' ? picked : (aspectFromText(prompt) || 'auto'));
     const msgEl = opts.msg || makeImgMsg();
-    const m = { prompt: prompt, aspect: aspect, resolution: resolution, status: 'pending', design: opts.design || null };
+    const m = { prompt: prompt, genPrompt: opts.genPrompt || null, aspect: aspect, resolution: resolution, status: 'pending', design: opts.design || null, optional: !!opts.optional };
     renderImgCard(msgEl, m);
-    generateImage(prompt, aspect, resolution).then(data=>{
+    generateImage(opts.genPrompt || prompt, aspect, resolution).then(data=>{
       m.status = 'done';
       m.dataUrl = data.image;
       m.width = data.width;
@@ -3426,7 +3489,10 @@
     }).catch(err=>{
       m.status = 'error';
       m.upgrade = !!(err && err.upgrade);
-      m.error = isConnectionError(err) ? CONNECTION_MSG : ((err && err.message) || 'Unknown error');
+      m.detail = isConnectionError(err) ? CONNECTION_MSG : ((err && err.message) || 'Unknown error');
+      // An optional diagram never fails the answer: a small note, and Retry redoes only the image.
+      m.error = m.optional ? 'Diagram unavailable. Your written solution is still ready.' : m.detail;
+      console.warn('[image] generation failed:', m.detail, err && err.status ? 'HTTP ' + err.status : '');
       renderImgCard(msgEl, m);
     }).finally(()=>{ refreshCredits(); });
   }
@@ -3469,6 +3535,7 @@
   }
 
   function handleSend(text){
+    if(activeRequest) return;   // one request at a time: a second send is ignored
     const hasImage = !!pendingImage;
     const hasFile = !!pendingFile;
     if((!text || !text.trim()) && !hasImage && !hasFile) return;
@@ -3490,7 +3557,12 @@
     const creativeText = currentMode === 'creative' && creativeTool === 'text';
     // Creative Studio > Image generation: every message is an image request.
     // Other modes: only clear image requests, with default settings (Auto / Standard).
-    const wantsImage = canImage && !creativeText && (imageSettingsVisible() || detectImageIntent(trimmed, currentMode));
+    // Problem Solver never routes a message to the image API: its text answer is always produced (see below).
+    const wantsImage = canImage && !creativeText && currentMode !== 'solver' && (imageSettingsVisible() || detectImageIntent(trimmed, currentMode));
+    // Problem Solver: a diagram is made only on an explicit request, and runs alongside the text answer, never instead of it.
+    if(currentMode === 'solver' && canImage && explicitDiagramRequest(trimmed)){
+      runImage(trimmed, { optional: true, settings: false, genPrompt: diagramPrompt(trimmed) });
+    }
     if(currentMode === 'creative' && canImage && !creativeText && !wantsImage){
       const d = designRequest(trimmed);
       if(d){ addDesignLink(d); return; }
@@ -3749,8 +3821,15 @@
     const filtersEl = document.getElementById('ccFilters');
     if(filtersEl) filtersEl.hidden = !(m === 'web' || m === 'deep' || m === 'academic');
     updateImageSettings();
+    const srBtn = document.getElementById('studyRestart');
+    if(srBtn) srBtn.hidden = m !== 'study';
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
+  document.getElementById('studyRestart').addEventListener('click', function(){
+    ccRestartStudy();
+    addAiMsg('Study session restarted. Which chapter or topic would you like to study?');
+    input.focus();
+  });
   // ---- Image settings: shown only for Creative Studio > Image generation ----
   let creativeTool = 'image';
   const ASPECT_TXT = { auto: 'Auto', '1:1': 'Square (1:1)', '16:9': 'Landscape (16:9)', '9:16': 'Portrait (9:16)', '4:3': 'Standard (4:3)', '3:4': 'Portrait Photo (3:4)', '4:5': 'Portrait (4:5)' };
