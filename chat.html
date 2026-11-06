@@ -4085,7 +4085,7 @@
     var DENIED = 'Microphone access was blocked. Allow it in your browser settings and try again.';
 
     var recording = false, cancelled = false, baseText = '', flashing = false;
-    var rec = null, recorder = null, stream = null, chunks = [], flashTimer = null;
+    var rec = null, recorder = null, stream = null, chunks = [], flashTimer = null, fellBack = false;
 
     try{ var savedLang = localStorage.getItem('aviqo_voice_lang'); if(savedLang && langSel.querySelector('option[value="' + savedLang + '"]')) langSel.value = savedLang; }catch(e){}
     langSel.addEventListener('change', function(){ try{ localStorage.setItem('aviqo_voice_lang', langSel.value); }catch(e){} });
@@ -4129,7 +4129,8 @@
     }
 
     function startSpeechRecognition(){
-      rec = new SR();
+      var thisRec = new SR();
+      rec = thisRec;
       rec.lang = langSel.value;
       rec.continuous = true;
       rec.interimResults = true;
@@ -4146,6 +4147,12 @@
       rec.onerror = function(e){
         var code = e && e.error;
         if(code === 'aborted' || code === 'no-speech') return;
+        // Chrome's speech service can be unreachable (network / blocked). Use the backup recorder instead.
+        if((code === 'network' || code === 'service-not-allowed') && canRecord && !cancelled){
+          fellBack = true;
+          say('Switching to backup voice input');
+          return;
+        }
         setRecordingUI(false);
         if(cancelled) return;
         var msg = {
@@ -4157,11 +4164,17 @@
         }[code] || 'Voice input failed. Please try again.';
         flash(msg, 6000);
       };
-      rec.onend = function(){ rec = null; setRecordingUI(false); };
+      rec.onend = function(){
+        if(rec !== thisRec) return;               // a newer session already owns the UI
+        rec = null;
+        if(fellBack){ fellBack = false; startRecorder(); return; }
+        setRecordingUI(false);
+      };
       rec.start();
     }
 
     function startRecorder(){
+      if(!canRecord){ setRecordingUI(false); flash('Voice input failed. Please try again.', 6000); return; }
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s){
         stream = s;
         chunks = [];
