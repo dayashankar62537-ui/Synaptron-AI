@@ -1267,6 +1267,18 @@
   .cc .cc-recent-del:hover{background:var(--border); color:var(--text);}
   @media (hover:none){ .cc .cc-recent-del{opacity:1;} }
   .cc .cc-recents-empty{padding:6px 10px; font-size:13px; color:var(--muted-2); line-height:1.5;}
+  .cc .cc-history-search{box-sizing:border-box; width:calc(100% - 4px); margin:0 2px 8px; padding:7px 10px; border:1px solid var(--border); border-radius:9px; background:transparent; color:var(--text); font:13px 'Inter',sans-serif;}
+  .cc .cc-history-search:focus{outline:2px solid #6366f1; outline-offset:1px;}
+  .cc .cc-arch-toggle{display:block; width:100%; margin-top:6px; padding:6px 10px; border:0; background:none; text-align:left; color:var(--muted); font:12px 'Inter',sans-serif; cursor:pointer; border-radius:8px;}
+  .cc .cc-arch-toggle:hover{background:var(--surface-2); color:var(--text);}
+  .cc .cc-arch-toggle[hidden]{display:none;}
+  .cc .cc-recent-act{flex:none; width:24px; height:26px; margin-right:2px; border:0; border-radius:6px; background:none; color:var(--muted); cursor:pointer; font-size:13px; line-height:1; opacity:0;}
+  .cc .cc-recent:hover .cc-recent-act, .cc .cc-recent.on .cc-recent-act{opacity:1;}
+  .cc .cc-recent.pinned .cc-recent-pin{opacity:1; color:var(--text);}
+  .cc .cc-recent-act:hover{background:var(--border); color:var(--text);}
+  .cc .cc-recent-act:focus-visible, .cc .cc-recent-open:focus-visible{outline:2px solid #6366f1; outline-offset:-2px;}
+  @media (hover:none){ .cc .cc-recent-act{opacity:1;} }
+  .cc .cc-recent-rename{flex:1; min-width:0; margin:4px 6px; padding:5px 8px; border:1px solid var(--border); border-radius:7px; background:transparent; color:var(--text); font:14px 'Inter',sans-serif;}
   .cc .cc-side-foot{margin-top:auto; display:flex; flex-direction:column; gap:10px; padding-top:12px; border-top:1px solid var(--border);}
   .cc .cc-cta{
     width:100%; padding:10px 14px; border:0; border-radius:10px; cursor:pointer;
@@ -1366,6 +1378,61 @@
   }
   .cc .chat-send:hover{opacity:.85;}
   .cc .chat-send svg{width:17px; height:17px; stroke:var(--on-brand); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  /* Voice input */
+  .chat-voice{display:flex; align-items:center; gap:6px; flex:none;}
+  .chat-voice .visually-hidden{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+  .chat-voice .mic-lang{height:36px; max-width:92px; padding:0 6px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--text); font:12px 'Inter',sans-serif; cursor:pointer;}
+  .chat-mic{position:relative; width:36px; height:36px; border-radius:50%; border:0; background:transparent; color:var(--text); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; flex:none;}
+  .chat-mic:hover{background:var(--surface-2);}
+  .chat-mic:disabled{opacity:.35; cursor:not-allowed;}
+  .chat-mic svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .chat-mic:focus-visible, .chat-mic-cancel:focus-visible, .mic-lang:focus-visible{outline:2px solid #6366f1; outline-offset:2px;}
+  .chat-mic.is-recording{background:#e5484d; color:#fff;}
+  .chat-mic.is-recording svg{fill:currentColor; stroke:none;}
+  .chat-mic.is-recording::after{content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid #e5484d; opacity:0; animation:micPulse 1.4s ease-out infinite; pointer-events:none;}
+  @keyframes micPulse{0%{transform:scale(.9); opacity:.7;} 100%{transform:scale(1.35); opacity:0;}}
+  .chat-mic-cancel{height:30px; padding:0 10px; border:1px solid var(--border); border-radius:999px; background:var(--surface-2); color:var(--text); font:12px 'Inter',sans-serif; cursor:pointer;}
+  .chat-mic-cancel:hover{background:var(--border);}
+  .chat-mic-cancel[hidden]{display:none;}
+  @media (prefers-reduced-motion: reduce){ .chat-mic.is-recording::after{animation:none; opacity:.5;} }
+  @media (max-width:520px){ .chat-voice .mic-lang{max-width:74px;} }
+  /* Live voice */
+  .chat-live{width:36px; height:36px; border-radius:50%; border:0; background:var(--grad-brand); color:var(--on-brand); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; flex:none;}
+  .chat-live:hover{opacity:.85;}
+  .chat-live svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round;}
+  .chat-live:focus-visible, .live-btn:focus-visible, .live-chip:focus-visible, .live-lang:focus-visible{outline:2px solid #6366f1; outline-offset:2px;}
+  .live-overlay{position:fixed; inset:0; z-index:2000; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:max(16px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom)); background:radial-gradient(ellipse at 50% 35%, #15182a 0%, #05070d 70%); color:#e8ecf5; font-family:'Inter',sans-serif; box-sizing:border-box;}
+  .live-overlay[hidden]{display:none;}
+  .live-top{width:100%; max-width:720px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .live-brand{font-weight:600; letter-spacing:.02em; opacity:.9;}
+  .live-top-right{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .live-lang, .live-chip{height:32px; padding:0 10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:inherit; font:13px 'Inter',sans-serif; cursor:pointer;}
+  .live-lang option{color:#111;}
+  .live-center{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;}
+  .live-orb{--level:0.05; position:relative; width:clamp(160px, 42vw, 260px); height:clamp(160px, 42vw, 260px); border-radius:50%; display:flex; align-items:center; justify-content:center; transform:scale(calc(1 + var(--level) * 0.35)); transition:transform .08s linear;}
+  .live-orb::before{content:''; position:absolute; inset:-14%; border-radius:50%; background:radial-gradient(circle, rgba(99,102,241,.45), rgba(236,72,153,.18) 55%, transparent 70%); filter:blur(6px);}
+  .live-orb-core{position:relative; width:72%; height:72%; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffffff 0%, #a5b4fc 22%, #6366f1 60%, #ec4899 100%); box-shadow:0 0 60px rgba(99,102,241,.55), inset 0 0 30px rgba(255,255,255,.25);}
+  .live-orb[data-state="listening"] .live-orb-core{animation:orbBreathe 2.6s ease-in-out infinite;}
+  .live-orb[data-state="thinking"] .live-orb-core{animation:orbSpin 1.6s linear infinite; background:conic-gradient(from 0deg, #6366f1, #ec4899, #f59e0b, #6366f1);}
+  .live-orb[data-state="speaking"] .live-orb-core{animation:orbGlow 0.9s ease-in-out infinite alternate;}
+  .live-orb[data-state="muted"] .live-orb-core, .live-orb[data-state="idle"] .live-orb-core, .live-orb[data-state="connecting"] .live-orb-core{background:radial-gradient(circle at 35% 30%, #cbd5e1, #475569 70%); box-shadow:none; animation:none;}
+  @keyframes orbBreathe{0%,100%{transform:scale(1);} 50%{transform:scale(1.06);}}
+  @keyframes orbSpin{to{transform:rotate(360deg);}}
+  @keyframes orbGlow{from{filter:brightness(1);} to{filter:brightness(1.35);}}
+  .live-state{font-size:15px; letter-spacing:.04em; opacity:.85;}
+  .live-captions{width:100%; max-width:720px; max-height:28vh; overflow-y:auto; text-align:center; display:flex; flex-direction:column; gap:10px;}
+  .live-captions[hidden]{display:none;}
+  .live-cap-user{margin:0; font-size:14px; opacity:.65; min-height:1.4em;}
+  .live-cap-ai{margin:0; font-size:17px; line-height:1.5; min-height:1.5em;}
+  .live-controls{display:flex; gap:14px;}
+  .live-btn{min-width:110px; height:50px; padding:0 22px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:inherit; font:600 15px 'Inter',sans-serif; cursor:pointer; transition:background .2s;}
+  .live-btn:hover{background:rgba(255,255,255,.16);}
+  .live-btn[aria-pressed="true"]{background:#e5e7eb; color:#111;}
+  .live-end{background:#e5484d; border-color:#e5484d; color:#fff;}
+  .live-end:hover{background:#cf3a3f;}
+  .live-note{margin:0; font-size:12px; opacity:.5; text-align:center; max-width:460px;}
+  @media (prefers-reduced-motion: reduce){ .live-orb .live-orb-core{animation:none !important;} }
+  @media (max-width:520px){ .live-btn{min-width:96px;} .live-note{font-size:11px;} }
 
   /* ---------- action bar under each assistant answer ---------- */
   .cc .cc-actions{display:flex; align-items:center; gap:2px; margin-top:8px; flex-wrap:wrap;}
@@ -1670,6 +1737,34 @@
 
 <div class="cc-app" id="ccApp">
 
+  <!-- LIVE VOICE: full-screen conversation overlay -->
+  <div class="live-overlay" id="liveOverlay" role="dialog" aria-modal="true" aria-label="Live voice conversation" hidden>
+    <div class="live-top">
+      <span class="live-brand">Aviqo Live</span>
+      <div class="live-top-right">
+        <select class="live-lang" id="liveLang" aria-label="Voice language">
+          <option value="en-IN">English</option>
+          <option value="hi-IN">हिन्दी</option>
+          <option value="pa-IN">ਪੰਜਾਬੀ</option>
+        </select>
+        <button class="live-chip" id="liveCaptToggle" type="button" aria-pressed="true">Captions on</button>
+      </div>
+    </div>
+    <div class="live-center">
+      <div class="live-orb" id="liveOrb" data-state="idle" aria-hidden="true"><span class="live-orb-core"></span></div>
+      <div class="live-state" id="liveState" role="status" aria-live="polite">Ready</div>
+    </div>
+    <div class="live-captions" id="liveCaptions">
+      <p class="live-cap-user" id="liveCapUser"></p>
+      <p class="live-cap-ai" id="liveCapAi"></p>
+    </div>
+    <div class="live-controls">
+      <button class="live-btn" id="liveMute" type="button" aria-pressed="false" aria-label="Mute microphone">Mute</button>
+      <button class="live-btn live-end" id="liveEnd" type="button" aria-label="End conversation">End</button>
+    </div>
+    <p class="live-note">Use headphones for the best results. Voice uses your browser's speech recognition and voices.</p>
+  </div>
+
   <!-- LEFT SIDEBAR -->
   <aside class="cc-side" id="ccSide" aria-label="Sidebar">
     <div class="cc-brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAWfmNhQlgAABZ+anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAFlhqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjc4ZWE5ZTQxLWIwZWEtNDA5ZS1iZDI4LWFkZmU3Y2MxZmFkMQAAAAOTanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAAuGp1bWIAAABEanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5pbmdyZWRpZW50LnYzAAAAABhjMnNov3l6rjGQ73V2ZHMYh/qpDAAAAGxjYm9yo2lkYzpmb3JtYXRpaW1hZ2UvcG5namluc3RhbmNlSUR4LHhtcDppaWQ6MTFlZWU2N2ItNWM5Yy00YzlhLWE4OTQtNmM0MGE2MGM3ODM3bHJlbGF0aW9uc2hpcGhwYXJlbnRPZgAAAeJqdW1iAAAAQWp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuYWN0aW9ucy52MgAAAAAYYzJzaNcuyrURAi1LENUNNnILh24AAAGZY2JvcqJnYWN0aW9uc4KiZmFjdGlvbmtjMnBhLm9wZW5lZGpwYXJhbWV0ZXJzoWtpbmdyZWRpZW50c4GiY3VybHgtc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5pbmdyZWRpZW50LnYzZGhhc2hYIJeDP8L8mAc8spe1JelcpVK5lcruFyj1cLa428QZhUTmpGZhY3Rpb254HWNvbS5hbnRocm9waWMuY2xhdWRlLnByb3ZpZGVkanBhcmFtZXRlcnOheB9jb20uYW50aHJvcGljLm9yaWdpbi1jb25maWRlbmNlZ3Vua25vd25rZGVzY3JpcHRpb254ZkNsYXVkZSBwcm92aWRlZCB0aGlzIGZpbGUgYXQgdGhlIHJlcXVlc3Qgb2YgYSB1c2VyIGFuZCBtYXkgaGF2ZSBjcmVhdGVkIG9yIG1vZGlmaWVkIHRoZSBmaWxlIGNvbnRlbnRzLm1zb2Z0d2FyZUFnZW50oWRuYW1lZkNsYXVkZXJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAyGp1bWIAAABAanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5oYXNoLmRhdGEAAAAAGGMyc2h2q78e7FfEmolKq/JgiyPFAAAAgGNib3KlY2FsZ2ZzaGEyNTZjcGFkTQAAAAAAAAAAAAAAAABkaGFzaFgg9TvcAq47RlSgLQ7eL4VcOH1AaZGOEdVswxcx4tbmwVtkbmFtZW5qdW1iZiBtYW5pZmVzdGpleGNsdXNpb25zgaJlc3RhcnQYIWZsZW5ndGgZFooAAAI+anVtYgAAACdqdW1kYzJjbAARABCAAACqADibcQNjMnBhLmNsYWltLnYyAAAAAg9jYm9ypWNhbGdmc2hhMjU2aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYTo3OGVhOWU0MS1iMGVhLTQwOWUtYmQyOC1hZGZlN2NjMWZhZDEvYzJwYS5zaWduYXR1cmVqaW5zdGFuY2VJRHgseG1wOmlpZDoxOWEwOWQyZi0xOWNiLTRmZjYtYTY2Ni1mODVkYmNiMGFmODhyY3JlYXRlZF9hc3NlcnRpb25zg6JjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggl4M/wvyYBzyyl7Ul6VylUrmVyu4XKPVwtrjbxBmFROaiY3VybHgqc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5hY3Rpb25zLnYyZGhhc2hYICuOmdmlcuHw/DGkftfaFkvn+/7RFb+I3ywIDdylkk3fomN1cmx4KXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaGFzaC5kYXRhZGhhc2hYIAUDqleuQOitYmomGYSdBfK+ijSlwsAbfBvJumYPFsOjdGNsYWltX2dlbmVyYXRvcl9pbmZvo2RuYW1lb0FudGhyb3BpYyBGaWxlc2d2ZXJzaW9uZTEuMC4wa3NwZWNWZXJzaW9uZTIuNC4wAAAQOGp1bWIAAAAoanVtZGMyY3MAEQAQgAAAqgA4m3EDYzJwYS5zaWduYXR1cmUAAAAQCGNib3LShFkCEqIBJhghWQIKMIICBjCCAY2gAwIBAgIUQOWgCu7COdC+uIP6BkIFPWdVEwAwCgYIKoZIzj0EAwMwSTEXMBUGA1UEChMOQW50aHJvcGljLCBQQkMxLjAsBgNVBAMTJUFudGhyb3BpYyBDb250ZW50IENyZWRlbnRpYWxzIFJvb3QgQ0EwHhcNMjYwODA3MTg0MzU2WhcNMjgwODA2MTk0MzU2WjBEMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEpMCcGA1UEAxMgQW50aHJvcGljIENsYXVkZSBDb250ZW50IFNpZ25pbmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASYegpry1AYBRTVNL1CpTlbROnY3dey+UrsF9C3phYrATN3ZHf93Mo8RQN0KOUuOn19P4oWNFWe5n2/She9N7eTo1gwVjAOBgNVHQ8BAf8EBAMCB4AwFQYDVR0lBA4wDAYKKwYBBAGD6F4CATAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFM5R4gSBTmRbI/jjxM+aPpzB11zCMAoGCCqGSM49BAMDA2cAMGQCMDFzHRSeAXrSy1WOzkbhPZ6Km2wGTmZ/2gK18k8BQGXyqz88Rdrz6CTX9flAnYNVxgIwcF9c3fVhqmJKpi+UhasNUMko69cyX6STPfta3Q8EjyzDjzoyrol46FP6VFHhvUcJoWNwYWRZDZ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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" alt="Aviqo logo"> Aviqo<span>AI</span></div>
@@ -1692,7 +1787,9 @@
     </a>
 
     <div class="cc-section">Recents</div>
+    <input class="cc-history-search" id="ccHistorySearch" type="search" placeholder="Search chats" aria-label="Search chats" autocomplete="off">
     <div class="cc-recents" id="ccRecents"></div>
+    <button class="cc-arch-toggle" id="ccArchToggle" type="button" hidden>Archived</button>
 
     <div class="cc-side-foot">
       <a href="#" id="navGetAccess" hidden></a>
@@ -1891,6 +1988,21 @@
             </div>
           </div>
           <textarea id="chatInput" rows="1" placeholder="How can Aviqo help you today?" autocomplete="off" aria-label="Message Aviqo" maxlength="4000"></textarea>
+          <div class="chat-voice">
+            <button class="chat-live" id="chatLive" type="button" aria-label="Start live voice conversation" title="Live voice conversation">
+              <svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/></svg>
+            </button>
+            <select class="mic-lang" id="micLang" aria-label="Voice language" title="Voice language">
+              <option value="en-IN">English</option>
+              <option value="hi-IN">हिन्दी</option>
+              <option value="pa-IN">ਪੰਜਾਬੀ</option>
+            </select>
+            <button class="chat-mic" id="chatMic" type="button" aria-label="Start voice input" title="Voice input">
+              <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+            </button>
+            <button class="chat-mic-cancel" id="chatMicCancel" type="button" hidden>Cancel</button>
+            <span class="visually-hidden" id="micLive" role="status" aria-live="polite"></span>
+          </div>
           <button class="chat-send" id="chatSend" type="button" aria-label="Send">
             <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
@@ -3646,26 +3758,106 @@
     } finally { ccSilent = false; }
     scrollBottom();
   }
+  // Chat list: search by title or message text, pin, rename, archive, delete.
+  var ccSearchQ = '';
+  var ccShowArchived = false;
+  function ccSetFlag(id, key, on){
+    var d = ccRead();
+    var c = d.chats.find(function(x){ return x.id === id; });
+    if(!c) return;
+    if(on) c[key] = true; else delete c[key];
+    ccWrite(d);
+    ccRenderRecents();
+  }
+  function ccStartRename(row, c){
+    var old = row.querySelector('.cc-recent-open');
+    if(!old) return;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cc-recent-rename';
+    input.value = c.title || 'New chat';
+    input.maxLength = 60;
+    input.setAttribute('aria-label', 'Chat title');
+    var done = false;
+    function finish(save){
+      if(done) return;
+      done = true;
+      if(save){
+        var v = input.value.trim();
+        if(v){
+          var d = ccRead();
+          var x = d.chats.find(function(y){ return y.id === c.id; });
+          if(x){ x.title = v.slice(0, 60); ccWrite(d); }
+        }
+      }
+      ccRenderRecents();
+    }
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+      else if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', function(){ finish(true); });
+    row.replaceChild(input, old);
+    input.focus();
+    input.select();
+  }
   function ccRenderRecents(){
     if(!ccRecents) return;
     var d = ccRead();
+    var q = ccSearchQ.trim().toLowerCase();
     ccRecents.textContent = '';
-    if(!d.chats.length){
+    var archivedCount = d.chats.filter(function(c){ return c.archived; }).length;
+    var toggle = document.getElementById('ccArchToggle');
+    if(toggle){
+      toggle.textContent = (ccShowArchived ? 'Hide archived' : 'Archived') + (archivedCount ? ' (' + archivedCount + ')' : '');
+      toggle.hidden = !archivedCount && !ccShowArchived;
+    }
+    var list = d.chats.filter(function(c){
+      if(!!c.archived !== ccShowArchived) return false;
+      if(!q) return true;
+      if((c.title || '').toLowerCase().indexOf(q) !== -1) return true;
+      return (c.msgs || []).some(function(m){ return String(m.t || '').toLowerCase().indexOf(q) !== -1; });
+    });
+    if(!list.length){
       var empty = document.createElement('div');
       empty.className = 'cc-recents-empty';
-      empty.textContent = 'No chats yet. Send a message and it will show up here.';
+      if(q) empty.textContent = 'No chats match "' + ccSearchQ.trim() + '".';
+      else if(ccShowArchived) empty.textContent = 'No archived chats.';
+      else empty.textContent = 'No chats yet. Send a message and it will show up here.';
       ccRecents.appendChild(empty);
       return;
     }
-    d.chats.forEach(function(c){
+    list.sort(function(a, b){ return (!!b.pinned - !!a.pinned) || (b.ts - a.ts); });
+    list.forEach(function(c){
       var row = document.createElement('div');
-      row.className = 'cc-recent' + (c.id === d.current ? ' on' : '');
+      row.className = 'cc-recent' + (c.id === d.current ? ' on' : '') + (c.pinned ? ' pinned' : '');
       var open = document.createElement('button');
       open.type = 'button';
       open.className = 'cc-recent-open';
       open.textContent = c.title || 'New chat';
       open.title = c.title || 'New chat';
       open.addEventListener('click', function(){ ccOpen(c.id); });
+      var pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'cc-recent-act cc-recent-pin';
+      pin.setAttribute('aria-label', c.pinned ? 'Unpin chat' : 'Pin chat');
+      pin.title = c.pinned ? 'Unpin' : 'Pin to top';
+      pin.textContent = c.pinned ? '★' : '☆';
+      pin.addEventListener('click', function(e){ e.stopPropagation(); ccSetFlag(c.id, 'pinned', !c.pinned); });
+      var ren = document.createElement('button');
+      ren.type = 'button';
+      ren.className = 'cc-recent-act';
+      ren.setAttribute('aria-label', 'Rename chat');
+      ren.title = 'Rename';
+      ren.textContent = '✎';
+      ren.addEventListener('click', function(e){ e.stopPropagation(); ccStartRename(row, c); });
+      var arch = document.createElement('button');
+      arch.type = 'button';
+      arch.className = 'cc-recent-act';
+      arch.setAttribute('aria-label', c.archived ? 'Unarchive chat' : 'Archive chat');
+      arch.title = c.archived ? 'Unarchive' : 'Archive';
+      arch.textContent = c.archived ? '↩' : '⊟';
+      arch.addEventListener('click', function(e){ e.stopPropagation(); ccSetFlag(c.id, 'archived', !c.archived); });
       var del = document.createElement('button');
       del.type = 'button';
       del.className = 'cc-recent-del';
@@ -3673,10 +3865,19 @@
       del.textContent = '✕';
       del.addEventListener('click', function(e){ e.stopPropagation(); ccDelete(c.id); });
       row.appendChild(open);
+      row.appendChild(pin);
+      row.appendChild(ren);
+      row.appendChild(arch);
       row.appendChild(del);
       ccRecents.appendChild(row);
     });
   }
+  (function ccWireHistoryControls(){
+    var search = document.getElementById('ccHistorySearch');
+    if(search) search.addEventListener('input', function(e){ ccSearchQ = e.target.value; ccRenderRecents(); });
+    var toggle = document.getElementById('ccArchToggle');
+    if(toggle) toggle.addEventListener('click', function(){ ccShowArchived = !ccShowArchived; ccRenderRecents(); });
+  })();
   function ccOpen(id){
     var d = ccRead();
     var c = d.chats.find(function(x){ return x.id === id; });
@@ -3866,6 +4067,509 @@
   (function(){ var saved = 'quick'; try{ saved = localStorage.getItem('aviqo_mode') || 'quick'; }catch(e){} setMode(saved); })();
 
   sendBtn.addEventListener('click', ()=>{ if(activeRequest){ stopRequest(); return; } handleSend(input.value); });
+
+  // ---- Voice input: Web Speech API first, server transcription (Groq Whisper) as fallback ----
+  // Transcribed text goes into the message box only. It is never sent automatically.
+  (function ccVoiceInput(){
+    var mic = document.getElementById('chatMic');
+    var cancelBtn = document.getElementById('chatMicCancel');
+    var langSel = document.getElementById('micLang');
+    var live = document.getElementById('micLive');
+    if(!mic || !cancelBtn || !langSel) return;
+
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    var PLACEHOLDER = input.placeholder;
+    var MIC_ICON = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
+    var STOP_ICON = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+    var DENIED = 'Microphone access was blocked. Allow it in your browser settings and try again.';
+
+    var recording = false, cancelled = false, baseText = '', flashing = false;
+    var rec = null, recorder = null, stream = null, chunks = [], flashTimer = null;
+
+    try{ var savedLang = localStorage.getItem('aviqo_voice_lang'); if(savedLang && langSel.querySelector('option[value="' + savedLang + '"]')) langSel.value = savedLang; }catch(e){}
+    langSel.addEventListener('change', function(){ try{ localStorage.setItem('aviqo_voice_lang', langSel.value); }catch(e){} });
+
+    if(!SR && !canRecord){
+      mic.disabled = true;
+      mic.title = 'Voice input is not supported in this browser';
+      mic.setAttribute('aria-label', 'Voice input is not supported in this browser');
+    }
+
+    function say(msg){ live.textContent = msg; }
+    // Shows a short message in the message box, then restores the normal placeholder.
+    function flash(msg, ms){
+      say(msg);
+      input.placeholder = msg;
+      flashing = true;
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(function(){
+        flashing = false;
+        if(!recording) input.placeholder = PLACEHOLDER;
+      }, ms || 5000);
+    }
+    function setRecordingUI(on){
+      recording = on;
+      mic.classList.toggle('is-recording', on);
+      mic.innerHTML = on ? STOP_ICON : MIC_ICON;
+      mic.setAttribute('aria-label', on ? 'Stop voice input' : 'Start voice input');
+      mic.title = on ? 'Stop' : 'Voice input';
+      cancelBtn.hidden = !on;
+      if(on){ input.placeholder = 'Listening… speak now'; say('Listening'); }
+      else if(!flashing){ input.placeholder = PLACEHOLDER; }
+    }
+    function applyText(text){
+      var t = String(text || '');
+      var prefix = baseText ? baseText.replace(/\s+$/, '') + ' ' : '';
+      input.value = (prefix + t).slice(0, 4000);
+      input.dispatchEvent(new Event('input'));
+    }
+    function releaseStream(){
+      if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+    }
+
+    function startSpeechRecognition(){
+      rec = new SR();
+      rec.lang = langSel.value;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      var finalText = '';
+      rec.onresult = function(e){
+        var interim = '';
+        for(var i = e.resultIndex; i < e.results.length; i++){
+          var part = e.results[i][0].transcript;
+          if(e.results[i].isFinal) finalText += part; else interim += part;
+        }
+        if(!cancelled) applyText((finalText + interim).trim());
+      };
+      rec.onerror = function(e){
+        var code = e && e.error;
+        if(code === 'aborted' || code === 'no-speech') return;
+        setRecordingUI(false);
+        if(cancelled) return;
+        var msg = {
+          'not-allowed': DENIED,
+          'service-not-allowed': DENIED,
+          'audio-capture': 'No microphone was found.',
+          'network': 'Voice input needs an internet connection.',
+          'language-not-supported': 'This language is not supported by your browser voice input.'
+        }[code] || 'Voice input failed. Please try again.';
+        flash(msg, 6000);
+      };
+      rec.onend = function(){ rec = null; setRecordingUI(false); };
+      rec.start();
+    }
+
+    function startRecorder(){
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s){
+        stream = s;
+        chunks = [];
+        var mime = '';
+        if(window.MediaRecorder.isTypeSupported){
+          if(MediaRecorder.isTypeSupported('audio/webm')) mime = 'audio/webm';
+          else if(MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
+        }
+        recorder = mime ? new MediaRecorder(s, { mimeType: mime }) : new MediaRecorder(s);
+        recorder.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+        recorder.onstop = function(){
+          releaseStream();
+          var type = (recorder && recorder.mimeType) || 'audio/webm';
+          recorder = null;
+          setRecordingUI(false);
+          if(cancelled) return;
+          if(!chunks.length){ flash('No speech was detected.'); return; }
+          var blob = new Blob(chunks, { type: type });
+          say('Transcribing');
+          input.placeholder = 'Transcribing…';
+          fetch('/api/transcribe?lang=' + encodeURIComponent(langSel.value), {
+            method: 'POST',
+            headers: { 'Content-Type': type.split(';')[0] },
+            body: blob
+          }).then(function(r){
+            return r.json().catch(function(){ return {}; }).then(function(j){
+              if(!r.ok) throw new Error(j.error || 'Transcription failed.');
+              return j;
+            });
+          }).then(function(j){
+            if(cancelled) return;
+            if(j.text){ applyText(j.text); input.placeholder = PLACEHOLDER; say('Transcribed'); }
+            else flash('No speech was detected.');
+          }).catch(function(err){
+            flash((err && err.message) || 'Transcription failed. Please try again.', 6000);
+          });
+        };
+        recorder.start();
+        setRecordingUI(true);
+      }).catch(function(){
+        setRecordingUI(false);
+        flash(DENIED, 6000);
+      });
+    }
+
+    function stopVoice(){
+      if(rec){ try{ rec.stop(); }catch(e){ setRecordingUI(false); } return; }
+      if(recorder && recorder.state !== 'inactive'){ recorder.stop(); return; }
+      setRecordingUI(false);
+    }
+    function cancelVoice(){
+      cancelled = true;
+      if(rec){ try{ rec.abort(); }catch(e){} rec = null; }
+      if(recorder && recorder.state !== 'inactive'){ try{ recorder.stop(); }catch(e){} }
+      releaseStream();
+      input.value = baseText;
+      input.dispatchEvent(new Event('input'));
+      setRecordingUI(false);
+      say('Voice input cancelled');
+    }
+
+    mic.addEventListener('click', function(){
+      if(recording){ stopVoice(); return; }
+      cancelled = false;
+      baseText = input.value;
+      try{
+        if(SR){ setRecordingUI(true); startSpeechRecognition(); }
+        else if(canRecord){ startRecorder(); }
+      }catch(e){
+        setRecordingUI(false);
+        flash('Voice input failed to start. Please try again.', 6000);
+      }
+    });
+    cancelBtn.addEventListener('click', cancelVoice);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && recording){ e.preventDefault(); cancelVoice(); }
+    });
+    // Leaving the page releases the microphone.
+    window.addEventListener('pagehide', function(){ if(recording) cancelVoice(); });
+  })();
+
+  // ---- Live voice conversation ----
+  // Loop: listen (speech recognition) -> send the finished sentence through askAviqo -> speak the reply -> listen again.
+  // The user can interrupt while the reply is spoken. The AI's own voice coming back through the mic is ignored.
+  // Browser speech gives no audio stream to measure, so the orb uses the mic level while listening and a timed pulse while speaking.
+  (function ccLiveVoice(){
+    var btn = document.getElementById('chatLive');
+    var overlay = document.getElementById('liveOverlay');
+    if(!btn || !overlay) return;
+    var orb = document.getElementById('liveOrb');
+    var stateEl = document.getElementById('liveState');
+    var capUser = document.getElementById('liveCapUser');
+    var capAi = document.getElementById('liveCapAi');
+    var captions = document.getElementById('liveCaptions');
+    var captToggle = document.getElementById('liveCaptToggle');
+    var muteBtn = document.getElementById('liveMute');
+    var endBtn = document.getElementById('liveEnd');
+    var liveLang = document.getElementById('liveLang');
+    var micLang = document.getElementById('micLang');
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var hasTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+    var MAX_TURNS = 40, MAX_MS = 15 * 60 * 1000, SILENCE_MS = 1200, BARGE_MIN_WORDS = 2;
+    var DENIED = 'Microphone access was blocked. Allow it in your browser settings and try again.';
+    var UNSUPPORTED = 'Live voice needs Chrome, Edge or Safari with speech support. You can still use the mic button for voice typing.';
+
+    var live = { active:false, muted:false, state:'idle', turns:0, rec:null, stream:null, ctx:null, analyser:null, raf:0, pulse:0,
+                 heard:'', finals:'', silenceTimer:null, restartTimer:null, endTimer:null, queue:[], utter:null, lastAi:'', netRetries:0, pending:false };
+
+    // Language: the live picker and the composer picker stay in sync.
+    liveLang.value = micLang.value;
+    liveLang.addEventListener('change', function(){ micLang.value = liveLang.value; micLang.dispatchEvent(new Event('change')); onLangChanged(); });
+    micLang.addEventListener('change', function(){ liveLang.value = micLang.value; onLangChanged(); });
+    function onLangChanged(){
+      if(live.rec){ stopRecognition(); startRecognition(); }
+    }
+
+    // Captions preference (saved per browser)
+    var capsOn = true;
+    try{ capsOn = localStorage.getItem('aviqo_live_captions') !== 'off'; }catch(e){}
+    function applyCaptions(){
+      captions.hidden = !capsOn;
+      captToggle.textContent = capsOn ? 'Captions on' : 'Captions off';
+      captToggle.setAttribute('aria-pressed', String(capsOn));
+    }
+    applyCaptions();
+    captToggle.addEventListener('click', function(){
+      capsOn = !capsOn;
+      try{ localStorage.setItem('aviqo_live_captions', capsOn ? 'on' : 'off'); }catch(e){}
+      applyCaptions();
+    });
+
+    function setState(s, label){ live.state = s; orb.setAttribute('data-state', s); stateEl.textContent = label; }
+    function setUser(t){ capUser.textContent = t || ''; }
+    function setAi(t){ capAi.textContent = t || ''; }
+    function words(t){ return String(t || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean); }
+    function clearTimers(){
+      clearTimeout(live.silenceTimer); clearTimeout(live.restartTimer); clearTimeout(live.endTimer);
+      live.silenceTimer = live.restartTimer = live.endTimer = null;
+    }
+
+    function tick(){
+      if(!live.active) return;
+      var level = 0.05;
+      if(live.state === 'listening' && live.analyser){
+        var buf = new Uint8Array(live.analyser.fftSize);
+        live.analyser.getByteTimeDomainData(buf);
+        var sum = 0;
+        for(var i = 0; i < buf.length; i++){ var v = (buf[i] - 128) / 128; sum += v * v; }
+        level = Math.min(1, Math.sqrt(sum / buf.length) * 4);
+      } else if(live.state === 'speaking'){
+        live.pulse += 0.18;
+        level = 0.35 + 0.25 * Math.abs(Math.sin(live.pulse));
+      }
+      orb.style.setProperty('--level', level.toFixed(3));
+      live.raf = requestAnimationFrame(tick);
+    }
+
+    function startMeter(stream){
+      live.analyser = null;
+      try{
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+        live.ctx = new AC();
+        var src = live.ctx.createMediaStreamSource(stream);
+        live.analyser = live.ctx.createAnalyser();
+        live.analyser.fftSize = 512;
+        src.connect(live.analyser);
+      }catch(e){ live.analyser = null; }
+    }
+
+    function startRecognition(){
+      if(!live.active || live.muted || live.rec || !SR) return;
+      var rec = new SR();
+      live.rec = rec;
+      rec.lang = liveLang.value;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      rec.onresult = function(e){
+        var interim = '';
+        for(var i = e.resultIndex; i < e.results.length; i++){
+          var part = e.results[i][0].transcript;
+          if(e.results[i].isFinal) live.finals += part; else interim += part;
+        }
+        var heard = (live.finals + interim).trim();
+        if(!heard) return;
+        if(live.state === 'speaking'){
+          if(isEcho(heard)) return;                       // the AI's own voice coming back through the mic
+          if(words(heard).length >= BARGE_MIN_WORDS) bargeIn(heard);
+          return;
+        }
+        live.heard = heard;
+        setUser(heard);
+        if(live.state === 'listening'){
+          clearTimeout(live.silenceTimer);
+          live.silenceTimer = setTimeout(commit, SILENCE_MS);
+        }
+      };
+      rec.onerror = function(e){
+        var code = e && e.error;
+        if(code === 'aborted' || code === 'no-speech') return;
+        if(code === 'not-allowed' || code === 'service-not-allowed'){ endSession(DENIED); return; }
+        if(code === 'network'){
+          if(++live.netRetries > 3){ endSession('Speech recognition lost its connection. Please start live voice again.'); }
+          else { setAi('Speech connection dropped. Reconnecting…'); }
+          return;
+        }
+        setAi('Speech recognition error (' + code + '). Still listening.');
+      };
+      rec.onend = function(){
+        live.rec = null;
+        if(live.active && !live.muted){
+          clearTimeout(live.restartTimer);
+          live.restartTimer = setTimeout(startRecognition, 250);
+        }
+      };
+      try{ rec.start(); }catch(e){ live.rec = null; endSession('Could not start voice input. Please try again.'); }
+    }
+    function stopRecognition(){
+      var r = live.rec;
+      live.rec = null;
+      if(r){ r.onend = null; try{ r.abort(); }catch(e){} }
+    }
+
+    // A recognized phrase that mostly repeats the AI's last reply is treated as echo, not as the user.
+    function isEcho(text){
+      var w = words(text);
+      if(!w.length) return true;
+      var ai = {};
+      words(live.lastAi).forEach(function(x){ ai[x] = true; });
+      var hits = w.filter(function(x){ return ai[x]; }).length;
+      return hits / w.length >= 0.5;
+    }
+
+    function commit(){
+      live.silenceTimer = null;
+      var text = String(live.heard || '').trim();
+      live.heard = ''; live.finals = '';
+      if(!text) return;
+      if(live.state !== 'listening'){ live.heard = text; return; }
+      setUser(text);
+      runTurn(text);
+    }
+
+    function bargeIn(text){
+      stopSpeech();
+      live.heard = text;
+      live.finals = '';
+      setUser(text);
+      setState('listening', 'Listening…');
+      clearTimeout(live.silenceTimer);
+      live.silenceTimer = setTimeout(commit, SILENCE_MS);
+    }
+
+    function runTurn(text){
+      if(!live.active) return;
+      if(live.turns >= MAX_TURNS){ endSession('Live session limit reached. Start a new one to keep talking.'); return; }
+      if(creditsLeft !== null && creditsLeft <= 0){ endSession(); addUpgradeMsg(); return; }
+      if(!isSignedUp){ endSession(); openSignup(); return; }
+      live.turns++;
+      live.pending = true;
+      setState('thinking', 'Thinking…');
+      addUserMsg(text, null);
+      addTyping();
+      askAviqo(text, null, null).then(function(data){
+        live.pending = false;
+        if(!live.active) return;
+        activeRequest = null; setBusy(false); removeTyping();
+        var reply = String((data && data.reply) || '').trim();
+        addAiMsg(reply, null, null, data && data.sources, data && data.steps, data && data.evidence, data && data.visuals);
+        speakReply(reply);
+      }).catch(function(err){
+        live.pending = false;
+        removeTyping();
+        activeRequest = null; setBusy(false);
+        if(err && err.name === 'AbortError') return;
+        if(!live.active) return;
+        var msg = isConnectionError(err) ? CONNECTION_MSG : "I couldn't reach the AI backend just now (" + ((err && err.message) || 'error') + "). Please try again.";
+        addAiMsg(msg);
+        setAi(msg);
+        afterTurn();
+      });
+    }
+
+    function afterTurn(){
+      if(!live.active) return;
+      if(live.muted){ setState('muted', 'Muted'); return; }
+      setState('listening', 'Listening…');
+      if(live.heard){ clearTimeout(live.silenceTimer); live.silenceTimer = setTimeout(commit, SILENCE_MS); }
+    }
+
+    function speakReply(reply){
+      if(!live.active) return;
+      live.lastAi = reply;
+      setAi(reply);
+      var sentences = reply ? reply.split(/(?<=[.!?।॥])\s+/).map(function(s){ return s.trim(); }).filter(Boolean) : [];
+      if(!hasTTS || !sentences.length){ afterTurn(); return; }
+      live.queue = sentences;
+      live.pulse = 0;
+      setState('speaking', 'Speaking…');
+      nextSentence();
+    }
+
+    function pickVoice(lang){
+      var vs = (window.speechSynthesis && speechSynthesis.getVoices) ? speechSynthesis.getVoices() : [];
+      var target = String(lang || '').toLowerCase();
+      var base = target.split('-')[0];
+      return vs.find(function(v){ return v.lang && v.lang.toLowerCase() === target; })
+          || vs.find(function(v){ return v.lang && v.lang.toLowerCase().indexOf(base) === 0; })
+          || null;
+    }
+
+    function nextSentence(){
+      if(!live.active || live.state !== 'speaking') return;
+      var s = live.queue.shift();
+      if(s === undefined){ live.utter = null; afterTurn(); return; }
+      var u = new SpeechSynthesisUtterance(s);
+      u.lang = liveLang.value;
+      var v = pickVoice(u.lang);
+      if(v) u.voice = v;
+      u.onend = function(){ if(live.utter === u){ live.utter = null; nextSentence(); } };
+      u.onerror = function(){ if(live.utter === u){ live.utter = null; nextSentence(); } };
+      live.utter = u;
+      try{ speechSynthesis.speak(u); }catch(e){ live.utter = null; afterTurn(); }
+    }
+
+    function stopSpeech(){
+      live.queue = [];
+      live.utter = null;
+      if(hasTTS){ try{ speechSynthesis.cancel(); }catch(e){} }
+      if(live.state === 'speaking') setState('listening', 'Listening…');
+    }
+
+    function setMuted(on){
+      live.muted = on;
+      muteBtn.setAttribute('aria-pressed', String(on));
+      muteBtn.textContent = on ? 'Unmute' : 'Mute';
+      muteBtn.setAttribute('aria-label', on ? 'Unmute microphone' : 'Mute microphone');
+      if(live.stream) live.stream.getAudioTracks().forEach(function(t){ t.enabled = !on; });
+      if(on){
+        clearTimeout(live.silenceTimer); clearTimeout(live.restartTimer);
+        live.heard = ''; live.finals = ''; setUser('');
+        stopRecognition();
+        if(live.state !== 'speaking' && live.state !== 'thinking') setState('muted', 'Muted');
+      } else {
+        if(live.state === 'muted') setState('listening', 'Listening…');
+        startRecognition();
+      }
+    }
+
+    function startSession(){
+      if(live.active) return;
+      if(!isSignedUp){ openSignup(); return; }
+      if(!SR || !hasTTS || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+        addAiMsg(UNSUPPORTED);
+        return;
+      }
+      if(activeRequest){ return; }   // a text request is in progress
+      live.active = true; live.muted = false; live.turns = 0; live.heard = ''; live.finals = '';
+      live.lastAi = ''; live.netRetries = 0; live.queue = []; live.utter = null;
+      muteBtn.setAttribute('aria-pressed', 'false');
+      muteBtn.textContent = 'Mute';
+      muteBtn.setAttribute('aria-label', 'Mute microphone');
+      overlay.hidden = false;
+      endBtn.focus();
+      setState('connecting', 'Connecting…');
+      setUser(''); setAi('');
+      live.endTimer = setTimeout(function(){ endSession('Live session time limit reached (15 minutes).'); }, MAX_MS);
+      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function(stream){
+        if(!live.active){ stream.getTracks().forEach(function(t){ t.stop(); }); return; }
+        live.stream = stream;
+        startMeter(stream);
+        live.raf = requestAnimationFrame(tick);
+        setState('listening', 'Listening…');
+        startRecognition();
+      }).catch(function(){
+        endSession(DENIED);
+      });
+    }
+
+    // Ends the session and releases the microphone, speech and audio context.
+    function endSession(message){
+      if(!live.active) return;
+      live.active = false;
+      clearTimers();
+      stopRecognition();
+      stopSpeech();
+      if(live.pending && activeRequest){ try{ activeRequest.abort(); }catch(e){} activeRequest = null; setBusy(false); removeTyping(); }
+      live.pending = false;
+      cancelAnimationFrame(live.raf);
+      if(live.stream){ live.stream.getTracks().forEach(function(t){ t.stop(); }); live.stream = null; }
+      if(live.ctx){ try{ live.ctx.close(); }catch(e){} live.ctx = null; }
+      live.analyser = null;
+      orb.style.removeProperty('--level');
+      overlay.hidden = true;
+      setState('idle', 'Ready');
+      setUser(''); setAi('');
+      if(message) addAiMsg(message);
+      btn.focus();
+    }
+
+    btn.addEventListener('click', startSession);
+    muteBtn.addEventListener('click', function(){ if(live.active) setMuted(!live.muted); });
+    endBtn.addEventListener('click', function(){ endSession(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && live.active){ e.preventDefault(); endSession(); } });
+    window.addEventListener('offline', function(){ endSession('You went offline, so live voice ended.'); });
+    window.addEventListener('pagehide', function(){ endSession(); });
+  })();
   // Enter sends, Shift+Enter starts a new line
   input.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
