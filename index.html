@@ -26,8 +26,23 @@
 <script defer src="/_vercel/insights/script.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472324691189516"
-     crossorigin="anonymous"></script>
+<script>
+/* Owner guard: open your site once with ?owner=1 on each of your devices and ads never load for you there
+   (so you can not click your own ads by mistake). ?owner=0 turns ads back on. */
+(function(){
+  var own=false;
+  try{
+    if(/[?&]owner=1(&|$)/.test(location.search)) localStorage.setItem('aq_owner','1');
+    if(/[?&]owner=0(&|$)/.test(location.search)) localStorage.removeItem('aq_owner');
+    own = localStorage.getItem('aq_owner')==='1';
+  }catch(e){}
+  if(own){ document.documentElement.classList.add('aq-owner'); return; }
+  var a=document.createElement('script');
+  a.async=true; a.crossOrigin='anonymous';
+  a.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472324691189516';
+  document.head.appendChild(a);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1360,11 +1375,14 @@
     .signup-nav-btn{padding:8px 10px; font-size:11.5px;}
   }
   /* ---------- ad slot ---------- */
-  .ad-wrap{padding-top:8px; padding-bottom:8px; text-align:center;}
+  .ad-wrap{max-width:1100px; margin:72px auto; padding:18px 16px 20px; text-align:center; border-radius:18px; background:rgba(128,128,128,.06); clear:both; overflow:hidden;}
+  .ad-wrap ins.adsbygoogle{min-height:250px;}
+  .aq-owner .ad-wrap{display:none !important;}
+  @media (max-width:640px){ .ad-wrap{margin:56px 14px; padding:14px 10px 16px;} }
   .ad-label{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-2); margin-bottom:8px;}
   .ad-wrap ins.adsbygoogle{min-height:0;}
   /* bottom ad on the black closing section */
-  #aq-end .ad-wrap{padding:28px 20px 8px; max-width:1100px; margin:0 auto;}
+  #aq-end .ad-wrap{padding:18px 16px 20px; max-width:1100px; margin:56px auto 72px; background:rgba(255,255,255,.05);}
   #aq-end .ad-label{color:rgba(255,255,255,.5);}
   .ad-wrap:has(ins.adsbygoogle[data-ad-status="unfilled"]){display:none;}
   /* ---------- 3D pricing cards + plan detail popup ---------- */
