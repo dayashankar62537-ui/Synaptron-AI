@@ -1041,14 +1041,43 @@ async function studyCached(owner, sid, msgId) {
   return null;
 }
 
+// Study state: Upstash Redis when it works, otherwise an in-memory fallback on this server instance.
+// The fallback keeps Study Mode usable when Redis is missing or down. If the instance restarts, the
+// session is simply lost and the next message starts a new lesson (no crash, no "could not be saved").
+const studyMemory = new Map();
+function studyMemPrune() {
+  const now = Date.now();
+  for (const [k, v] of studyMemory) { if (v.exp < now) studyMemory.delete(k); }
+  while (studyMemory.size > 500) studyMemory.delete(studyMemory.keys().next().value);
+}
 async function studyLoad(key) {
-  const raw = await redisCmd(['GET', key]);
+  let raw = null;
+  try {
+    raw = await redisCmd(['GET', key]);
+  } catch (e) {
+    console.error('Study: Redis GET failed, using memory fallback:', e && e.message);
+  }
+  if (!raw) {
+    const m = studyMemory.get(key);
+    raw = m && m.exp > Date.now() ? m.raw : null;
+  }
   if (!raw) return null;
   try { return JSON.parse(raw); } catch (e) { return null; }
 }
 async function studySave(key, st) {
   st.updated = Date.now();
-  await redisCmd(['SET', key, JSON.stringify(st), 'EX', String(STUDY_TTL_SECONDS)]);
+  const raw = JSON.stringify(st);
+  studyMemPrune();
+  studyMemory.set(key, { raw, exp: Date.now() + STUDY_TTL_SECONDS * 1000 });
+  try {
+    await redisCmd(['SET', key, raw, 'EX', String(STUDY_TTL_SECONDS)]);
+  } catch (e) {
+    console.error('Study: Redis SET failed, state kept in memory only:', e && e.message);
+  }
+}
+async function studyDelete(key) {
+  studyMemory.delete(key);
+  try { await redisCmd(['DEL', key]); } catch (e) { console.error('Study: Redis DEL failed:', e && e.message); }
 }
 
 // Decides what a message means for the session and returns the reply. Returns null if the lesson could not be created.
@@ -1075,7 +1104,7 @@ async function studyTurn({ groqKey, owner, sid, msgId, message }) {
 
   // Session control first, so "restart" and "revise" work on finished sessions too.
   if (st && STUDY_RESTART_RE.test(text)) {
-    await redisCmd(['DEL', key]);
+    await studyDelete(key);
     return { reply: 'Session cleared. Which chapter or topic would you like to study?', study: null };
   }
   if (st && STUDY_REVISION_RE.test(text)) {
@@ -1089,6 +1118,9 @@ async function studyTurn({ groqKey, owner, sid, msgId, message }) {
 
   // No active session, or a finished one: the message is the topic to study.
   if (!st || st.status === 'complete') {
+    if (/^\s*(hi+|hello+|hey+|hola|namaste|namaskar|sat sri akal|ssa|kaise ho|kya haal hai|thanks?|thank you|ok(ay)?)\s*[.!?]*\s*$/i.test(text)) {
+      return { reply: 'Hi! Study Mode is ready. Which chapter or topic would you like to study? For example: chemical bonding, Newton\'s laws, or quadratic equations.', study: null };
+    }
     const fresh = await studyStartLesson(groqKey, text);
     if (!fresh) return null;
     st = Object.assign(fresh, { id: sid });
@@ -2486,8 +2518,7 @@ async function handleChat(req, res) {
       const cached = await studyCached(creditId, studyId, clientMsgId);
       if (cached) return res.status(200).json({ reply: cached.reply, mode: modeId, steps: [], sources: [], searched: false, study: cached.study, duplicate: true });
     } catch (e) {
-      console.error('Study state unavailable', e && e.message);
-      return res.status(200).json({ reply: STUDY_SAVE_FAILED, mode: modeId, steps: [], sources: [], searched: false });
+      console.error('Study duplicate check failed, continuing', e && e.message);
     }
   }
 
@@ -2618,7 +2649,7 @@ async function handleChat(req, res) {
   } catch (err) {
     if (charged) await refundCredits(creditId, cost);
     if (err && err.studyUser) return res.status(200).json({ reply: err.studyUser, mode: modeId, steps: [], sources: [], searched: false });
-    if (modeId === 'study' && studyId && !(err && err.status)) return res.status(200).json({ reply: STUDY_SAVE_FAILED, mode: modeId, steps: [], sources: [], searched: false });
+    if (modeId === 'study') console.error('Study turn failed:', err && (err.stack || err.message));
     return aiError(res, err);
   }
 }
