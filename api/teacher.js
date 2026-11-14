@@ -77,6 +77,29 @@ export function normalizeConfig(raw) {
 export function activeTypes(cfg) { return TYPES.filter((t) => cfg.types[t]); }
 
 // Checks one model paper against the config. Returns error strings (empty when valid).
+// The model often gets the marking-scheme steps slightly wrong. Marks per question come from the config,
+// so fix the steps to add up to them (scale, then put any rounding difference on the last step).
+export function repairMarking(parsed, cfg) {
+  const secs = parsed && Array.isArray(parsed.sections) ? parsed.sections : [];
+  secs.forEach((sec) => {
+    const t = sec && sec.type;
+    if (!cfg.types[t] || !Array.isArray(sec.questions)) return;
+    const want = cfg.types[t].marks;
+    sec.questions.forEach((q) => {
+      const steps = Array.isArray(q && q.marking) ? q.marking.filter((s) => s && typeof s === 'object') : [];
+      if (!steps.length) return;
+      const have = steps.reduce((a, s) => a + (Number(s.marks) || 0), 0);
+      if (have === want && steps.every((s) => Number.isInteger(Number(s.marks)) && Number(s.marks) >= 1)) return;
+      steps.forEach((s) => { s.marks = Math.max(1, Math.round(((Number(s.marks) || 0) * want) / (have || 1))); });
+      let diff = want - steps.reduce((a, s) => a + s.marks, 0);
+      const last = steps[steps.length - 1];
+      last.marks = Math.max(1, last.marks + diff);
+      q.marking = steps;
+    });
+  });
+  return parsed;
+}
+
 export function validatePaper(parsed, cfg) {
   const errors = [];
   const want = activeTypes(cfg);
@@ -175,7 +198,7 @@ async function callModel(groqKey, system, user, maxTokens) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: TEACHER_MODEL, temperature: 0.4, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }),
+      body: JSON.stringify(Object.assign({ model: TEACHER_MODEL, temperature: 0.4, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }, TEACHER_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {})),
       signal: ctrl.signal
     });
     if (!r.ok) throw new Error('model HTTP ' + r.status);
@@ -213,12 +236,13 @@ async function generateValid(groqKey, prompt, check, attempts = 2) {
   let lastErr = 'no valid output';
   for (let i = 0; i < attempts; i++) {
     let raw = '';
-    try { raw = await callModel(groqKey, prompt.system, prompt.user, 3500); } catch (e) { lastErr = e.message; continue; }
+    try { raw = await callModel(groqKey, prompt.system, prompt.user, 8000); } catch (e) { lastErr = e.message; console.error('Teacher model call failed:', e.message); continue; }
     const parsed = extractJson(raw);
-    if (!parsed) { lastErr = 'not json'; continue; }
+    if (!parsed) { lastErr = 'not json'; console.error('Teacher output not JSON, length', raw.length); continue; }
     const err = check(parsed);
     if (!err || (Array.isArray(err) && !err.length)) return parsed;
     lastErr = Array.isArray(err) ? err[0] : err;
+    console.error('Teacher output rejected:', lastErr);
   }
   throw Object.assign(new Error(lastErr), { code: 'generation' });
 }
@@ -339,7 +363,7 @@ export default async function handler(req, res) {
       for (let i = 0; i < normalized.cfg.sets; i++) {
         const name = String.fromCharCode(65 + i);
         const prompt = paperPrompt(normalized.cfg, name, usedTexts);
-        const parsed = await generateValid(groqKey, prompt, (p) => validatePaper(p, normalized.cfg));
+        const parsed = await generateValid(groqKey, prompt, (p) => { repairMarking(p, normalized.cfg); return validatePaper(p, normalized.cfg); });
         const built = buildSet(parsed, normalized.cfg, name);
         built.paper.sections.forEach((s) => s.questions.forEach((q) => usedTexts.push(q.question)));
         sets.push({ name, paper: built.paper, answerKey: built.answerKey });
