@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher Mode · Aviqo AI</title>
+<meta name="description" content="Generate question papers, MCQs and answer keys for Indian school classes with Aviqo AI Teacher Mode.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#100e0c;--surface:#1b1815;--surface-2:#211d19;--border:rgba(255,236,210,0.12);--text:#f3ede3;--muted:#b7ab99;--brand:#ffb020;--brand-2:#ff7a3d;--ink:#1a1206;--bad:#ff8a7a;--ok:#9ee6b0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Inter',system-ui,sans-serif;}
+  header{padding:18px 16px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;display:flex;align-items:center;gap:10px}
+  header h1::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--grad,linear-gradient(120deg,#ffb020,#ff7a3d));box-shadow:0 0 12px rgba(255,160,60,.55)}
+  header .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--muted);font-size:13px;margin-right:auto}
+  header a{color:var(--brand);text-decoration:none;font-size:14px}
+  main{max-width:980px;margin:0 auto;padding:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit}
+  .tab[aria-selected="true"]{background:var(--brand);color:var(--ink);border-color:var(--brand);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+  input,select,textarea{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:9px 10px;width:100%}
+  textarea{min-height:90px;resize:vertical}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{text-align:left;padding:6px 4px;font-size:14px}
+  td input{width:90px}
+  .row-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  button.primary{background:linear-gradient(120deg,var(--brand),var(--brand-2));color:var(--ink);border:0;border-radius:10px;padding:10px 18px;font-weight:600;font-size:15px;font-family:inherit;cursor:pointer}
+  button.primary:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--brand);border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font:inherit}
+  .meter{font-weight:600}
+  .meter.bad{color:var(--bad)} .meter.ok{color:var(--ok)}
+  .msg{font-size:14px;margin-top:10px}
+  .msg.bad{color:var(--bad)}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .hidden{display:none !important}
+  /* A4 paper preview */
+  .a4{background:#fff;color:#111;max-width:210mm;margin:0 auto;padding:18mm 16mm;border:1px solid var(--border);border-radius:6px;font-family:'Times New Roman',Times,serif;}
+  .a4 h2{text-align:center;margin:0 0 4px;font-size:18px;}
+  .a4 .meta{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px solid #999;padding-bottom:6px;margin-bottom:12px}
+  .a4 h3{font-size:15px;margin:14px 0 6px}
+  .a4 ol{padding-left:22px;margin:0}
+  .a4 li{margin:0 0 10px;font-size:14px}
+  .a4 .opts{list-style:upper-alpha;padding-left:20px;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
+  .a4 .marks{float:right;font-weight:bold;margin-left:8px}
+  .a4 [contenteditable]{outline:none;border-bottom:1px dashed transparent}
+  .a4 [contenteditable]:focus{border-bottom-color:#b7791f}
+  .keypanel{background:#fffbeb;color:#111;border:1px solid #f5d37a}
+  .keypanel .a4{background:transparent;border:0}
+  .keypanel li{font-size:13px}
+  .keypanel .step{margin-left:18px}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  body.embed{background:transparent}
+  body.embed header{display:none}
+  body.embed main{padding:12px 4px 24px;max-width:none}
+  body.embed .card{background:var(--surface)}
+  @media (max-width:520px){ main{padding:12px} .a4{padding:14mm 8mm} .a4 .opts{grid-template-columns:1fr} }
+  @media print{
+    body{background:#fff}
+    header,.no-print,.keypanel{display:none !important}
+    .card{border:0;padding:0;margin:0}
+    .a4{border:0;box-shadow:none;padding:0;max-width:none}
+    body.print-key header, body.print-key .no-print, body.print-key .paper-card{display:none !important}
+    body.print-key .keypanel{display:block !important;background:#fff;border:0}
+    @page{size:A4;margin:14mm}
+    .page-break{break-before:page}
+  }
+</style>
+</head>
+<body>
+<script>if(/[?&]embed=1/.test(location.search)) document.body.classList.add('embed');</script>
+<header>
+  <span class="brand">Aviqo AI</span>
+  <h1>Teacher Mode</h1>
+  <a href="chat.html" id="backLink">Back to chat</a>
+</header>
+<main>
+  <div id="signinNote" class="card hidden">
+    <p>Teacher Mode needs a signed-in account, so credits are counted correctly. <a href="chat.html">Sign in from the chat page</a>, then come back here.</p>
+  </div>
+
+  <div id="app">
+    <div class="tabs no-print" role="tablist">
+      <button class="tab" role="tab" id="tabPaper" aria-selected="true" data-tab="paper">Question paper</button>
+      <button class="tab" role="tab" id="tabMcq" aria-selected="false" data-tab="mcq">MCQ generator</button>
+    </div>
+
+    <form id="commonForm" class="card no-print" autocomplete="off">
+      <div class="grid">
+        <label>Class
+          <select id="cls">
+            <option value="">Choose class</option>
+          </select>
+        </label>
+        <label>Board
+          <select id="board"><option value="">Choose board</option><option>CBSE</option><option>PSEB</option><option>Other</option></select>
+        </label>
+        <label>Subject
+          <input id="subject" maxlength="60" placeholder="e.g. Science, Maths, Hindi">
+        </label>
+        <label>Language
+          <select id="lang"><option value="en">English</option><option value="hi">Hindi</option><option value="hinglish">Hinglish</option></select>
+        </label>
+        <label>Difficulty
+          <select id="diff"><option value="mixed">Mixed</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
+        </label>
+      </div>
+      <label style="margin-top:12px">Chapters (one per line, up to 15)
+        <textarea id="chapters" placeholder="Life Processes&#10;Control and Coordination"></textarea>
+      </label>
+      <p class="note">Chapters are used exactly as you type them. Aviqo does not check them against the official CBSE or PSEB syllabus, so please review the questions before use.</p>
+    </form>
+
+    <form id="paperForm" class="card no-print" autocomplete="off">
+      <div class="grid">
+        <label>Total marks <input id="total" type="number" min="5" max="200" value="20"></label>
+        <label>Duration (minutes) <input id="duration" type="number" min="10" max="240" value="60"></label>
+        <label>Paper sets
+          <select id="sets"><option value="1">1 set</option><option value="2">2 sets (A, B)</option><option value="3">3 sets (A, B, C)</option></select>
+        </label>
+      </div>
+      <table aria-label="Question types">
+        <thead><tr><th>Question type</th><th>Questions</th><th>Marks each</th><th>Marks</th></tr></thead>
+        <tbody>
+          <tr><td>Multiple choice</td><td><input type="number" min="0" max="50" value="4" data-type="mcq"></td><td><input type="number" min="1" max="10" value="1" data-marks="mcq"></td><td class="subtotal" data-sub="mcq">4</td></tr>
+          <tr><td>Short answer</td><td><input type="number" min="0" max="50" value="4" data-type="short"></td><td><input type="number" min="1" max="10" value="2" data-marks="short"></td><td class="subtotal" data-sub="short">8</td></tr>
+          <tr><td>Long answer</td><td><input type="number" min="0" max="50" value="2" data-type="long"></td><td><input type="number" min="1" max="10" value="4" data-marks="long"></td><td class="subtotal" data-sub="long">8</td></tr>
+          <tr><td>Numerical</td><td><input type="number" min="0" max="50" value="0" data-type="numerical"></td><td><input type="number" min="1" max="10" value="2" data-marks="numerical"></td><td class="subtotal" data-sub="numerical">0</td></tr>
+        </tbody>
+      </table>
+      <p class="meter" id="meter" aria-live="polite"></p>
+      <div class="row-actions">
+        <button class="primary" id="genPaper" type="submit">Generate paper</button>
+      </div>
+    </form>
+
+    <form id="mcqForm" class="card no-print hidden" autocomplete="off">
+      <div class="grid">
+        <label>Number of questions <input id="mcqCount" type="number" min="1" max="30" value="10"></label>
+      </div>
+      <div class="row-actions">
+        <button class="primary" id="genMcq" type="submit">Generate MCQs</button>
+      </div>
+    </form>
+
+    <div id="status" class="msg no-print" role="status" aria-live="polite"></div>
+    <div id="results"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var API = '/api/teacher';
+  for (var ci = 1; ci <= 12; ci++) { var opt = document.createElement('option'); opt.value = String(ci); opt.textContent = String(ci); document.getElementById('cls').appendChild(opt); }
+  var TYPE_LABEL = { mcq: 'Multiple choice questions', short: 'Short answer questions', long: 'Long answer questions', numerical: 'Numerical questions' };
+  var $ = function(id){ return document.getElementById(id); };
+  var email = '';
+  try { var u = JSON.parse(localStorage.getItem('aviqo_user') || 'null'); email = u && u.email ? String(u.email) : ''; } catch(e) {}
+  if(!email){ $('app').classList.add('hidden'); $('signinNote').classList.remove('hidden'); if(document.body.classList.contains('embed')){ var bl = $('signinNote').querySelector('a'); if(bl) bl.outerHTML = 'Use the sign-in button in the chat page, then choose Teacher Mode again.'; } return; }
+
+  var tabs = document.querySelectorAll('.tab');
+  var mode = 'paper';
+  tabs.forEach(function(t){ t.addEventListener('click', function(){
+    mode = t.dataset.tab;
+    tabs.forEach(function(x){ x.setAttribute('aria-selected', String(x === t)); });
+    $('paperForm').classList.toggle('hidden', mode !== 'paper');
+    $('mcqForm').classList.toggle('hidden', mode !== 'mcq');
+    $('results').textContent = ''; setStatus('');
+  }); });
+
+  function setStatus(text, bad){ var s = $('status'); s.textContent = text || ''; s.className = 'msg no-print' + (bad ? ' bad' : ''); }
+  function typeRows(){ return Array.prototype.slice.call(document.querySelectorAll('[data-type]')); }
+  function readTypes(){
+    var out = {}; var sum = 0;
+    typeRows().forEach(function(inp){
+      var t = inp.dataset.type; var count = Number(inp.value) || 0;
+      var marks = Number(document.querySelector('[data-marks="' + t + '"]').value) || 0;
+      out[t] = { count: count, marks: marks }; sum += count * marks;
+      document.querySelector('[data-sub="' + t + '"]').textContent = count * marks;
+    });
+    return { types: out, sum: sum };
+  }
+  function updateMeter(){
+    var total = Number($('total').value) || 0; var r = readTypes();
+    var ok = r.sum === total && Object.keys(r.types).some(function(k){ return r.types[k].count > 0; });
+    var m = $('meter');
+    m.textContent = 'Marks: ' + r.sum + ' of ' + total + (ok ? ' · matches' : ' · must add up to ' + total);
+    m.className = 'meter ' + (ok ? 'ok' : 'bad');
+    $('genPaper').disabled = !ok;
+    return ok;
+  }
+  ['total'].forEach(function(id){ $(id).addEventListener('input', updateMeter); });
+  document.getElementById('paperForm').addEventListener('input', updateMeter);
+  updateMeter();
+
+  function common(){
+    var chapters = $('chapters').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    return { class: $('cls').value, board: $('board').value, subject: $('subject').value.trim(), chapters: chapters, difficulty: $('diff').value, language: $('lang').value };
+  }
+
+  function el(tag, attrs, text){
+    var e = document.createElement(tag);
+    if(attrs) Object.keys(attrs).forEach(function(k){ if(k === 'cls') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); });
+    if(text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function editable(tag, cls, text){ var e = el(tag, { cls: cls, contenteditable: 'true', spellcheck: 'false' }, text); return e; }
+
+  function renderPaper(set){
+    var wrap = el('div', { cls: 'card paper-card' });
+    var sheet = el('div', { cls: 'a4' });
+    var p = set.paper;
+    sheet.appendChild(el('h2', null, 'Class ' + p.class + ' · ' + p.subject + ' · ' + p.board + ' · Set ' + set.name));
+    var meta = el('div', { cls: 'meta' });
+    meta.appendChild(el('span', null, 'Time: ' + p.durationMinutes + ' minutes'));
+    meta.appendChild(el('span', null, 'Maximum marks: ' + p.totalMarks));
+    sheet.appendChild(meta);
+    p.sections.forEach(function(sec, si){
+      sheet.appendChild(el('h3', null, 'Section ' + String.fromCharCode(65 + si) + ' — ' + TYPE_LABEL[sec.type] + ' (' + sec.marks + ' mark' + (sec.marks > 1 ? 's' : '') + ' each)'));
+      var ol = el('ol');
+      sec.questions.forEach(function(q){
+        var li = el('li');
+        li.appendChild(el('span', { cls: 'marks' }, '[' + q.marks + ']'));
+        li.appendChild(editable('span', null, q.question));
+        if(q.options){
+          var ul = el('ol', { cls: 'opts' });
+          q.options.forEach(function(o){ ul.appendChild(editable('li', null, o)); });
+          li.appendChild(ul);
+        }
+        ol.appendChild(li);
+      });
+      sheet.appendChild(ol);
+    });
+    wrap.appendChild(sheet);
+    var bar = el('div', { cls: 'row-actions no-print' });
+    var b1 = el('button', { cls: 'ghost', type: 'button' }, 'Print / save paper as PDF');
+    b1.addEventListener('click', function(){ document.body.classList.remove('print-key'); window.print(); });
+    bar.appendChild(b1);
+    wrap.appendChild(bar);
+    return wrap;
+  }
+
+  function renderKey(set){
+    var wrap = el('div', { cls: 'card keypanel' });
+    wrap.appendChild(el('h3', null, 'Answer key and marking scheme — Set ' + set.name + ' (for the teacher only)'));
+    var sheet = el('div', { cls: 'a4' });
+    var ol = el('ol');
+    set.answerKey.items.forEach(function(it){
+      var li = el('li');
+      var head = it.type === 'mcq' ? 'Answer: ' + it.answerLetter + ') ' + it.answer : 'Answer: ' + it.answer;
+      li.appendChild(el('strong', null, 'Q' + it.no + ' (' + it.marks + ' mark' + (it.marks > 1 ? 's' : '') + '). '));
+      li.appendChild(el('span', null, head));
+      if(it.explanation) li.appendChild(el('div', null, 'Explanation: ' + it.explanation));
+      if(it.marking){
+        var steps = el('ul');
+        it.marking.forEach(function(s){ steps.appendChild(el('li', { cls: 'step' }, s.step + ' — ' + s.marks + ' mark' + (s.marks > 1 ? 's' : ''))); });
+        li.appendChild(steps);
+      }
+      ol.appendChild(li);
+    });
+    sheet.appendChild(ol);
+    wrap.appendChild(sheet);
+    var bar = el('div', { cls: 'row-actions' });
+    var b = el('button', { cls: 'ghost', type: 'button' }, 'Print answer key only');
+    b.addEventListener('click', function(){ document.body.classList.add('print-key'); window.print(); setTimeout(function(){ document.body.classList.remove('print-key'); }, 500); });
+    bar.appendChild(b);
+    wrap.appendChild(bar);
+    return wrap;
+  }
+
+  function renderMcqs(data){
+    var out = $('results'); out.textContent = '';
+    var card = el('div', { cls: 'card paper-card' });
+    var sheet = el('div', { cls: 'a4' });
+    sheet.appendChild(el('h2', null, 'Multiple choice questions'));
+    var ol = el('ol');
+    data.questions.forEach(function(q){
+      var li = el('li');
+      li.appendChild(editable('span', null, q.question));
+      var ul = el('ol', { cls: 'opts' });
+      q.options.forEach(function(o){ ul.appendChild(editable('li', null, o)); });
+      li.appendChild(ul);
+      ol.appendChild(li);
+    });
+    sheet.appendChild(ol);
+    card.appendChild(sheet);
+    var bar = el('div', { cls: 'row-actions no-print' });
+    var b1 = el('button', { cls: 'ghost', type: 'button' }, 'Print / save as PDF');
+    b1.addEventListener('click', function(){ document.body.classList.remove('print-key'); window.print(); });
+    bar.appendChild(b1); card.appendChild(bar);
+    out.appendChild(card);
+    var key = el('div', { cls: 'card keypanel' });
+    key.appendChild(el('h3', null, 'Answer key (for the teacher only)'));
+    var sheet2 = el('div', { cls: 'a4' }); var ol2 = el('ol');
+    data.answerKey.forEach(function(k){ ol2.appendChild(el('li', null, 'Q' + k.no + ': ' + k.answerLetter + ') ' + k.answer + (k.explanation ? ' — ' + k.explanation : ''))); });
+    sheet2.appendChild(ol2); key.appendChild(sheet2);
+    out.appendChild(key);
+  }
+
+  function post(body){
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ user: { email: email } }, body)) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error(j.error || 'Request failed (' + r.status + ').'); return j; }); });
+  }
+  function busy(btn, on, label){
+    btn.disabled = on;
+    btn.innerHTML = '';
+    if(on){ btn.appendChild(el('span', { cls: 'spinner' })); btn.appendChild(document.createTextNode(label)); }
+    else btn.textContent = label;
+  }
+
+  $('paperForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var c = common(); var r = readTypes();
+    var cfg = Object.assign(c, { totalMarks: Number($('total').value), durationMinutes: Number($('duration').value), sets: Number($('sets').value), types: r.types });
+    var btn = $('genPaper');
+    $('results').textContent = '';
+    setStatus('');
+    busy(btn, true, 'Generating…');
+    post({ action: 'paper', config: cfg }).then(function(j){
+      busy(btn, false, 'Generate paper'); updateMeter();
+      setStatus('Done. Review and edit the questions before printing. Credits left: ' + j.credits + '.');
+      var out = $('results'); out.textContent = '';
+      j.sets.forEach(function(set){ out.appendChild(renderPaper(set)); out.appendChild(renderKey(set)); });
+    }).catch(function(err){
+      busy(btn, false, 'Generate paper'); updateMeter();
+      setStatus(err.message, true);
+    });
+  });
+
+  $('mcqForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var btn = $('genMcq');
+    $('results').textContent = '';
+    setStatus('');
+    busy(btn, true, 'Generating…');
+    var cfg = common();
+    post({ action: 'mcq', config: cfg, count: Number($('mcqCount').value) }).then(function(j){
+      busy(btn, false, 'Generate MCQs');
+      setStatus('Done. Review and edit the questions before use. Credits left: ' + j.credits + '.');
+      renderMcqs(j);
+    }).catch(function(err){
+      busy(btn, false, 'Generate MCQs');
+      setStatus(err.message, true);
+    });
+  });
+})();
+</script>
+</body>
+</html>
