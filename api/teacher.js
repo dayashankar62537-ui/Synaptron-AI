@@ -19,7 +19,27 @@ const FREE_CREDITS = 10;
 // ---------- helpers ----------
 export function norm(text) { return String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
 const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
-const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+// Models often write maths as LaTeX. Turn it into plain Unicode so the paper prints cleanly.
+const TEX_SYMBOLS = [
+  ['\\\\text\\{([^{}]*)\\}', '$1'], ['\\\\mathrm\\{([^{}]*)\\}', '$1'], ['\\\\mathbf\\{([^{}]*)\\}', '$1'],
+  ['\\\\frac\\{([^{}]*)\\}\\{([^{}]*)\\}', '($1)/($2)'], ['\\\\sqrt\\{([^{}]*)\\}', '√($1)'],
+  ['\\\\(?:mid|vert)\\b', '|'], ['\\\\cup\\b', '∪'], ['\\\\cap\\b', '∩'], ['\\\\subseteq\\b', '⊆'], ['\\\\subset\\b', '⊂'],
+  ['\\\\supseteq\\b', '⊇'], ['\\\\supset\\b', '⊃'], ['\\\\notin\\b', '∉'], ['\\\\in\\b', '∈'], ['\\\\times\\b', '×'],
+  ['\\\\setminus\\b', '∖'], ['\\\\emptyset\\b', '∅'], ['\\\\varnothing\\b', '∅'], ['\\\\cdot\\b', '·'],
+  ['\\\\(?:leq|le)\\b', '≤'], ['\\\\(?:geq|ge)\\b', '≥'], ['\\\\neq\\b', '≠'], ['\\\\infty\\b', '∞'], ['\\\\pi\\b', 'π'],
+  ['\\\\Rightarrow\\b', '⇒'], ['\\\\Leftrightarrow\\b', '⇔'], ['\\\\to\\b', '→'], ['\\\\forall\\b', '∀'], ['\\\\exists\\b', '∃'],
+  ['\\\\lor\\b', '∨'], ['\\\\land\\b', '∧'], ['\\\\neg\\b', '¬'], ['\\\\circ\\b', '∘'], ['\\\\deg\\b', '°'],
+  ['\\^\\{2\\}', '²'], ['\\^\\{3\\}', '³'], ['\\^2\\b', '²'], ['\\^3\\b', '³'], ['\\^\\{c\\}', 'ᶜ'], ['\\^c\\b', 'ᶜ'],
+  ['\\\\\\{', '{'], ['\\\\\\}', '}'], ['\\\\[{}]', ''], ['\\\\[,;!: ]', ' '], ['\\\\[()\\[\\]]', ''], ['\\\\\\$', '$']
+];
+export function texToPlain(v) {
+  let out = String(v);
+  if (!/[\\\\$^_]/.test(out)) return out;
+  TEX_SYMBOLS.forEach(([pat, rep]) => { out = out.replace(new RegExp(pat.endsWith('\\b') ? pat + '\\s*' : pat, 'g'), rep); });
+  out = out.replace(/\\\\([A-Za-z]+)/g, '$1').replace(/\$/g, '').replace(/\^\{([^{}]*)\}/g, '^$1').replace(/_\{([^{}]*)\}/g, '_$1');
+  return out.replace(/[ \t]+/g, ' ').trim();
+}
+const str = (v, max) => (typeof v === 'string' ? texToPlain(v).trim().slice(0, max) : '');
 
 // Shared fields: class, board, subject, chapters, difficulty, language. Returns { cfg, errors }.
 export function normalizeBase(raw) {
@@ -187,7 +207,9 @@ export function cleanMcqs(items, count, avoid = [], rng = Math.random) {
 export function extractJson(raw) {
   const m = String(raw || '').match(/\{[\s\S]*\}/);
   if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (e) { return null; }
+  try { return JSON.parse(m[0]); } catch (e) { /* try repair below */ }
+  // Maths text often has LaTeX backslashes (\frac, \cup) that break JSON. Escape the invalid ones and retry.
+  try { return JSON.parse(m[0].replace(/\\(?!["\\\/bfnrtu])/g, '\\\\')); } catch (e) { return null; }
 }
 
 // ---------- model call ----------
@@ -210,7 +232,7 @@ async function callModel(groqKey, system, user, maxTokens) {
 function paperPrompt(cfg, name, avoid) {
   const specs = activeTypes(cfg).map((t) => '- ' + TYPE_LABEL[t] + ': exactly ' + cfg.types[t].count + ' questions, ' + cfg.types[t].marks + ' mark(s) each.').join('\n');
   return {
-    system: 'You write school exam questions for Indian students. Language: ' + LANGS[cfg.language] + '. '
+    system: 'You write school exam questions for Indian students. Language: ' + LANGS[cfg.language] + '. Write maths in plain text or Unicode (for example A ∪ B, x², √2), never LaTeX, and never use backslashes. Output valid JSON only. '
       + 'Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. '
       + 'Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' ? ' (mix easy, medium and hard)' : '') + '. This is paper set ' + name + '; make its questions different from other sets.\n'
       + 'Sections, in this exact order:\n' + specs + '\n'
@@ -224,7 +246,7 @@ function paperPrompt(cfg, name, avoid) {
 
 function mcqPrompt(cfg, count, avoid) {
   return {
-    system: 'You write multiple choice questions for Indian school students. Language: ' + LANGS[cfg.language] + '. Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. '
+    system: 'You write multiple choice questions for Indian school students. Language: ' + LANGS[cfg.language] + '. Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Write maths in plain text or Unicode, never LaTeX or backslashes. Output valid JSON only. '
       + 'Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. Difficulty: ' + cfg.difficulty + '. '
       + 'Return ONLY JSON: {"questions":[{"question","options":[4 distinct strings],"answerIndex":0-3,"explanation"}]} with ' + count + ' questions. Exactly one option is correct. Every answer must be correct. Do not repeat these questions: ' + JSON.stringify(avoid.slice(0, 40)) + '.',
     user: 'Write the questions now.'
@@ -238,7 +260,7 @@ async function generateValid(groqKey, prompt, check, attempts = 2) {
     let raw = '';
     try { raw = await callModel(groqKey, prompt.system, prompt.user, 8000); } catch (e) { lastErr = e.message; console.error('Teacher model call failed:', e.message); continue; }
     const parsed = extractJson(raw);
-    if (!parsed) { lastErr = 'not json'; console.error('Teacher output not JSON, length', raw.length); continue; }
+    if (!parsed) { lastErr = 'not json'; console.error('Teacher output not JSON, length', raw.length, 'start:', String(raw).slice(0, 160)); continue; }
     const err = check(parsed);
     if (!err || (Array.isArray(err) && !err.length)) return parsed;
     lastErr = Array.isArray(err) ? err[0] : err;
