@@ -1254,6 +1254,11 @@
   .cc-stage .teacher-panel{flex:1;min-height:0;display:flex;position:relative;}
   .cc-stage .teacher-panel[hidden]{display:none;}
   #teacherHost{position:absolute;inset:0 0 8px 0;}
+  @media print{
+    body *{visibility:hidden !important;}
+    #teacherHost, #teacherHost *{visibility:visible !important;}
+    #teacherHost{position:absolute !important;left:0 !important;top:0 !important;inset:auto !important;width:100% !important;height:auto !important;overflow:visible !important;background:#fff !important;}
+  }
   .teacher-bar{display:flex;justify-content:space-between;align-items:center;padding:4px 14px 6px;font-size:13px;color:var(--muted);}
   .teacher-bar a{color:var(--cyan);text-decoration:none;font-weight:600;}
   .teacher-bar a:hover{text-decoration:underline;}
