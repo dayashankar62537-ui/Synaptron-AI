@@ -1359,15 +1359,35 @@
     width:100%; max-width:600px; margin:26px auto 0; text-align:left;
   }
   .cc .ccard{
-    font:inherit; text-align:left; display:flex; flex-direction:column; gap:4px;
-    padding:14px 16px; border-radius:14px; border:1px solid var(--border);
+    position:relative; font:inherit; text-align:left; display:flex; align-items:flex-start; gap:12px;
+    padding:14px; border-radius:14px; border:1px solid var(--border);
     background:var(--surface); color:var(--text); cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .12s ease;
   }
-  .cc .ccard:hover{background:var(--surface-2);}
+  .cc .ccard:hover{background:var(--surface-2); border-color:var(--border-hi); box-shadow:0 4px 14px rgba(0,0,0,.07); transform:translateY(-1px);}
   .cc .ccard:focus-visible{outline:2px solid #ff8c28; outline-offset:2px;}
+  .cc .ccard:active{transform:scale(.98); box-shadow:none;}
+  .cc .ccard.is-active{border-color:#ff8c28;}
+  .cc .ccard.is-active::after{content:''; position:absolute; top:12px; right:12px; width:7px; height:7px; border-radius:50%; background:#ff8c28;}
+  .cc .ccard-ic{flex:none; width:32px; height:32px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:var(--surface-2); color:var(--text);}
+  .cc .ccard-ic svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+  .cc .ccard-txt{display:flex; flex-direction:column; gap:3px; min-width:0; padding-right:8px;}
   .cc .ccard-t{font-size:14px; font-weight:600;}
   .cc .ccard-d{font-size:12.5px; color:var(--muted); line-height:1.4;}
+  @media (prefers-reduced-motion:reduce){ .cc .ccard{transition:none;} .cc .ccard:hover, .cc .ccard:active{transform:none;} }
   @media (max-width:380px){ .cc .cc-cards{grid-template-columns:1fr;} }
+
+  /* drag-and-drop overlay, Study restart control, attachment type badge */
+  .cc-drop{position:absolute; inset:12px; z-index:40; display:flex; align-items:center; justify-content:center; border:2px dashed #ff8c28; border-radius:20px; background:rgba(255,140,40,.06); pointer-events:none;}
+  .cc-drop[hidden]{display:none;}
+  .cc-drop-pill{padding:10px 18px; border-radius:999px; background:var(--surface); border:1px solid var(--border); color:var(--text); font:600 14px 'Inter',sans-serif; box-shadow:0 4px 16px rgba(0,0,0,.08);}
+  .cc .cc-session-btn{font:500 12.5px 'Inter',sans-serif; border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text); padding:6px 12px; cursor:pointer; white-space:nowrap;}
+  .cc .cc-session-btn:hover{background:var(--surface-2);}
+  .cc .cc-session-btn:focus-visible{outline:2px solid var(--border-hi); outline-offset:2px;}
+  .cc .cc-session-btn[hidden]{display:none;}
+  .cc .attach-preview .attach-ext{font:600 11px 'JetBrains Mono',monospace; padding:4px 8px; border-radius:6px; background:var(--surface-2); color:var(--text); max-width:none; white-space:nowrap;}
+  .cc .attach-preview .attach-ext[hidden]{display:none;}
+  @media (max-width:480px){ .cc .chat-voice{gap:4px;} .cc .chat-voice .mic-lang{max-width:74px; padding:0 4px;} }
 
   .cc-stage.is-empty{justify-content:center;}
   .cc-stage.is-empty .chat-body{display:none;}
@@ -1664,7 +1684,7 @@
   }
 
   /* ---------- modes, sources, citations ---------- */
-  .cc .cc-modebar{display:flex; align-items:center; gap:10px; margin:0 4px 8px; font:13px 'Inter',sans-serif; color:var(--muted);}
+  .cc .cc-modebar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin:0 4px 8px; font:13px 'Inter',sans-serif; color:var(--muted);}
   .cc .cc-mode-select{
     appearance:auto; border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text);
     font:500 13.5px 'Inter',sans-serif; padding:6px 12px; cursor:pointer; max-width:100%;
@@ -1904,6 +1924,7 @@
     </header>
 
     <div class="cc-stage is-empty" id="ccStage">
+      <div class="cc-drop" id="ccDrop" hidden><span class="cc-drop-pill">Drop a file to attach it</span></div>
 
       <!-- empty state (greeting) -->
       <div class="cc-empty">
@@ -1911,21 +1932,21 @@
         <h1>What can I help you with?</h1>
         <p>All specialists in one brain.</p>
         <div class="cc-cards" id="ccEmptyCards">
-          <button class="ccard" type="button" data-mode="study" data-prompt="Explain this topic simply, with an example and 3 quiz questions: ">
-            <span class="ccard-t">Study Anything</span>
-            <span class="ccard-d">Simple explanations, examples and quizzes</span>
+          <button class="ccard" type="button" data-card="study" aria-pressed="false">
+            <span class="ccard-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 5.5C4.5 4.5 8 4.5 11 6v13c-3-1.5-6.5-1.5-9-.5zM22 5.5c-2.5-1-6-1-9 .5v13c3-1.5 6.5-1.5 9-.5z"/></svg></span>
+            <span class="ccard-txt"><span class="ccard-t">Study Anything</span><span class="ccard-d">Simple explanations, examples and quizzes</span></span>
           </button>
-          <button class="ccard" type="button" data-mode="deep" data-prompt="Research this topic in depth, with key findings and sources: ">
-            <span class="ccard-t">Deep Research</span>
-            <span class="ccard-d">Multi-source analysis and clear summaries</span>
+          <button class="ccard" type="button" data-card="research" aria-pressed="false">
+            <span class="ccard-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+            <span class="ccard-txt"><span class="ccard-t">Deep Research</span><span class="ccard-d">Multi-source analysis and clear summaries</span></span>
           </button>
-          <button class="ccard" type="button" data-mode="coding" data-prompt="Help me write and debug code for: ">
-            <span class="ccard-t">Coding Assistant</span>
-            <span class="ccard-d">Write, fix and explain code</span>
+          <button class="ccard" type="button" data-card="coding" aria-pressed="false">
+            <span class="ccard-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+            <span class="ccard-txt"><span class="ccard-t">Coding Assistant</span><span class="ccard-d">Write, fix and explain code</span></span>
           </button>
-          <button class="ccard" type="button" data-mode="quick" data-prompt="Analyse my file or data and summarise the key insights: ">
-            <span class="ccard-t">File &amp; Data Analysis</span>
-            <span class="ccard-d">Attach a file and get clear insights</span>
+          <button class="ccard" type="button" data-card="analysis" aria-pressed="false">
+            <span class="ccard-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 17v-3M12 17v-6M16 17v-4"/></svg></span>
+            <span class="ccard-txt"><span class="ccard-t">File &amp; Data Analysis</span><span class="ccard-d">Attach a file and get clear insights</span></span>
           </button>
         </div>
       </div>
@@ -1947,6 +1968,7 @@
       <div class="cc-composer">
         <div class="attach-preview" id="attachPreview" style="display:none;">
           <img id="attachThumb" alt="Attached photo">
+          <span class="attach-ext" id="attachExt" hidden></span>
           <span id="attachName"></span>
           <button id="attachRemove" type="button" aria-label="Remove photo">✕</button>
         </div>
@@ -1967,6 +1989,7 @@
             <option value="creative">Creative Studio</option>
           </select>
           <span class="cc-mode-hint" id="ccModeHint"></span>
+          <button type="button" id="studyRestart" class="cc-session-btn" hidden title="Start a fresh study session">Restart study session</button>
           <span class="cc-tool-wrap" id="creativeToolWrap" hidden>
             <label for="creativeTool">Creative tool</label>
             <select id="creativeTool" class="cc-mode-select" aria-label="Creative tool">
@@ -1997,7 +2020,6 @@
           <span class="img-set-hint" id="imgSetHint"></span>
         </div>
 
-        <button type="button" id="studyRestart" class="cc-mode-select" hidden>Restart Study Session</button>
         <div class="cc-filters" id="ccFilters" hidden>
           <label for="ccFilter">Search filter</label>
           <select id="ccFilter" class="cc-mode-select" aria-label="Search filter">
@@ -2131,6 +2153,7 @@
   const attachBtn = document.getElementById('chatAttachBtn');
   const attachInput = document.getElementById('attachInput');
   const attachPreview = document.getElementById('attachPreview');
+  const attachExt = document.getElementById('attachExt');
   const attachThumb = document.getElementById('attachThumb');
   const attachName = document.getElementById('attachName');
   const attachRemove = document.getElementById('attachRemove');
@@ -2490,11 +2513,18 @@
     attachInput.value = '';
     attachPreview.style.display = 'none';
     attachThumb.style.display = '';
+    attachExt.hidden = true;
     attachBtn.classList.remove('has-file');
   }
-  attachInput.addEventListener('change', ()=>{
-    const file = attachInput.files && attachInput.files[0];
+  // One entry point for the + menu and drag-and-drop.
+  function takeFile(file){
     if(!file) return;
+    const isImg = /^image\//.test(file.type) || /\.(png|jpe?g|webp|heic|heif)$/i.test(file.name);
+    const kb = file.size < 1048576 ? Math.max(1, Math.round(file.size / 1024)) + ' KB' : (file.size / 1048576).toFixed(1) + ' MB';
+    attachThumb.style.display = isImg ? '' : 'none';
+    attachExt.hidden = isImg;
+    attachExt.textContent = (file.name.split('.').pop() || 'file').toUpperCase() + ' · ' + kb;
+    attachName.title = file.name;
 
     if(/\.(doc|xls|ppt)$/i.test(file.name)){
       alert('Old .doc, .xls and .ppt files are not supported. Please save the file as .docx, .xlsx or PDF.');
@@ -2544,6 +2574,11 @@
       return;
     }
 
+    if(!isImg){
+      alert('This file type is not supported. Attach an image, PDF, DOCX, XLSX, TXT, CSV, MD or JSON.');
+      attachInput.value = '';
+      return;
+    }
     if(file.size > 3.5 * 1024 * 1024){
       alert('Please choose an image under 3MB.');
       attachInput.value = '';
@@ -2562,8 +2597,34 @@
       attachBtn.classList.add('has-file');
     };
     reader.readAsDataURL(file);
-  });
+  }
+  attachInput.addEventListener('change', ()=>{ takeFile(attachInput.files && attachInput.files[0]); });
   attachRemove.addEventListener('click', clearAttachment);
+
+  // ---- Drag and drop onto the chat: one file at a time, same rules as the + menu ----
+  (function(){
+    const stageEl = document.getElementById('ccStage');
+    const dropEl = document.getElementById('ccDrop');
+    if(!stageEl || !dropEl) return;
+    let depth = 0;
+    const hasFiles = e => !!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') > -1);
+    const canDrop = () => !stageEl.classList.contains('teacher-on');
+    stageEl.addEventListener('dragenter', e => { if(!hasFiles(e) || !canDrop()) return; e.preventDefault(); depth++; dropEl.hidden = false; });
+    stageEl.addEventListener('dragover', e => { if(!hasFiles(e) || !canDrop()) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    stageEl.addEventListener('dragleave', e => { if(!hasFiles(e)) return; depth = Math.max(0, depth - 1); if(depth === 0) dropEl.hidden = true; });
+    stageEl.addEventListener('drop', e => {
+      if(!hasFiles(e)) return;
+      depth = 0; dropEl.hidden = true;
+      if(!canDrop()) return;
+      e.preventDefault();
+      const files = e.dataTransfer.files;
+      if(files.length > 1) alert('Please drop one file at a time.');
+      else takeFile(files[0]);
+    });
+    // stop the browser from opening a file dropped outside the chat area
+    window.addEventListener('dragover', e => { if(hasFiles(e)) e.preventDefault(); });
+    window.addEventListener('drop', e => { if(hasFiles(e)) e.preventDefault(); });
+  })();
 
   // ---- Document reading in the browser (no external libraries) ----
   async function inflateBytes(bytes, format){
@@ -4116,6 +4177,23 @@
     if(empty) empty.hidden = on;
     if(!on) stage.classList.toggle('is-empty', !(body && body.children.length > 1));
   }
+  // Welcome cards: each card has a home mode. Its prompt adapts to the active mode.
+  const CARD_DEFS = {
+    study:    { mode:'study', active:['study','solver'], prompt:'Explain this topic simply, with an example and 3 quiz questions: ', byMode:{ solver:'Solve this step by step, showing each working: ' } },
+    research: { mode:'deep', active:['deep','web','academic'], prompt:'Research this topic in depth, with key findings and sources: ', byMode:{ web:'Search the web for the latest verified information on: ', academic:'Find and summarise academic papers and findings on: ' } },
+    coding:   { mode:'coding', active:['coding'], prompt:'Help me write and debug code for: ', byMode:{} },
+    analysis: { mode:'file', active:['file','data'], prompt:'Analyse the attached file and summarise the key insights: ', byMode:{ data:'Analyse my data, spot trends and outliers, and explain them: ' } }
+  };
+  function cardPrompt(def){ return def.byMode[currentMode] || def.prompt; }
+  function renderCards(){
+    document.querySelectorAll('#ccEmptyCards .ccard').forEach(function(card){
+      const def = CARD_DEFS[card.dataset.card];
+      if(!def) return;
+      const on = def.active.indexOf(currentMode) > -1;
+      card.classList.toggle('is-active', on);
+      card.setAttribute('aria-pressed', String(on));
+    });
+  }
   function setMode(m){
     if(!Object.prototype.hasOwnProperty.call(MODE_HINTS, m)) m = 'quick';
     currentMode = m;
@@ -4126,6 +4204,7 @@
     updateImageSettings();
     const srBtn = document.getElementById('studyRestart');
     if(srBtn) srBtn.hidden = m !== 'study';
+    renderCards();
     setTeacherView(m === 'teacher');
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
@@ -4692,22 +4771,37 @@
     window.addEventListener('pagehide', function(){ endSession(); });
   })();
   // Enter sends, Shift+Enter starts a new line
+  // Enter / Ctrl+Enter / Cmd+Enter send, Shift+Enter adds a line, Esc stops a running answer
   input.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
       e.preventDefault();
       if(!activeRequest) handleSend(input.value);
     }
+    if(e.key === 'Escape' && activeRequest && !e.isComposing){
+      e.preventDefault();
+      stopRequest();
+    }
   });
   input.addEventListener('input', autoGrow);
-  // welcome cards: set the matching mode and fill the composer (user presses Enter to send)
+  // shorter placeholder on phones so it does not clip beside the voice and send controls
+  (function(){
+    const narrow = window.matchMedia('(max-width:480px)');
+    const setPh = () => { input.placeholder = narrow.matches ? 'Ask Aviqo' : 'How can Aviqo help you today?'; };
+    setPh();
+    if(narrow.addEventListener) narrow.addEventListener('change', setPh);
+  })();
+  // welcome cards: keep the active mode if it fits the card, otherwise switch to the card's mode; fill the composer (user presses Enter to send)
   document.querySelectorAll('#ccEmptyCards .ccard').forEach(card=>{
     card.addEventListener('click', ()=>{
       if(!isSignedUp){ openSignup(); return; }
-      if(card.dataset.mode && currentMode !== card.dataset.mode) setMode(card.dataset.mode);
-      input.value = card.dataset.prompt || '';
+      const def = CARD_DEFS[card.dataset.card];
+      if(!def) return;
+      if(def.active.indexOf(currentMode) === -1) setMode(def.mode);
+      input.value = cardPrompt(def);
       autoGrow();
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
+      renderCards();
     });
   });
   input.addEventListener('focus', ()=>{ if(!isSignedUp){ input.blur(); openSignup(); } });
