@@ -1250,6 +1250,11 @@
     background:none; color:var(--text); font:500 14px 'Inter',sans-serif; text-align:left; cursor:pointer; white-space:nowrap;
   }
   .cc .cc-link:hover{background:var(--surface-2);}
+  .cc .cc-link[hidden]{display:none !important;}
+  .cc-stage .teacher-panel{flex:1;min-height:0;display:flex;padding:0 0 8px;}
+  .cc-stage .teacher-panel[hidden]{display:none;}
+  .cc-stage .teacher-panel iframe{flex:1;width:100%;border:0;min-height:0;background:transparent;}
+  .cc-stage .cc-empty[hidden], .cc-stage .chat-body[hidden]{display:none !important;}
   .cc .cc-link svg{width:17px; height:17px; flex:none; stroke:var(--muted); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
   .cc .cc-section{font:600 11px 'JetBrains Mono',monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--muted-2); padding:16px 10px 6px;}
   .cc .cc-recents{flex:1 1 auto; min-height:0; overflow-y:auto;}
@@ -1785,6 +1790,10 @@
       <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.5a3.5 3.5 0 010 7M21.5 20a6.5 6.5 0 00-4-6"/></svg>
       Team
     </a>
+    <button class="cc-link" id="ccTeacherLink" type="button" hidden>
+      <svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v5"/></svg>
+      Teacher Mode
+    </button>
 
     <div class="cc-section">Recents</div>
     <input class="cc-history-search" id="ccHistorySearch" type="search" placeholder="Search chats" aria-label="Search chats" autocomplete="off">
@@ -1887,6 +1896,11 @@
         </div>
       </div>
 
+      <!-- teacher mode panel (same login and credits; rendered from teacher.html in embed mode) -->
+      <div class="teacher-panel" id="teacherPanel" hidden>
+        <iframe id="teacherFrame" title="Teacher Mode" loading="lazy" referrerpolicy="same-origin"></iframe>
+      </div>
+
       <!-- composer -->
       <div class="cc-composer">
         <div class="attach-preview" id="attachPreview" style="display:none;">
@@ -1904,6 +1918,7 @@
             <option value="academic">Academic Research</option>
             <option value="solver">Problem Solver</option>
             <option value="study">Study Mode</option>
+            <option value="teacher">Teacher Mode</option>
             <option value="coding">Coding Assistant</option>
             <option value="file">File Analysis</option>
             <option value="data">Data Analyst</option>
@@ -2107,6 +2122,7 @@
 
   function showProfile(user){
     navSignupBtn.style.display = 'none';
+    const tl = document.getElementById('ccTeacherLink'); if(tl) tl.hidden = false;
     if(navGetAccess) navGetAccess.style.display = 'none';
     profilePill.style.display = 'flex';
     profileAvatar.textContent = (user.name || '?').trim().charAt(0).toUpperCase();
@@ -2122,6 +2138,7 @@
 
   function hideProfile(){
     navSignupBtn.style.display = '';
+    const tl = document.getElementById('ccTeacherLink'); if(tl) tl.hidden = true;
     if(navGetAccess) navGetAccess.style.display = '';
     profilePill.style.display = 'none';
   }
@@ -3976,7 +3993,8 @@
     coding: 'Complete code, fixes and tests',
     file: 'Answers from an attached TXT, CSV, MD, JSON or image',
     data: 'Calculations, tables and insights from your data',
-    creative: 'Writing, ideas and scripts'
+    creative: 'Writing, ideas and scripts',
+    teacher: 'Question papers, MCQs and answer keys for teachers'
   };
   const modeSelect = document.getElementById('ccMode');
   const modeHint = document.getElementById('ccModeHint');
@@ -4014,6 +4032,32 @@
     }
   }
 
+  // Teacher Mode replaces the chat area and composer with the teacher panel. Other modes restore them.
+  function setTeacherView(on){
+    const panel = document.getElementById('teacherPanel');
+    const frame = document.getElementById('teacherFrame');
+    const stage = document.getElementById('ccStage');
+    if(!panel || !frame || !stage) return;
+    panel.hidden = !on;
+    if(on && !frame.getAttribute('src')) frame.setAttribute('src', 'teacher.html?embed=1');
+    stage.classList.toggle('teacher-on', on);
+    stage.classList.remove('is-empty');
+    // Hide the chat input and attachments, but keep the mode selector so the user can leave Teacher Mode.
+    const composer = stage.querySelector('.cc-composer');
+    if(composer){
+      Array.prototype.forEach.call(composer.children, function(child){
+        if(child.classList.contains('cc-modebar')) return;
+        // inline style, so CSS display rules on these rows cannot override the hiding
+        if(on){ if(child.dataset.teacherHid === undefined){ child.dataset.teacherHid = child.style.display; child.style.display = 'none'; } }
+        else if(child.dataset.teacherHid !== undefined){ child.style.display = child.dataset.teacherHid; delete child.dataset.teacherHid; }
+      });
+    }
+    const body = document.getElementById('chatBody');
+    if(body) body.hidden = on;
+    const empty = stage.querySelector('.cc-empty');
+    if(empty) empty.hidden = on;
+    if(!on) stage.classList.toggle('is-empty', !(body && body.children.length > 1));
+  }
   function setMode(m){
     if(!Object.prototype.hasOwnProperty.call(MODE_HINTS, m)) m = 'quick';
     currentMode = m;
@@ -4024,6 +4068,7 @@
     updateImageSettings();
     const srBtn = document.getElementById('studyRestart');
     if(srBtn) srBtn.hidden = m !== 'study';
+    setTeacherView(m === 'teacher');
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
   document.getElementById('studyRestart').addEventListener('click', function(){
@@ -4064,6 +4109,11 @@
   fetch('/api/generate-image').then(function(r){ return r.ok ? r.json() : null; }).then(applyImageCaps).catch(function(){});
 
   modeSelect.addEventListener('change', ()=> setMode(modeSelect.value));
+  const teacherLink = document.getElementById('ccTeacherLink');
+  if(teacherLink) teacherLink.addEventListener('click', function(){
+    setMode('teacher');
+    const side = document.getElementById('ccSide'); if(side && side.classList.contains('open')) { const s = document.getElementById('ccScrim'); if(s) s.click(); }
+  });
   (function(){ var saved = 'quick'; try{ saved = localStorage.getItem('aviqo_mode') || 'quick'; }catch(e){} setMode(saved); })();
 
   sendBtn.addEventListener('click', ()=>{ if(activeRequest){ stopRequest(); return; } handleSend(input.value); });
