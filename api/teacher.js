@@ -292,7 +292,7 @@ export default async function handler(req, res) {
 
   const creditKey = 'credits:' + email;
   let left;
-  try { left = await spendCredits(creditKey, cost); } catch (e) { return res.status(503).json({ error: 'Credits are not available right now.' }); }
+  try { left = await spendCredits(creditKey, cost); } catch (e) { console.error('Teacher credits error:', e && e.message); return res.status(503).json({ error: 'Credits are not available right now.' }); }
   if (left === null) return res.status(402).json({ error: 'Not enough credits for this request.' });
 
   try {
