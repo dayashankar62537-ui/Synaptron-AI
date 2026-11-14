@@ -59,6 +59,15 @@ export function normalizeBase(raw) {
   if (!cfg.chapters.length || cfg.chapters.length > 15) errors.push('Enter 1 to 15 chapters.');
   if (!DIFFS.includes(cfg.difficulty)) errors.push('Difficulty must be easy, medium, hard or mixed.');
   if (!LANGS[cfg.language]) errors.push('Language must be en, hi or hinglish.');
+  // Optional difficulty split for mixed papers, e.g. { easy: 30, medium: 50, hard: 20 }.
+  const mixIn = r.difficultyMix && typeof r.difficultyMix === 'object' ? r.difficultyMix : null;
+  cfg.difficultyMix = null;
+  if (mixIn) {
+    const mix = { easy: Number(mixIn.easy), medium: Number(mixIn.medium), hard: Number(mixIn.hard) };
+    const valid = [mix.easy, mix.medium, mix.hard].every((x) => Number.isInteger(x) && x >= 0 && x <= 100);
+    if (!valid || mix.easy + mix.medium + mix.hard !== 100) errors.push('Difficulty split must be whole numbers that add up to 100.');
+    else cfg.difficultyMix = mix;
+  }
   return { cfg, errors };
 }
 
@@ -234,7 +243,7 @@ function paperPrompt(cfg, name, avoid) {
   return {
     system: 'You write school exam questions for Indian students. Language: ' + LANGS[cfg.language] + '. Write maths in plain text or Unicode (for example A ∪ B, x², √2), never LaTeX, and never use backslashes. Output valid JSON only. '
       + 'Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. '
-      + 'Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' ? ' (mix easy, medium and hard)' : '') + '. This is paper set ' + name + '; make its questions different from other sets.\n'
+      + 'Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' ? (cfg.difficultyMix ? ' (about ' + cfg.difficultyMix.easy + '% easy, ' + cfg.difficultyMix.medium + '% medium, ' + cfg.difficultyMix.hard + '% hard)' : ' (mix easy, medium and hard)') : '') + '. This is paper set ' + name + '; make its questions different from other sets.\n'
       + 'Sections, in this exact order:\n' + specs + '\n'
       + 'Return ONLY JSON: {"sections":[{"type":"mcq"|"short"|"long"|"numerical","questions":[...]}]}. '
       + 'MCQ question: {"question","options":[4 distinct strings],"answerIndex":0-3,"explanation"}. '
@@ -247,7 +256,7 @@ function paperPrompt(cfg, name, avoid) {
 function mcqPrompt(cfg, count, avoid) {
   return {
     system: 'You write multiple choice questions for Indian school students. Language: ' + LANGS[cfg.language] + '. Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Write maths in plain text or Unicode, never LaTeX or backslashes. Output valid JSON only. '
-      + 'Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. Difficulty: ' + cfg.difficulty + '. '
+      + 'Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' && cfg.difficultyMix ? ' (about ' + cfg.difficultyMix.easy + '% easy, ' + cfg.difficultyMix.medium + '% medium, ' + cfg.difficultyMix.hard + '% hard)' : '') + '. '
       + 'Return ONLY JSON: {"questions":[{"question","options":[4 distinct strings],"answerIndex":0-3,"explanation"}]} with ' + count + ' questions. Exactly one option is correct. Every answer must be correct. Do not repeat these questions: ' + JSON.stringify(avoid.slice(0, 40)) + '.',
     user: 'Write the questions now.'
   };
