@@ -2112,9 +2112,11 @@ function creditKey(user, ip) {
   return 'credits:ip:' + ip;
 }
 
+// Env values pasted into Vercel often carry spaces, newlines or quotes; strip them so the URL parses.
+function cleanEnv(v) { return String(v || '').trim().replace(/^["']+|["']+$/g, '').trim(); }
 async function redisCmd(cmd) {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = cleanEnv(process.env.UPSTASH_REDIS_REST_URL);
+  const token = cleanEnv(process.env.UPSTASH_REDIS_REST_TOKEN);
   if (!url || !token) throw new Error('Credits store is not configured');
   const r = await fetchWithTimeout(url, {
     method: 'POST',
