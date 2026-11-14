@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AVIQO 3D Studio</title>
+<meta name="description" content="Turn anything into 3D. Create, customize and edit 3D models in your browser.">
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --surface-2:#f0f2f5; --border:#e2e5ea; --border-hi:#cfd4dc;
+    --text:#161a22; --muted:#667085; --accent:#ff8c28; --accent-soft:rgba(255,140,40,.12); --danger:#d92d20;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1116; --surface:#171a21; --surface-2:#1f232c; --border:#2a2f3a; --border-hi:#3a4150;
+      --text:#eef0f4; --muted:#9aa3b2; --accent-soft:rgba(255,140,40,.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1116; --surface:#171a21; --surface-2:#1f232c; --border:#2a2f3a; --border-hi:#3a4150;
+    --text:#eef0f4; --muted:#9aa3b2; --accent-soft:rgba(255,140,40,.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; height:100%; background:var(--bg); color:var(--text);}
+  body{font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow:hidden;}
+  button,input,select{font:inherit; color:inherit;}
+  button{cursor:pointer;}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  [hidden]{display:none !important;}
+
+  .studio{
+    display:grid; height:100vh; height:100dvh; min-width:0;
+    grid-template-columns:248px minmax(0,1fr) 288px;
+    grid-template-rows:auto minmax(0,1fr) auto;
+    grid-template-areas:"top top top" "left view right" "left bar right";
+  }
+  header.top{
+    grid-area:top; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--border); min-width:0;
+  }
+  .brand{display:flex; flex-direction:column; min-width:0; margin-right:auto;}
+  .brand strong{font-size:15px; letter-spacing:.02em;}
+  .brand span{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .brand a{color:var(--muted); font-size:12px; text-decoration:none;}
+  .brand a:hover{color:var(--text);}
+  .top-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .btn{
+    min-height:44px; padding:8px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text); display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    white-space:nowrap; transition:background .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .btn:hover:not(:disabled){background:var(--surface-2); border-color:var(--border-hi);}
+  .btn:active:not(:disabled){transform:scale(.98);}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.primary:hover:not(:disabled){filter:brightness(1.05); background:var(--accent);}
+  .btn.danger:hover:not(:disabled){color:var(--danger); border-color:var(--danger);}
+  .btn[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent);}
+  .btn svg{width:18px; height:18px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+
+  aside{
+    background:var(--surface); overflow-y:auto; min-height:0; padding:14px; display:flex; flex-direction:column; gap:16px;
+  }
+  aside#left{grid-area:left; border-right:1px solid var(--border);}
+  .drawer-head{display:none; align-items:center; justify-content:space-between; gap:8px;}
+  .drawer-head strong{font-size:14px;}
+  aside#right{grid-area:right; border-left:1px solid var(--border);}
+  .section h2{font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 8px; font-weight:600;}
+  .grid3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
+  .grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;}
+  .shape-btn{flex-direction:column; min-height:64px; padding:10px 4px; font-size:13px;}
+  .shape-btn i{width:26px; height:26px; border-radius:7px; background:var(--accent-soft); display:block; border:1px solid var(--accent);}
+  .shape-btn i.sq{border-radius:4px;}
+  .shape-btn i.ci{border-radius:50%;}
+  .shape-btn i.cy{border-radius:13px / 7px;}
+  .block{display:flex; flex-direction:column; gap:8px;}
+  .note{font-size:12.5px; color:var(--muted); margin:0;}
+  .note.warn{color:var(--text); background:var(--accent-soft); padding:8px 10px; border-radius:10px;}
+
+  .objects{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
+  .objects li{display:flex;}
+  .obj-btn{
+    flex:1; min-height:44px; text-align:left; padding:8px 10px; border-radius:10px; border:1px solid transparent;
+    background:var(--surface-2); display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0;
+  }
+  .obj-btn:hover{border-color:var(--border-hi);}
+  .obj-btn[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft);}
+  .obj-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .obj-type{font-size:11.5px; color:var(--muted); flex:none;}
+
+  .props{display:grid; grid-template-columns:1fr; gap:10px;}
+  .row{display:grid; grid-template-columns:72px minmax(0,1fr); align-items:center; gap:8px;}
+  .row label, .row .lbl{color:var(--muted); font-size:13px;}
+  .xyz{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px;}
+  .xyz label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--muted); min-width:0;}
+  input[type="number"], input[type="text"]{
+    width:100%; min-width:0; min-height:40px; padding:8px 9px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface-2);
+  }
+  input[type="color"]{width:100%; min-height:40px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); padding:4px;}
+  input[type="range"]{width:100%; min-height:40px; accent-color:var(--accent);}
+  .sel-info{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  main.view{grid-area:view; position:relative; min-width:0; min-height:0; overflow:hidden;}
+  #viewport{position:absolute; inset:0; background:#e9ecf1; touch-action:none;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #viewport{background:#0b0d12;} }
+  :root[data-theme="dark"] #viewport{background:#0b0d12;}
+  #viewport canvas{display:block; width:100%; height:100%;}
+  .hint{
+    position:absolute; left:12px; top:12px; font-size:12.5px; color:var(--muted);
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:6px 10px; pointer-events:none;
+    max-width:calc(100% - 24px);
+  }
+  #msg{
+    position:absolute; left:50%; bottom:12px; transform:translateX(-50%); max-width:calc(100% - 24px);
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:8px 12px; font-size:13px;
+    box-shadow:0 6px 20px rgba(0,0,0,.08); text-align:center;
+  }
+  #msg[data-kind="error"]{border-color:var(--danger); color:var(--danger);}
+  #msg:empty{display:none;}
+  .empty-card{
+    position:absolute; inset:0; margin:auto; width:min(360px, calc(100% - 32px)); height:max-content;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  .empty-card h3{margin:0 0 6px; font-size:16px;}
+  .empty-card p{margin:0; color:var(--muted); font-size:13.5px;}
+  .engine-banner{
+    position:absolute; left:12px; right:12px; top:12px; background:var(--surface); border:1px solid var(--danger);
+    color:var(--danger); border-radius:12px; padding:10px 12px; font-size:13px;
+  }
+
+  nav.bar{
+    grid-area:bar; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+    padding:8px 10px; background:var(--surface); border-top:1px solid var(--border); min-width:0;
+  }
+  .bar .sep{width:1px; height:28px; background:var(--border); margin:0 4px;}
+  .drawer-toggle{display:none;}
+
+  @media (max-width:1100px){
+    .studio{grid-template-columns:220px minmax(0,1fr) 250px;}
+  }
+  /* tablet and phone: side panels become drawers over the viewport */
+  @media (max-width:860px){
+    .studio{
+      grid-template-columns:minmax(0,1fr);
+      grid-template-rows:auto minmax(0,1fr) auto;
+      grid-template-areas:"top" "view" "bar";
+    }
+    aside#left, aside#right{
+      position:fixed; left:0; right:0; bottom:0; max-height:70vh; z-index:30;
+      border:0; border-top:1px solid var(--border); border-radius:18px 18px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,.15);
+      transform:translateY(100%); transition:transform .22s ease; padding-bottom:calc(14px + env(safe-area-inset-bottom));
+    }
+    aside#left.open, aside#right.open{transform:none;}
+    .drawer-toggle{display:inline-flex;}
+    .drawer-head{display:flex;}
+    .hint{display:none;}
+    .grid3{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .brand span{display:none;}
+  }
+  @media (max-width:520px){
+    header.top{padding:8px 10px; gap:8px;}
+    .top-actions{width:100%; justify-content:space-between;}
+    .top-actions .btn{flex:1; padding:8px 6px; min-width:0; font-size:13px;}
+    .top-actions .btn .lbl-long{display:none;}
+    nav.bar{gap:6px; padding:6px;}
+    nav.bar .btn{min-width:44px; padding:8px 8px;}
+    nav.bar .btn .lbl{display:none;}
+    .bar .sep{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){ aside#left, aside#right{transition:none;} }
+</style>
+<script src="studio-core.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="studio">
+
+  <header class="top">
+    <div class="brand">
+      <strong>AVIQO 3D STUDIO</strong>
+      <span>Turn Anything Into 3D. Create, Customize &amp; Edit.</span>
+      <a href="chat.html">← Back to Aviqo chat</a>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="btnUndo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+        <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg><span class="lbl-long">Undo</span>
+      </button>
+      <button class="btn" id="btnRedo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+        <svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg><span class="lbl-long">Redo</span>
+      </button>
+      <button class="btn" id="btnExportGlb" type="button" title="Export GLB">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>GLB
+      </button>
+      <button class="btn" id="btnExportGltf" type="button" title="Export GLTF (JSON)">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>GLTF
+      </button>
+    </div>
+  </header>
+
+  <aside id="left" aria-label="Create and objects">
+    <div class="drawer-head"><strong>Create &amp; objects</strong><button class="btn" type="button" data-close>Close</button></div>
+    <section class="section block">
+      <h2>Add shape</h2>
+      <div class="grid3">
+        <button class="btn shape-btn" type="button" data-shape="cube"><i class="sq"></i>Cube</button>
+        <button class="btn shape-btn" type="button" data-shape="sphere"><i class="ci"></i>Sphere</button>
+        <button class="btn shape-btn" type="button" data-shape="cylinder"><i class="cy"></i>Cylinder</button>
+      </div>
+    </section>
+
+    <section class="section block">
+      <h2>Import</h2>
+      <button class="btn" id="btnImport" type="button">
+        <svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 21h14"/></svg>Upload GLB model
+      </button>
+      <input id="glbInput" type="file" accept=".glb,model/gltf-binary" hidden>
+      <p class="note">GLB files up to 50 MB. Imported models keep their own materials until you edit them.</p>
+    </section>
+
+    <section class="section block" aria-labelledby="aiTitle">
+      <h2 id="aiTitle">AI generation</h2>
+      <p class="note warn">Text-to-3D and image-to-3D are not active yet. They will be enabled when the Tripo3D API key is configured on the server. Nothing is generated until then.</p>
+    </section>
+
+    <section class="section block">
+      <h2>Objects <span id="objectCount" class="note" style="display:inline;text-transform:none;letter-spacing:0"></span></h2>
+      <ul class="objects" id="objectList"></ul>
+    </section>
+  </aside>
+
+  <main class="view">
+    <div id="viewport" aria-label="3D viewport"></div>
+    <div class="hint" id="hint">Drag to orbit · Scroll to zoom · Click an object to select it</div>
+    <div class="empty-card" id="emptyHint">
+      <h3>Start with a shape</h3>
+      <p>Add a cube, sphere or cylinder from the left panel, or upload a GLB model. Then move, rotate, scale and recolor it.</p>
+    </div>
+    <div class="engine-banner" id="engineBanner" hidden></div>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </main>
+
+  <aside id="right" aria-label="Object properties">
+    <div class="drawer-head"><strong>Properties</strong><button class="btn" type="button" data-close>Close</button></div>
+    <section class="section block">
+      <h2>Selected</h2>
+      <div class="sel-info" id="selInfo">Nothing selected</div>
+      <p class="note" id="importNote" hidden>Imported model: color and material edits apply to all its parts.</p>
+    </section>
+
+    <section class="section props" id="propsPanel" aria-label="Properties">
+      <h2>Transform</h2>
+      <div class="row"><span class="lbl">Name</span><input type="text" data-field="name" maxlength="40" aria-label="Name"></div>
+      <div class="row"><span class="lbl">Position</span>
+        <div class="xyz">
+          <label>X<input type="number" step="0.1" data-field="position" data-axis="0" aria-label="Position X"></label>
+          <label>Y<input type="number" step="0.1" data-field="position" data-axis="1" aria-label="Position Y"></label>
+          <label>Z<input type="number" step="0.1" data-field="position" data-axis="2" aria-label="Position Z"></label>
+        </div>
+      </div>
+      <div class="row"><span class="lbl">Rotate°</span>
+        <div class="xyz">
+          <label>X<input type="number" step="1" data-field="rotation" data-axis="0" aria-label="Rotation X"></label>
+          <label>Y<input type="number" step="1" data-field="rotation" data-axis="1" aria-label="Rotation Y"></label>
+          <label>Z<input type="number" step="1" data-field="rotation" data-axis="2" aria-label="Rotation Z"></label>
+        </div>
+      </div>
+      <div class="row"><span class="lbl">Scale</span>
+        <div class="xyz">
+          <label>X<input type="number" step="0.1" min="0.01" data-field="scale" data-axis="0" aria-label="Scale X"></label>
+          <label>Y<input type="number" step="0.1" min="0.01" data-field="scale" data-axis="1" aria-label="Scale Y"></label>
+          <label>Z<input type="number" step="0.1" min="0.01" data-field="scale" data-axis="2" aria-label="Scale Z"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="section props">
+      <h2>Material</h2>
+      <div class="row"><span class="lbl">Color</span><input type="color" data-field="color" value="#ff8c28" aria-label="Color"></div>
+      <div class="row"><span class="lbl">Roughness</span><input type="range" min="0" max="1" step="0.01" data-field="roughness" aria-label="Roughness"></div>
+      <div class="row"><span class="lbl">Metalness</span><input type="range" min="0" max="1" step="0.01" data-field="metalness" aria-label="Metalness"></div>
+    </section>
+
+    <section class="section block">
+      <h2>Actions</h2>
+      <div class="grid2">
+        <button class="btn" id="btnDuplicate" type="button" data-action title="Duplicate (Ctrl+D)">Duplicate</button>
+        <button class="btn danger" id="btnDelete" type="button" data-action title="Delete (Del)">Delete</button>
+      </div>
+    </section>
+  </aside>
+
+  <nav class="bar" aria-label="Editing tools">
+    <button class="btn drawer-toggle" id="btnObjects" type="button" aria-controls="left" aria-expanded="false">Objects</button>
+    <button class="btn" type="button" data-mode="translate" aria-pressed="true" title="Move (W)" aria-label="Move">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span class="lbl">Move</span>
+    </button>
+    <button class="btn" type="button" data-mode="rotate" aria-pressed="false" title="Rotate (E)" aria-label="Rotate">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg><span class="lbl">Rotate</span>
+    </button>
+    <button class="btn" type="button" data-mode="scale" aria-pressed="false" title="Scale (R)" aria-label="Scale">
+      <svg viewBox="0 0 24 24"><path d="M4 20V4h16"/><path d="M8 16l12-12"/><path d="M14 4h6v6"/></svg><span class="lbl">Scale</span>
+    </button>
+    <span class="sep"></span>
+    <button class="btn" id="btnFrame" type="button" title="Frame selected (F)" aria-label="Frame selected">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Frame</span>
+    </button>
+    <button class="btn" id="btnDuplicate2" type="button" data-action title="Duplicate (Ctrl+D)" aria-label="Duplicate">
+      <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/></svg><span class="lbl">Duplicate</span>
+    </button>
+    <button class="btn danger" id="btnDelete2" type="button" data-action title="Delete (Del)" aria-label="Delete">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span class="lbl">Delete</span>
+    </button>
+    <button class="btn drawer-toggle" id="btnProps" type="button" aria-controls="right" aria-expanded="false">Properties</button>
+  </nav>
+</div>
+
+<script type="module">
+  const Core = window.StudioCore;
+  const $ = (id) => document.getElementById(id);
+
+  // ---- Load Three.js (pinned). If it fails, the editor UI still works without the viewport. ----
+  let THREE = null, OrbitControls, TransformControls, GLTFLoader, GLTFExporter;
+  let engineError = '';
+  try {
+    THREE = await import('three');
+    ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    ({ TransformControls } = await import('three/addons/controls/TransformControls.js'));
+    ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+    ({ GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js'));
+  } catch (err) {
+    THREE = null;
+    engineError = 'The 3D viewport could not load (Three.js). Check your connection and reload. The object list and editing panels still work.';
+  }
+
+  const history = Core.createHistory(Core.emptyState());
+  const state = () => history.present;
+  const glbSources = new Map();   // glbRef -> THREE.Object3D (parsed GLB scene)
+  let glbCounter = 0;
+  const meshes = new Map();       // object id -> THREE.Object3D
+  let renderer, scene, camera, controls, transform, contentGroup, raycaster, gltfLoader;
+  let gizmoDragging = false;
+
+  function setMsg(text, isError) {
+    const m = $('msg');
+    m.textContent = text || '';
+    m.dataset.kind = isError ? 'error' : 'info';
+  }
+
+  // ---- State changes: one place that updates history, viewport and panels ----
+  function applyState(next, mode) {
+    if (mode === 'commit') history.commit(next); else history.preview(next);
+    syncScene();
+    refreshUI();
+  }
+
+  function sanitize(s) {
+    if (s.selectedId && !Core.getObject(s, s.selectedId)) return { ...s, selectedId: null };
+    return s;
+  }
+
+  function addShape(shape) {
+    try {
+      const r = Core.addShape(state(), shape);
+      applyState(r.state, 'commit');
+      setMsg(shape.charAt(0).toUpperCase() + shape.slice(1) + ' added.');
+    } catch (e) { setMsg(e.message, true); }
+  }
+
+  function selectById(id) {
+    try { applyState(Core.selectObject(state(), id), 'preview'); }
+    catch (e) { setMsg(e.message, true); }
+  }
+
+  function duplicateSelected() {
+    const sel = state().selectedId;
+    if (!sel) return;
+    try {
+      const r = Core.duplicateObject(state(), sel);
+      applyState(r.state, 'commit');
+      setMsg('Duplicated.');
+    } catch (e) { setMsg(e.message, true); }
+  }
+
+  function deleteSelected() {
+    const sel = state().selectedId;
+    if (!sel) return;
+    try {
+      const r = Core.deleteObject(state(), sel);
+      applyState(r.state, 'commit');
+      setMsg('Deleted. Press Ctrl+Z to undo.');
+    } catch (e) { setMsg(e.message, true); }
+  }
+
+  function undo() {
+    const s = history.undo();
+    if (s) { applyState(sanitize(s), 'preview'); setMsg('Undone.'); }
+  }
+  function redo() {
+    const s = history.redo();
+    if (s) { applyState(sanitize(s), 'preview'); setMsg('Redone.'); }
+  }
+
+  // ---- Viewport sync: scene state -> Three.js objects ----
+  function buildObject(o) {
+    if (o.type === 'glb') {
+      const src = glbSources.get(o.glbRef);
+      if (!src) return null;
+      const group = new THREE.Group();
+      const copy = src.clone(true);
+      copy.traverse((n) => {
+        if (n.isMesh) n.material = Array.isArray(n.material) ? n.material.map((m) => m.clone()) : n.material.clone();
+      });
+      group.add(copy);
+      group.userData.id = o.id;
+      return group;
+    }
+    let geometry;
+    if (o.type === 'cube') geometry = new THREE.BoxGeometry(1, 1, 1);
+    else if (o.type === 'sphere') geometry = new THREE.SphereGeometry(0.5, 40, 24);
+    else geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 40);
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: '#ffffff' }));
+    mesh.userData.id = o.id;
+    return mesh;
+  }
+
+  function applyMaterial(o, obj) {
+    obj.traverse((n) => {
+      if (!n.isMesh) return;
+      const mats = Array.isArray(n.material) ? n.material : [n.material];
+      mats.forEach((m) => {
+        if (!m || !m.color) return;
+        if (o.color) m.color.set(o.color);
+        if (o.roughness !== null && 'roughness' in m) m.roughness = o.roughness;
+        if (o.metalness !== null && 'metalness' in m) m.metalness = o.metalness;
+      });
+    });
+  }
+
+  function disposeObject(obj) {
+    obj.traverse((n) => {
+      if (n.isMesh && n.userData.id) {
+        n.geometry.dispose();
+        (Array.isArray(n.material) ? n.material : [n.material]).forEach((m) => m.dispose());
+      }
+    });
+  }
+
+  function syncScene() {
+    if (!THREE) return;
+    const s = state();
+    const live = new Set();
+    const D = THREE.MathUtils.DEG2RAD;
+    s.objects.forEach((o) => {
+      live.add(o.id);
+      let obj = meshes.get(o.id);
+      if (!obj) {
+        obj = buildObject(o);
+        if (!obj) return;
+        meshes.set(o.id, obj);
+        contentGroup.add(obj);
+      }
+      obj.position.set(o.position[0], o.position[1], o.position[2]);
+      obj.rotation.set(o.rotation[0] * D, o.rotation[1] * D, o.rotation[2] * D);
+      obj.scale.set(o.scale[0], o.scale[1], o.scale[2]);
+      applyMaterial(o, obj);
+    });
+    for (const [id, obj] of meshes) {
+      if (!live.has(id)) {
+        if (transform.object === obj) transform.detach();
+        contentGroup.remove(obj);
+        disposeObject(obj);
+        meshes.delete(id);
+      }
+    }
+    const selObj = s.selectedId ? meshes.get(s.selectedId) : null;
+    if (selObj) { if (transform.object !== selObj) transform.attach(selObj); }
+    else if (transform.object) transform.detach();
+  }
+
+  // Reads the gizmo's current transform for the selected object.
+  function patchFromGizmo() {
+    const obj = transform && transform.object;
+    if (!obj) return null;
+    const id = obj.userData.id;
+    if (!id || !Core.getObject(state(), id)) return null;
+    const R = THREE.MathUtils.RAD2DEG;
+    return {
+      id,
+      position: [obj.position.x, obj.position.y, obj.position.z],
+      rotation: [obj.rotation.x * R, obj.rotation.y * R, obj.rotation.z * R],
+      scale: [obj.scale.x, obj.scale.y, obj.scale.z]
+    };
+  }
+
+  // ---- Panels ----
+  function fieldValue(o, field, axis) {
+    if (field === 'position' || field === 'rotation' || field === 'scale') return o[field][axis];
+    return o[field];
+  }
+
+  function refreshUI() {
+    const s = state();
+    const sel = s.selectedId ? Core.getObject(s, s.selectedId) : null;
+    $('btnUndo').disabled = !history.canUndo();
+    $('btnRedo').disabled = !history.canRedo();
+    const atLimit = s.objects.length >= Core.MAX_OBJECTS;
+    ['btnDuplicate', 'btnDuplicate2'].forEach((id) => { $(id).disabled = !sel || atLimit; });
+    ['btnDelete', 'btnDelete2'].forEach((id) => { $(id).disabled = !sel; });
+    $('btnFrame').disabled = !sel || !THREE;
+    $('emptyHint').hidden = s.objects.length > 0;
+    $('objectCount').textContent = s.objects.length + '/' + Core.MAX_OBJECTS;
+    renderList(s);
+
+    $('selInfo').textContent = sel ? sel.name + ' · ' + (sel.type === 'glb' ? 'Imported model' : sel.type) : 'Nothing selected';
+    $('importNote').hidden = !(sel && sel.type === 'glb');
+    document.querySelectorAll('#propsPanel input, #right input').forEach((inp) => {
+      inp.disabled = !sel;
+      if (inp === document.activeElement) return;   // never overwrite a field the user is typing in
+      if (!sel) { if (inp.type !== 'color') inp.value = ''; return; }
+      const f = inp.dataset.field;
+      if (!f) return;
+      if (f === 'color') inp.value = sel.color || '#cccccc';
+      else if (f === 'roughness' || f === 'metalness') inp.value = sel[f] === null ? 0.5 : sel[f];
+      else if (f === 'name') inp.value = sel.name;
+      else inp.value = String(Number(Number(fieldValue(sel, f, Number(inp.dataset.axis))).toFixed(2)));
+    });
+  }
+
+  function renderList(s) {
+    const list = $('objectList');
+    list.replaceChildren();
+    s.objects.forEach((o) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'obj-btn';
+      btn.setAttribute('aria-pressed', String(o.id === s.selectedId));
+      const name = document.createElement('span');
+      name.className = 'obj-name';
+      name.textContent = o.name;
+      const type = document.createElement('span');
+      type.className = 'obj-type';
+      type.textContent = o.type === 'glb' ? 'GLB' : o.type;
+      btn.append(name, type);
+      btn.addEventListener('click', () => selectById(o.id));
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+
+  // Numeric and text fields: 'input' previews live, 'change' creates one undo step.
+  document.querySelectorAll('#right [data-field]').forEach((inp) => {
+    const handle = (commit) => {
+      const sel = state().selectedId;
+      if (!sel) return;
+      const o = Core.getObject(state(), sel);
+      const f = inp.dataset.field;
+      let patch;
+      try {
+        if (f === 'name') patch = { name: inp.value };
+        else if (f === 'color') patch = { color: inp.value };
+        else if (f === 'roughness' || f === 'metalness') patch = { [f]: Number(inp.value) };
+        else {
+          const arr = o[f].slice();
+          arr[Number(inp.dataset.axis)] = Number(inp.value);
+          patch = { [f]: arr };
+        }
+        applyState(Core.updateObject(state(), sel, patch), commit ? 'commit' : 'preview');
+      } catch (e) {
+        setMsg(e.message, true);
+        refreshUI();
+      }
+    };
+    inp.addEventListener('input', () => handle(false));
+    inp.addEventListener('change', () => handle(true));
+  });
+
+  // ---- Viewport ----
+  function initViewport() {
+    const host = $('viewport');
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    host.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(getComputedStyle(host).backgroundColor || '#e9ecf1');
+    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.set(4, 3, 6);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f99, 1.1));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+    sun.position.set(5, 10, 7);
+    scene.add(sun);
+    const grid = new THREE.GridHelper(20, 20, 0x9aa3b2, 0xcfd5de);
+    scene.add(grid);
+
+    contentGroup = new THREE.Group();
+    contentGroup.name = 'AviqoScene';
+    scene.add(contentGroup);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0.5, 0);
+    controls.update();
+
+    transform = new TransformControls(camera, renderer.domElement);
+    transform.setMode('translate');
+    scene.add(transform);
+    transform.addEventListener('dragging-changed', (e) => {
+      controls.enabled = !e.value;
+      gizmoDragging = !!e.value;
+      if (!e.value) {
+        const p = patchFromGizmo();
+        if (p) {
+          const { id, ...fields } = p;
+          try { applyState(Core.updateObject(state(), id, fields), 'commit'); }
+          catch (err) { setMsg(err.message, true); refreshUI(); }
+        }
+      }
+    });
+    transform.addEventListener('objectChange', () => {
+      const p = patchFromGizmo();
+      if (!p) return;
+      const { id, ...fields } = p;
+      try { applyState(Core.updateObject(state(), id, fields), 'preview'); }
+      catch (err) { /* ignore transient values while dragging */ }
+    });
+
+    raycaster = new THREE.Raycaster();
+    gltfLoader = new GLTFLoader();
+
+    let down = null;
+    renderer.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      if (!down || gizmoDragging) { down = null; return; }
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      down = null;
+      if (moved > 6) return;                       // was an orbit drag, not a click
+      selectById(pickAt(e.clientX, e.clientY));
+    });
+
+    const resize = () => {
+      const w = Math.max(1, host.clientWidth), h = Math.max(1, host.clientHeight);
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    new ResizeObserver(resize).observe(host);
+    resize();
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  }
+
+  function pickAt(clientX, clientY) {
+    const r = renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObjects(contentGroup.children, true);
+    for (const h of hits) {
+      let o = h.object;
+      while (o) {
+        if (o.userData && o.userData.id) return o.userData.id;
+        o = o.parent;
+      }
+    }
+    return null;
+  }
+
+  function frameSelected() {
+    const sel = state().selectedId && meshes.get(state().selectedId);
+    if (!sel || !THREE) return;
+    controls.target.copy(sel.position);
+    camera.position.copy(sel.position).add(new THREE.Vector3(3, 2, 4));
+    controls.update();
+  }
+
+  // ---- Mode buttons ----
+  function setTransformMode(mode) {
+    const map = { translate: 'translate', rotate: 'rotate', scale: 'scale' };
+    if (transform) transform.setMode(map[mode]);
+    document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  }
+
+  // ---- Export ----
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportScene(binary) {
+    if (!THREE) return setMsg('The 3D viewport is not loaded, so export is unavailable. Reload the page.', true);
+    if (!state().objects.length) return setMsg('Add an object before exporting.', true);
+    setMsg('Exporting…');
+    new GLTFExporter().parse(
+      contentGroup,
+      (result) => {
+        const blob = binary
+          ? new Blob([result], { type: 'model/gltf-binary' })
+          : new Blob([JSON.stringify(result)], { type: 'model/gltf+json' });
+        download(blob, binary ? 'aviqo-3d-studio.glb' : 'aviqo-3d-studio.gltf');
+        setMsg(binary ? 'GLB exported.' : 'GLTF exported.');
+      },
+      (err) => setMsg('Export failed: ' + ((err && err.message) || err), true),
+      { binary, onlyVisible: true }
+    );
+  }
+
+  // ---- GLB import ----
+  $('btnImport').addEventListener('click', () => $('glbInput').click());
+  $('glbInput').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const problem = Core.checkGlb(header, file.size);
+    if (problem) return setMsg(problem, true);
+    if (!THREE) return setMsg('The 3D viewport is not loaded, so GLB import is unavailable. Reload the page.', true);
+    const bytes = await file.arrayBuffer();
+    gltfLoader.parse(bytes, '', (gltf) => {
+      const key = 'g' + (++glbCounter);
+      glbSources.set(key, gltf.scene);
+      const name = file.name.replace(/\.glb$/i, '').slice(0, 40) || 'Imported model';
+      try {
+        applyState(Core.addObject(state(), { type: 'glb', name, glbRef: key }).state, 'commit');
+        setMsg('Imported ' + name + '.');
+      } catch (err) { setMsg(err.message, true); }
+    }, (err) => setMsg('Could not read this GLB file: ' + ((err && err.message) || err), true));
+  });
+
+  // ---- Wiring ----
+  document.querySelectorAll('[data-shape]').forEach((b) => b.addEventListener('click', () => addShape(b.dataset.shape)));
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setTransformMode(b.dataset.mode)));
+  $('btnUndo').addEventListener('click', undo);
+  $('btnRedo').addEventListener('click', redo);
+  $('btnDuplicate').addEventListener('click', duplicateSelected);
+  $('btnDuplicate2').addEventListener('click', duplicateSelected);
+  $('btnDelete').addEventListener('click', deleteSelected);
+  $('btnDelete2').addEventListener('click', deleteSelected);
+  $('btnFrame').addEventListener('click', frameSelected);
+  $('btnExportGlb').addEventListener('click', () => exportScene(true));
+  $('btnExportGltf').addEventListener('click', () => exportScene(false));
+
+  // Drawers on phones and tablets
+  function toggleDrawer(which) {
+    const panel = $(which === 'left' ? 'left' : 'right');
+    const other = $(which === 'left' ? 'right' : 'left');
+    other.classList.remove('open');
+    panel.classList.toggle('open');
+    $('btnObjects').setAttribute('aria-expanded', String($('left').classList.contains('open')));
+    $('btnProps').setAttribute('aria-expanded', String($('right').classList.contains('open')));
+  }
+  $('btnObjects').addEventListener('click', () => toggleDrawer('left'));
+  $('btnProps').addEventListener('click', () => toggleDrawer('right'));
+  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => {
+    $('left').classList.remove('open');
+    $('right').classList.remove('open');
+    $('btnObjects').setAttribute('aria-expanded', 'false');
+    $('btnProps').setAttribute('aria-expanded', 'false');
+  }));
+
+  // Keyboard shortcuts (ignored while typing in a field)
+  window.addEventListener('keydown', (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
+    if (typing) {
+      if (e.key === 'Escape') document.activeElement.blur();
+      return;
+    }
+    const mod = e.ctrlKey || e.metaKey;
+    const k = e.key.toLowerCase();
+    if (mod && k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if (mod && ((k === 'z' && e.shiftKey) || k === 'y')) { e.preventDefault(); redo(); }
+    else if (mod && k === 'd') { e.preventDefault(); duplicateSelected(); }
+    else if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
+      if (state().selectedId) { e.preventDefault(); deleteSelected(); }
+    }
+    else if (!mod && k === 'w') setTransformMode('translate');
+    else if (!mod && k === 'e') setTransformMode('rotate');
+    else if (!mod && k === 'r') setTransformMode('scale');
+    else if (!mod && k === 'f') frameSelected();
+    else if (e.key === 'Escape') selectById(null);
+  });
+
+  // ---- Start ----
+  if (THREE) {
+    initViewport();
+    syncScene();
+    setTransformMode('translate');
+  } else {
+    $('engineBanner').hidden = false;
+    $('engineBanner').textContent = engineError;
+    $('viewport').style.display = 'none';
+    $('hint').hidden = true;
+    $('emptyHint').querySelector('p').textContent = 'The 3D viewport is unavailable right now. Reload the page to try again.';
+  }
+  refreshUI();
+</script>
+</body>
+</html>
