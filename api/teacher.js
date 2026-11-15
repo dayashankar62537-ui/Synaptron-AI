@@ -278,7 +278,12 @@ async function callModel(groqKey, system, user, maxTokens) {
       body: JSON.stringify(Object.assign({ model: TEACHER_MODEL, temperature: 0.4, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }, TEACHER_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {})),
       signal: ctrl.signal
     });
-    if (!r.ok) throw Object.assign(new Error('model HTTP ' + r.status), { status: r.status, retryAfter: Number(r.headers && r.headers.get && r.headers.get('retry-after')) || 0 });
+    if (!r.ok) {
+      // Groq's body says which limit was hit (per minute, or per day), so keep a short piece of it for the logs.
+      const body = typeof r.text === 'function' ? await r.text().catch(() => '') : '';
+      const detail = String(body).replace(/\s+/g, ' ').slice(0, 300);
+      throw Object.assign(new Error('model HTTP ' + r.status + ' ' + detail), { status: r.status, retryAfter: Number(r.headers && r.headers.get && r.headers.get('retry-after')) || 0 });
+    }
     const d = await r.json();
     return { text: String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || ''), finish: String((d && d.choices && d.choices[0] && d.choices[0].finish_reason) || '') };
   } finally { clearTimeout(timer); }
