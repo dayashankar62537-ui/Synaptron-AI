@@ -17,7 +17,10 @@ const SIGNED_IN_COST_PER_CALL = 2;
 const FREE_CREDITS = 10;
 // Models write far more reliably in small batches. Each call asks for at most BATCH questions, batches run in
 // parallel and any shortfall is topped up. A request can ask for up to MAX_QUESTIONS.
-const BATCH = 5;
+const BATCH = 10;
+// Groq rate-limits each key. Keep the number of calls per request small and spaced out.
+let PACE_MS = 1500;
+export function __setPace(ms) { PACE_MS = ms; }
 const MAX_QUESTIONS = 50;
 // Vercel stops a function after maxDuration (60 s). Generation gets a shorter budget so the function always
 // answers, and the credits are refunded, instead of being killed mid-call.
@@ -275,7 +278,7 @@ async function callModel(groqKey, system, user, maxTokens) {
       body: JSON.stringify(Object.assign({ model: TEACHER_MODEL, temperature: 0.4, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }, TEACHER_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {})),
       signal: ctrl.signal
     });
-    if (!r.ok) throw new Error('model HTTP ' + r.status);
+    if (!r.ok) throw Object.assign(new Error('model HTTP ' + r.status), { status: r.status, retryAfter: Number(r.headers && r.headers.get && r.headers.get('retry-after')) || 0 });
     const d = await r.json();
     return { text: String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || ''), finish: String((d && d.choices && d.choices[0] && d.choices[0].finish_reason) || '') };
   } finally { clearTimeout(timer); }
@@ -317,14 +320,19 @@ function withDeadline(promise, ms) {
 // Asks the model for one batch. Returns raw items (possibly none); the caller validates them.
 async function askBatch(groqKey, cfg, t, n, avoid, setName) {
   let size = n;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt) await pause(1500);
+  for (let attempt = 0, tries = 0; attempt < 6 && tries < 3; attempt++) {
     const p = questionPrompt(cfg, t, size, avoid, setName);
     let reply;
-    try { reply = await callModel(groqKey, p.system, p.user, 8000); } catch (e) { console.error('Teacher model call failed:', e.message); continue; }
+    try { reply = await callModel(groqKey, p.system, p.user, 8000); }
+    catch (e) {
+      console.error('Teacher model call failed:', e.message, 'batch', t, size);
+      if (e.status === 429) { await pause(Math.max(e.retryAfter * 1000, 5000 * (tries + 1))); tries++; continue; }
+      tries++; await pause(2000); continue;
+    }
     const items = parseQuestions(reply.text);
     console.error('Teacher batch', JSON.stringify({ type: t, set: setName || '-', asked: size, finish: reply.finish, chars: reply.text.length, items: items ? items.length : 'unparsed' }));
     if (items && items.length) return items;
+    tries++;
     // Cut off before the end: ask for fewer questions next time.
     if (reply.finish === 'length' && size > 2) size = Math.ceil(size / 2);
     else if (!items) console.error('Teacher reply start:', reply.text.slice(0, 200));
@@ -365,6 +373,13 @@ function cleanItem(t, q, cfg) {
   if (!answer) return reject('missing answer');
   repairMarking({ sections: [{ type: t, questions: [q] }] }, cfg);
   const steps = Array.isArray(q.marking) ? q.marking.filter((s) => s && typeof s === 'object') : [];
+  if (steps.length > cfg.types[t].marks) {
+    const keep = steps.slice(0, cfg.types[t].marks);
+    const extra = steps.slice(cfg.types[t].marks);
+    keep.forEach((x) => { x.marks = 1; });
+    keep[keep.length - 1].step = keep[keep.length - 1].step + ' ' + extra.map((x) => str(x.step, 100)).join(' ');
+    steps.splice(0, steps.length, ...keep);
+  }
   if (!steps.length || steps.some((s) => !str(s.step, 300) || !isInt(Number(s.marks), 1, 10))) return reject('marking steps invalid');
   if (steps.reduce((a, s) => a + Number(s.marks), 0) !== cfg.types[t].marks) return reject('marking does not add up');
   return { question, answer, marking: steps.map((s) => ({ step: str(s.step, 300), marks: Number(s.marks) })) };
@@ -388,6 +403,8 @@ async function fillSlots(groqKey, cfg, slots, avoid, deadline) {
   };
   // Round 1: every slot in small batches. Later rounds: ask each short slot for exactly what it still lacks.
   // Keep going until every slot is full or the time budget is nearly used.
+  let calls = 0;
+  const maxCalls = slots.length > 1 ? 24 : 14;
   for (let round = 0; round < 12; round++) {
     const work = [];
     slots.forEach((slot) => {
@@ -396,8 +413,10 @@ async function fillSlots(groqKey, cfg, slots, avoid, deadline) {
       if (round === 0) chunkSizes(slot.need).forEach((size) => work.push({ slot, size: size + 3 }));
       else work.push({ slot, size: Math.min(BATCH, missing + 3) });
     });
-    if (!work.length || Date.now() > deadline) break;
-    const out = await mapLimit(work, 6, (job) => askBatch(groqKey, cfg, job.slot.type, job.size, round === 0 ? [] : usedText.slice(-60), job.slot.set));
+    if (!work.length || Date.now() > deadline || calls >= maxCalls) break;
+    calls += work.length;
+    const out = await mapLimit(work, 2, (job) => askBatch(groqKey, cfg, job.slot.type, job.size, round === 0 ? [] : usedText.slice(-60), job.slot.set));
+    if (PACE_MS) await pause(PACE_MS);
     work.forEach((job, i) => accept(job.slot, out[i]));
   }
   if (Object.keys(reasons).length) console.error('Teacher rejected model items:', JSON.stringify(reasons));
