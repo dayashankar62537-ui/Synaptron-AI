@@ -19,6 +19,10 @@ const FREE_CREDITS = 10;
 // parallel and any shortfall is topped up. A request can ask for up to MAX_QUESTIONS.
 const BATCH = 10;
 const MAX_QUESTIONS = 50;
+// Vercel stops a function after maxDuration (60 s). Generation gets a shorter budget so the function always
+// answers, and the credits are refunded, instead of being killed mid-call.
+let GENERATION_BUDGET_MS = 50000;
+export function __setBudget(ms) { GENERATION_BUDGET_MS = ms; }
 
 // ---------- helpers ----------
 export function norm(text) { return String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
@@ -280,6 +284,16 @@ function questionPrompt(cfg, t, n, avoid, setName) {
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Rejects with a clear message if the work is not finished within ms.
+function withDeadline(promise, ms) {
+  let timer;
+  const limit = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error('The AI took too long to finish. Please try again, or ask for fewer questions.'), { code: 'generation' })), ms);
+  });
+  promise.catch(() => {});
+  return Promise.race([promise, limit]).finally(() => clearTimeout(timer));
+}
+
 // Asks the model for one batch. Returns raw items (possibly none); the caller validates them.
 async function askBatch(groqKey, cfg, t, n, avoid, setName) {
   const p = questionPrompt(cfg, t, n, avoid, setName);
@@ -310,23 +324,25 @@ function chunkSizes(n) {
 }
 
 // Returns a cleaned question for a type, or null when the model's item is unusable.
+let lastReason = '';
+function reject(why) { lastReason = why; return null; }
 function cleanItem(t, q, cfg) {
-  if (!q || typeof q !== 'object') return null;
+  if (!q || typeof q !== 'object') return reject('not an object');
   const question = str(q.question, 800);
-  if (!question) return null;
+  if (!question) return reject('empty question');
   if (t === 'mcq') {
     const opts = Array.isArray(q.options) ? q.options.map((o) => str(o, 300)) : [];
-    if (opts.length !== 4 || opts.some((o) => !o) || new Set(opts.map(norm)).size !== 4) return null;
+    if (opts.length !== 4 || opts.some((o) => !o) || new Set(opts.map(norm)).size !== 4) return reject('options not 4 distinct');
     const ai = resolveAnswerIndex(q, opts);
-    if (ai < 0) return null;
+    if (ai < 0) return reject('answer index/text not usable');
     return { question, options: opts, answerIndex: ai, explanation: str(q.explanation, 600) };
   }
   const answer = str(q.answer, 600);
-  if (!answer) return null;
+  if (!answer) return reject('missing answer');
   repairMarking({ sections: [{ type: t, questions: [q] }] }, cfg);
   const steps = Array.isArray(q.marking) ? q.marking.filter((s) => s && typeof s === 'object') : [];
-  if (!steps.length || steps.some((s) => !str(s.step, 300) || !isInt(Number(s.marks), 1, 10))) return null;
-  if (steps.reduce((a, s) => a + Number(s.marks), 0) !== cfg.types[t].marks) return null;
+  if (!steps.length || steps.some((s) => !str(s.step, 300) || !isInt(Number(s.marks), 1, 10))) return reject('marking steps invalid');
+  if (steps.reduce((a, s) => a + Number(s.marks), 0) !== cfg.types[t].marks) return reject('marking does not add up');
   return { question, answer, marking: steps.map((s) => ({ step: str(s.step, 300), marks: Number(s.marks) })) };
 }
 
@@ -335,28 +351,31 @@ function cleanItem(t, q, cfg) {
 async function fillSlots(groqKey, cfg, slots, avoid) {
   const keys = new Set(avoid.map(norm));
   const usedText = avoid.slice();
+  const reasons = {};
   const accept = (slot, raws) => {
     for (const r of Array.isArray(raws) ? raws : []) {
       if (slot.items.length >= slot.need) break;
       const q = cleanItem(slot.type, r, cfg);
-      if (!q) continue;
+      if (!q) { reasons[lastReason] = (reasons[lastReason] || 0) + 1; continue; }
       const k = norm(q.question);
-      if (keys.has(k)) continue;
+      if (keys.has(k)) { reasons['duplicate question'] = (reasons['duplicate question'] || 0) + 1; continue; }
       keys.add(k); usedText.push(q.question); slot.items.push(q);
     }
   };
   const jobs = [];
   slots.forEach((slot) => chunkSizes(slot.need).forEach((size) => jobs.push({ slot, size })));
-  const first = await mapLimit(jobs, 4, (job) => askBatch(groqKey, cfg, job.slot.type, job.size + 2, [], job.slot.set));
+  const first = await mapLimit(jobs, 4, (job) => askBatch(groqKey, cfg, job.slot.type, job.size + 4, [], job.slot.set));
   jobs.forEach((job, i) => accept(job.slot, first[i]));
-  for (let round = 0; round < 2; round++) {
+  for (let round = 0; round < 3; round++) {
     const short = slots.filter((s) => s.items.length < s.need);
     if (!short.length) break;
-    const extra = await mapLimit(short, 4, (slot) => askBatch(groqKey, cfg, slot.type, Math.min(BATCH, slot.need - slot.items.length + 2), usedText, slot.set));
+    const extra = await mapLimit(short, 4, (slot) => askBatch(groqKey, cfg, slot.type, Math.min(BATCH, slot.need - slot.items.length + 4), usedText, slot.set));
     short.forEach((slot, i) => accept(slot, extra[i]));
   }
+  if (Object.keys(reasons).length) console.error('Teacher rejected model items:', JSON.stringify(reasons));
   slots.forEach((slot) => {
-    if (slot.items.length < slot.need) {
+    if (slot.items.length < slot.need && (slot.set || slot.items.length === 0)) {
+      // Paper sets must be exact. A short MCQ list is returned with what is valid, plus a notice.
       const where = slot.set ? ' for set ' + slot.set : '';
       throw Object.assign(new Error('Only ' + slot.items.length + ' of ' + slot.need + ' unique, valid ' + TYPE_LABEL[slot.type].toLowerCase() + where + ' could be made. Please try again, or check the chapters you entered.'), { code: 'generation' });
     }
@@ -474,6 +493,7 @@ export default async function handler(req, res) {
   if (left === null) return res.status(402).json({ error: 'Not enough credits for this request.' });
 
   try {
+    result = await withDeadline((async () => {
     if (action === 'paper') {
       const cfg = normalized.cfg;
       const names = Array.from({ length: cfg.sets }, (_, i) => String.fromCharCode(65 + i));
@@ -487,14 +507,16 @@ export default async function handler(req, res) {
         const built = buildSet(parsed, cfg, name);
         return { name, paper: built.paper, answerKey: built.answerKey };
       });
-      result = { sets };
+      return { sets };
     } else {
       const want = normalized.count;
       const slot = { set: null, type: 'mcq', need: want, items: [] };
       await fillSlots(groqKey, normalized.cfg, [slot], normalized.avoid);
       const items = cleanMcqs(slot.items, want, []);
-      result = { requested: want, questions: items.map((q) => ({ no: q.no, question: q.question, options: q.options })), answerKey: items.map((q) => ({ no: q.no, answerLetter: q.answerLetter, answer: q.answer, explanation: q.explanation })) };
+      const notice = items.length < want ? 'Only ' + items.length + ' of ' + want + ' unique, valid questions could be made. You can generate again to get the rest.' : '';
+      return { requested: want, notice, questions: items.map((q) => ({ no: q.no, question: q.question, options: q.options })), answerKey: items.map((q) => ({ no: q.no, answerLetter: q.answerLetter, answer: q.answer, explanation: q.explanation })) };
     }
+    })(), GENERATION_BUDGET_MS);
   } catch (e) {
     await refundCredits(creditKey, cost);
     console.error('Teacher generation failed', e && e.message);
