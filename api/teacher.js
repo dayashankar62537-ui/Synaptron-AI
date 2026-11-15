@@ -17,7 +17,7 @@ const SIGNED_IN_COST_PER_CALL = 2;
 const FREE_CREDITS = 10;
 // Models write far more reliably in small batches. Each call asks for at most BATCH questions, batches run in
 // parallel and any shortfall is topped up. A request can ask for up to MAX_QUESTIONS.
-const BATCH = 10;
+const BATCH = 5;
 const MAX_QUESTIONS = 50;
 // Vercel stops a function after maxDuration (60 s). Generation gets a shorter budget so the function always
 // answers, and the credits are refunded, instead of being killed mid-call.
@@ -244,6 +244,26 @@ export function extractJson(raw) {
   try { return JSON.parse(m[0].replace(/\\(?!["\\\/bfnrtu])/g, '\\\\')); } catch (e) { return null; }
 }
 
+// Pulls the question list out of a model reply. Accepts {"questions":[...]}, a bare [...] array,
+// trailing commas, and LaTeX backslashes that break JSON.
+export function parseQuestions(text) {
+  const cleaned = String(text || '').replace(/,\s*([}\]])/g, '$1');
+  for (const pat of [/\{[\s\S]*\}/, /\[[\s\S]*\]/]) {
+    const m = cleaned.match(pat);
+    if (!m) continue;
+    for (const candidate of [m[0], m[0].replace(/\\(?!["\\\/bfnrtu])/g, '\\\\')]) {
+      try {
+        const v = JSON.parse(candidate);
+        if (Array.isArray(v)) return v;
+        if (v && Array.isArray(v.questions)) return v.questions;
+        const firstArray = v && Object.values(v).find((x) => Array.isArray(x));
+        if (firstArray) return firstArray;
+      } catch (e) { /* try the next form */ }
+    }
+  }
+  return null;
+}
+
 // ---------- model call ----------
 async function callModel(groqKey, system, user, maxTokens) {
   const ctrl = new AbortController();
@@ -257,7 +277,7 @@ async function callModel(groqKey, system, user, maxTokens) {
     });
     if (!r.ok) throw new Error('model HTTP ' + r.status);
     const d = await r.json();
-    return String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '');
+    return { text: String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || ''), finish: String((d && d.choices && d.choices[0] && d.choices[0].finish_reason) || '') };
   } finally { clearTimeout(timer); }
 }
 
@@ -296,14 +316,18 @@ function withDeadline(promise, ms) {
 
 // Asks the model for one batch. Returns raw items (possibly none); the caller validates them.
 async function askBatch(groqKey, cfg, t, n, avoid, setName) {
-  const p = questionPrompt(cfg, t, n, avoid, setName);
-  for (let attempt = 0; attempt < 2; attempt++) {
+  let size = n;
+  for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt) await pause(1500);
-    let raw = '';
-    try { raw = await callModel(groqKey, p.system, p.user, 8000); } catch (e) { console.error('Teacher model call failed:', e.message); continue; }
-    const parsed = extractJson(raw);
-    if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
-    console.error('Teacher output not usable, length', raw.length, 'start:', String(raw).slice(0, 160));
+    const p = questionPrompt(cfg, t, size, avoid, setName);
+    let reply;
+    try { reply = await callModel(groqKey, p.system, p.user, 8000); } catch (e) { console.error('Teacher model call failed:', e.message); continue; }
+    const items = parseQuestions(reply.text);
+    console.error('Teacher batch', JSON.stringify({ type: t, set: setName || '-', asked: size, finish: reply.finish, chars: reply.text.length, items: items ? items.length : 'unparsed' }));
+    if (items && items.length) return items;
+    // Cut off before the end: ask for fewer questions next time.
+    if (reply.finish === 'length' && size > 2) size = Math.ceil(size / 2);
+    else if (!items) console.error('Teacher reply start:', reply.text.slice(0, 200));
   }
   return [];
 }
@@ -348,7 +372,7 @@ function cleanItem(t, q, cfg) {
 
 // Fills every slot (one per paper set and question type, or one for the MCQ generator) with unique, valid questions.
 // Batches run in parallel. A slot that is still short gets up to two top-up calls. Throws when a slot cannot be filled.
-async function fillSlots(groqKey, cfg, slots, avoid) {
+async function fillSlots(groqKey, cfg, slots, avoid, deadline) {
   const keys = new Set(avoid.map(norm));
   const usedText = avoid.slice();
   const reasons = {};
@@ -362,15 +386,19 @@ async function fillSlots(groqKey, cfg, slots, avoid) {
       keys.add(k); usedText.push(q.question); slot.items.push(q);
     }
   };
-  const jobs = [];
-  slots.forEach((slot) => chunkSizes(slot.need).forEach((size) => jobs.push({ slot, size })));
-  const first = await mapLimit(jobs, 4, (job) => askBatch(groqKey, cfg, job.slot.type, job.size + 4, [], job.slot.set));
-  jobs.forEach((job, i) => accept(job.slot, first[i]));
-  for (let round = 0; round < 3; round++) {
-    const short = slots.filter((s) => s.items.length < s.need);
-    if (!short.length) break;
-    const extra = await mapLimit(short, 4, (slot) => askBatch(groqKey, cfg, slot.type, Math.min(BATCH, slot.need - slot.items.length + 4), usedText, slot.set));
-    short.forEach((slot, i) => accept(slot, extra[i]));
+  // Round 1: every slot in small batches. Later rounds: ask each short slot for exactly what it still lacks.
+  // Keep going until every slot is full or the time budget is nearly used.
+  for (let round = 0; round < 12; round++) {
+    const work = [];
+    slots.forEach((slot) => {
+      const missing = slot.need - slot.items.length;
+      if (missing <= 0) return;
+      if (round === 0) chunkSizes(slot.need).forEach((size) => work.push({ slot, size: size + 3 }));
+      else work.push({ slot, size: Math.min(BATCH, missing + 3) });
+    });
+    if (!work.length || Date.now() > deadline) break;
+    const out = await mapLimit(work, 6, (job) => askBatch(groqKey, cfg, job.slot.type, job.size, round === 0 ? [] : usedText.slice(-60), job.slot.set));
+    work.forEach((job, i) => accept(job.slot, out[i]));
   }
   if (Object.keys(reasons).length) console.error('Teacher rejected model items:', JSON.stringify(reasons));
   slots.forEach((slot) => {
@@ -492,6 +520,8 @@ export default async function handler(req, res) {
   try { left = await spendCredits(creditKey, cost); } catch (e) { console.error('Teacher credits error:', e && e.message); return res.status(503).json({ error: 'Credits are not available right now.' }); }
   if (left === null) return res.status(402).json({ error: 'Not enough credits for this request.' });
 
+  // Stop starting new rounds early enough to answer before the budget ends.
+  const deadlineAt = Date.now() + Math.max(GENERATION_BUDGET_MS * 0.8, GENERATION_BUDGET_MS - 8000);
   try {
     result = await withDeadline((async () => {
     if (action === 'paper') {
@@ -499,7 +529,7 @@ export default async function handler(req, res) {
       const names = Array.from({ length: cfg.sets }, (_, i) => String.fromCharCode(65 + i));
       const slots = [];
       names.forEach((name) => activeTypes(cfg).forEach((t) => slots.push({ set: name, type: t, need: cfg.types[t].count, items: [] })));
-      await fillSlots(groqKey, cfg, slots, []);
+      await fillSlots(groqKey, cfg, slots, [], deadlineAt);
       const sets = names.map((name) => {
         const parsed = { sections: activeTypes(cfg).map((t) => ({ type: t, questions: slots.find((s) => s.set === name && s.type === t).items })) };
         const errs = validatePaper(parsed, cfg);
@@ -511,7 +541,7 @@ export default async function handler(req, res) {
     } else {
       const want = normalized.count;
       const slot = { set: null, type: 'mcq', need: want, items: [] };
-      await fillSlots(groqKey, normalized.cfg, [slot], normalized.avoid);
+      await fillSlots(groqKey, normalized.cfg, [slot], normalized.avoid, deadlineAt);
       const items = cleanMcqs(slot.items, want, []);
       const notice = items.length < want ? 'Only ' + items.length + ' of ' + want + ' unique, valid questions could be made. You can generate again to get the rest.' : '';
       return { requested: want, notice, questions: items.map((q) => ({ no: q.no, question: q.question, options: q.options })), answerKey: items.map((q) => ({ no: q.no, answerLetter: q.answerLetter, answer: q.answer, explanation: q.explanation })) };
