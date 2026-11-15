@@ -270,7 +270,7 @@ export function parseQuestions(text) {
 // ---------- model call ----------
 async function callModel(groqKey, system, user, maxTokens) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 45000);
+  const timer = setTimeout(() => ctrl.abort(), 25000);
   try {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -318,7 +318,7 @@ function withDeadline(promise, ms) {
 }
 
 // Asks the model for one batch. Returns raw items (possibly none); the caller validates them.
-async function askBatch(groqKey, cfg, t, n, avoid, setName) {
+async function askBatch(groqKey, cfg, t, n, avoid, setName, deadline) {
   let size = n;
   for (let attempt = 0, tries = 0; attempt < 6 && tries < 3; attempt++) {
     const p = questionPrompt(cfg, t, size, avoid, setName);
@@ -326,7 +326,11 @@ async function askBatch(groqKey, cfg, t, n, avoid, setName) {
     try { reply = await callModel(groqKey, p.system, p.user, 8000); }
     catch (e) {
       console.error('Teacher model call failed:', e.message, 'batch', t, size);
-      if (e.status === 429) { await pause(Math.max(e.retryAfter * 1000, 5000 * (tries + 1))); tries++; continue; }
+      if (e.status === 429) {
+        const wait = Math.max(e.retryAfter * 1000, 5000 * (tries + 1));
+        if (Date.now() + wait > deadline) throw Object.assign(new Error('The AI service is busy right now. Please wait a minute and try again.'), { code: 'busy' });
+        await pause(wait); tries++; continue;
+      }
       tries++; await pause(2000); continue;
     }
     const items = parseQuestions(reply.text);
@@ -415,7 +419,7 @@ async function fillSlots(groqKey, cfg, slots, avoid, deadline) {
     });
     if (!work.length || Date.now() > deadline || calls >= maxCalls) break;
     calls += work.length;
-    const out = await mapLimit(work, 2, (job) => askBatch(groqKey, cfg, job.slot.type, job.size, round === 0 ? [] : usedText.slice(-60), job.slot.set));
+    const out = await mapLimit(work, 2, (job) => askBatch(groqKey, cfg, job.slot.type, job.size, round === 0 ? [] : usedText.slice(-60), job.slot.set, deadline));
     if (PACE_MS) await pause(PACE_MS);
     work.forEach((job, i) => accept(job.slot, out[i]));
   }
@@ -569,7 +573,7 @@ export default async function handler(req, res) {
   } catch (e) {
     await refundCredits(creditKey, cost);
     console.error('Teacher generation failed', e && e.message);
-    const msg = e && e.code === 'generation' ? e.message : 'Could not generate a valid result. Please try again, or check the chapters you entered.';
+    const msg = e && (e.code === 'generation' || e.code === 'busy') ? e.message : 'Could not generate a valid result. Please try again, or check the chapters you entered.';
     return res.status(502).json({ error: msg });
   }
   return res.status(200).json(Object.assign({ ok: true, action, syllabusVerified: false, credits: left }, result));
