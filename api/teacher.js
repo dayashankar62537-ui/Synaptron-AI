@@ -15,6 +15,10 @@ const LANGS = { en: 'English', hi: 'Hindi (Devanagari)', hinglish: 'Hinglish (Hi
 const MAX_SETS = 3;
 const SIGNED_IN_COST_PER_CALL = 2;
 const FREE_CREDITS = 10;
+// Models write far more reliably in small batches. Each call asks for at most BATCH questions, batches run in
+// parallel and any shortfall is topped up. A request can ask for up to MAX_QUESTIONS.
+const BATCH = 10;
+const MAX_QUESTIONS = 50;
 
 // ---------- helpers ----------
 export function norm(text) { return String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
@@ -97,6 +101,8 @@ export function normalizeConfig(raw) {
     cfg.types[t] = { count, marks };
     sum += count * marks;
   }
+  const total = Object.values(cfg.types).reduce((a, t) => a + t.count, 0);
+  if (total > MAX_QUESTIONS) errors.push('A paper can have at most ' + MAX_QUESTIONS + ' questions in total.');
   if (!Object.keys(cfg.types).length) errors.push('Choose at least one question type.');
   else if (!errors.length && sum !== cfg.totalMarks) errors.push('Marks do not add up: questions give ' + sum + ' marks, but total is ' + cfg.totalMarks + '.');
   return { cfg, errors };
@@ -192,6 +198,18 @@ export function buildSet(parsed, cfg, name, rng = Math.random) {
   return { paper, answerKey: key };
 }
 
+// Models sometimes number options from 1, write a letter, or only give the answer text. Accept each of these.
+export function resolveAnswerIndex(q, opts) {
+  const text = q && typeof q.answer === 'string' ? norm(q.answer) : '';
+  if (text) { const i = opts.findIndex((o) => norm(o) === text); if (i >= 0) return i; }
+  const v = q ? q.answerIndex : undefined;
+  if (isInt(v, 0, 3)) return v;
+  if (isInt(v, 1, 4)) return v - 1;
+  if (typeof v === 'string' && /^\s*[A-Da-d]\s*$/.test(v)) return 'ABCD'.indexOf(v.trim().toUpperCase());
+  if (typeof v === 'string' && /^\s*[1-4]\s*$/.test(v)) return Number(v) - 1;
+  return -1;
+}
+
 // MCQ generator: validates options, removes duplicates (within the batch and against avoid list), shuffles options.
 export function cleanMcqs(items, count, avoid = [], rng = Math.random) {
   const seen = new Set(avoid.map(norm));
@@ -200,14 +218,15 @@ export function cleanMcqs(items, count, avoid = [], rng = Math.random) {
     const question = str(it && it.question, 500);
     const opts = Array.isArray(it && it.options) ? it.options.map((o) => str(o, 200)) : [];
     if (!question || opts.length !== 4 || opts.some((o) => !o) || new Set(opts.map(norm)).size !== 4) continue;
-    if (!isInt(it.answerIndex, 0, 3)) continue;
+    const ai = resolveAnswerIndex(it, opts);
+    if (ai < 0) continue;
     const key = norm(question);
     if (seen.has(key)) continue;
     seen.add(key);
     const order = [0, 1, 2, 3];
     for (let i = 3; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-    const pos = order.indexOf(it.answerIndex);
-    out.push({ no: out.length + 1, question, options: order.map((i) => opts[i]), answerLetter: 'ABCD'[pos], answer: opts[it.answerIndex], explanation: str(it.explanation, 400) });
+    const pos = order.indexOf(ai);
+    out.push({ no: out.length + 1, question, options: order.map((i) => opts[i]), answerLetter: 'ABCD'[pos], answer: opts[ai], explanation: str(it.explanation, 400) });
     if (out.length === count) break;
   }
   return out;
@@ -238,44 +257,111 @@ async function callModel(groqKey, system, user, maxTokens) {
   } finally { clearTimeout(timer); }
 }
 
-function paperPrompt(cfg, name, avoid) {
-  const specs = activeTypes(cfg).map((t) => '- ' + TYPE_LABEL[t] + ': exactly ' + cfg.types[t].count + ' questions, ' + cfg.types[t].marks + ' mark(s) each.').join('\n');
-  return {
-    system: 'You write school exam questions for Indian students. Language: ' + LANGS[cfg.language] + '. Write maths in plain text or Unicode (for example A ∪ B, x², √2), never LaTeX, and never use backslashes. Output valid JSON only. '
-      + 'Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. '
-      + 'Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' ? (cfg.difficultyMix ? ' (about ' + cfg.difficultyMix.easy + '% easy, ' + cfg.difficultyMix.medium + '% medium, ' + cfg.difficultyMix.hard + '% hard)' : ' (mix easy, medium and hard)') : '') + '. This is paper set ' + name + '; make its questions different from other sets.\n'
-      + 'Sections, in this exact order:\n' + specs + '\n'
-      + 'Return ONLY JSON: {"sections":[{"type":"mcq"|"short"|"long"|"numerical","questions":[...]}]}. '
-      + 'MCQ question: {"question","options":[4 distinct strings],"answerIndex":0-3,"explanation"}. '
-      + 'Other questions: {"question","answer","marking":[{"step","marks"}]} where the step marks add up to the marks per question. '
-      + 'Every answer must be correct. Do not repeat these questions: ' + JSON.stringify(avoid.slice(0, 40)) + '.',
-    user: 'Write the paper now.'
-  };
+function difficultyText(cfg) {
+  if (cfg.difficulty !== 'mixed') return cfg.difficulty;
+  return cfg.difficultyMix ? 'mixed (about ' + cfg.difficultyMix.easy + '% easy, ' + cfg.difficultyMix.medium + '% medium, ' + cfg.difficultyMix.hard + '% hard)' : 'mixed (easy, medium and hard)';
 }
 
-function mcqPrompt(cfg, count, avoid) {
+// One model call writes one batch of one question type.
+function questionPrompt(cfg, t, n, avoid, setName) {
+  const shape = t === 'mcq'
+    ? 'Each item: {"question","options":[4 distinct strings],"answer":"the exact text of the correct option","answerIndex":0-3,"explanation"}. Exactly one option is correct.'
+    : 'Each item: {"question","answer","marking":[{"step","marks"}]} where the marks of the steps add up to ' + cfg.types[t].marks + '.';
   return {
-    system: 'You write multiple choice questions for Indian school students. Language: ' + LANGS[cfg.language] + '. Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Write maths in plain text or Unicode, never LaTeX or backslashes. Output valid JSON only. '
-      + 'Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. Difficulty: ' + cfg.difficulty + (cfg.difficulty === 'mixed' && cfg.difficultyMix ? ' (about ' + cfg.difficultyMix.easy + '% easy, ' + cfg.difficultyMix.medium + '% medium, ' + cfg.difficultyMix.hard + '% hard)' : '') + '. '
-      + 'Return ONLY JSON: {"questions":[{"question","options":[4 distinct strings],"answerIndex":0-3,"explanation"}]} with ' + count + ' questions. Exactly one option is correct. Every answer must be correct. Do not repeat these questions: ' + JSON.stringify(avoid.slice(0, 40)) + '.',
+    system: 'You write school exam questions for Indian students. Language: ' + LANGS[cfg.language] + '. Write maths in plain text or Unicode (for example A ∪ B, x², √2), never LaTeX and never backslashes. Output valid JSON only. '
+      + 'Class ' + cfg.class + ', board ' + cfg.board + ', subject ' + cfg.subject + '. Use ONLY these chapters: ' + cfg.chapters.join('; ') + '. '
+      + 'Difficulty: ' + difficultyText(cfg) + '. ' + (setName ? 'This is paper set ' + setName + '; make its questions different from other sets. ' : '')
+      + 'Write exactly ' + n + ' questions. Question type: ' + TYPE_LABEL[t] + '. Cover different topics from the chapters. Every answer must be correct. '
+      + 'Return ONLY JSON: {"questions":[...]} with ' + n + ' items. ' + shape + ' '
+      + 'Do not repeat these questions: ' + JSON.stringify(avoid.slice(-60)) + '.',
     user: 'Write the questions now.'
   };
 }
 
-// Calls the model up to `attempts` times, returning the first parsed result that passes `check`.
-async function generateValid(groqKey, prompt, check, attempts = 2) {
-  let lastErr = 'no valid output';
-  for (let i = 0; i < attempts; i++) {
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Asks the model for one batch. Returns raw items (possibly none); the caller validates them.
+async function askBatch(groqKey, cfg, t, n, avoid, setName) {
+  const p = questionPrompt(cfg, t, n, avoid, setName);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt) await pause(1500);
     let raw = '';
-    try { raw = await callModel(groqKey, prompt.system, prompt.user, 8000); } catch (e) { lastErr = e.message; console.error('Teacher model call failed:', e.message); continue; }
+    try { raw = await callModel(groqKey, p.system, p.user, 8000); } catch (e) { console.error('Teacher model call failed:', e.message); continue; }
     const parsed = extractJson(raw);
-    if (!parsed) { lastErr = 'not json'; console.error('Teacher output not JSON, length', raw.length, 'start:', String(raw).slice(0, 160)); continue; }
-    const err = check(parsed);
-    if (!err || (Array.isArray(err) && !err.length)) return parsed;
-    lastErr = Array.isArray(err) ? err[0] : err;
-    console.error('Teacher output rejected:', lastErr);
+    if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+    console.error('Teacher output not usable, length', raw.length, 'start:', String(raw).slice(0, 160));
   }
-  throw Object.assign(new Error(lastErr), { code: 'generation' });
+  return [];
+}
+
+// Runs fn over list with at most `limit` calls in flight, so the model provider is not flooded.
+async function mapLimit(list, limit, fn) {
+  const out = new Array(list.length);
+  let next = 0;
+  const worker = async () => { while (next < list.length) { const i = next++; out[i] = await fn(list[i], i); } };
+  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
+  return out;
+}
+
+function chunkSizes(n) {
+  const out = [];
+  for (let left = n; left > 0; left -= BATCH) out.push(Math.min(BATCH, left));
+  return out;
+}
+
+// Returns a cleaned question for a type, or null when the model's item is unusable.
+function cleanItem(t, q, cfg) {
+  if (!q || typeof q !== 'object') return null;
+  const question = str(q.question, 800);
+  if (!question) return null;
+  if (t === 'mcq') {
+    const opts = Array.isArray(q.options) ? q.options.map((o) => str(o, 300)) : [];
+    if (opts.length !== 4 || opts.some((o) => !o) || new Set(opts.map(norm)).size !== 4) return null;
+    const ai = resolveAnswerIndex(q, opts);
+    if (ai < 0) return null;
+    return { question, options: opts, answerIndex: ai, explanation: str(q.explanation, 600) };
+  }
+  const answer = str(q.answer, 600);
+  if (!answer) return null;
+  repairMarking({ sections: [{ type: t, questions: [q] }] }, cfg);
+  const steps = Array.isArray(q.marking) ? q.marking.filter((s) => s && typeof s === 'object') : [];
+  if (!steps.length || steps.some((s) => !str(s.step, 300) || !isInt(Number(s.marks), 1, 10))) return null;
+  if (steps.reduce((a, s) => a + Number(s.marks), 0) !== cfg.types[t].marks) return null;
+  return { question, answer, marking: steps.map((s) => ({ step: str(s.step, 300), marks: Number(s.marks) })) };
+}
+
+// Fills every slot (one per paper set and question type, or one for the MCQ generator) with unique, valid questions.
+// Batches run in parallel. A slot that is still short gets up to two top-up calls. Throws when a slot cannot be filled.
+async function fillSlots(groqKey, cfg, slots, avoid) {
+  const keys = new Set(avoid.map(norm));
+  const usedText = avoid.slice();
+  const accept = (slot, raws) => {
+    for (const r of Array.isArray(raws) ? raws : []) {
+      if (slot.items.length >= slot.need) break;
+      const q = cleanItem(slot.type, r, cfg);
+      if (!q) continue;
+      const k = norm(q.question);
+      if (keys.has(k)) continue;
+      keys.add(k); usedText.push(q.question); slot.items.push(q);
+    }
+  };
+  const jobs = [];
+  slots.forEach((slot) => chunkSizes(slot.need).forEach((size) => jobs.push({ slot, size })));
+  const first = await mapLimit(jobs, 4, (job) => askBatch(groqKey, cfg, job.slot.type, job.size + 2, [], job.slot.set));
+  jobs.forEach((job, i) => accept(job.slot, first[i]));
+  for (let round = 0; round < 2; round++) {
+    const short = slots.filter((s) => s.items.length < s.need);
+    if (!short.length) break;
+    const extra = await mapLimit(short, 4, (slot) => askBatch(groqKey, cfg, slot.type, Math.min(BATCH, slot.need - slot.items.length + 2), usedText, slot.set));
+    short.forEach((slot, i) => accept(slot, extra[i]));
+  }
+  slots.forEach((slot) => {
+    if (slot.items.length < slot.need) {
+      const where = slot.set ? ' for set ' + slot.set : '';
+      throw Object.assign(new Error('Only ' + slot.items.length + ' of ' + slot.need + ' unique, valid ' + TYPE_LABEL[slot.type].toLowerCase() + where + ' could be made. Please try again, or check the chapters you entered.'), { code: 'generation' });
+    }
+    slot.items = slot.items.slice(0, slot.need);
+  });
 }
 
 // ---------- credits and limits (same keys as chat) ----------
@@ -376,7 +462,7 @@ export default async function handler(req, res) {
     const b = normalizeBase(body.config);
     const count = Number(body.count);
     const errs = b.errors.slice();
-    if (!isInt(count, 1, 30)) errs.push('MCQ count must be 1 to 30.');
+    if (!isInt(count, 1, MAX_QUESTIONS)) errs.push('MCQ count must be 1 to ' + MAX_QUESTIONS + '.');
     if (errs.length) return res.status(400).json({ error: errs.join(' ') });
     normalized = { cfg: b.cfg, count, avoid: Array.isArray(body.avoid) ? body.avoid.map((x) => str(x, 500)).filter(Boolean).slice(0, 200) : [] };
     cost = SIGNED_IN_COST_PER_CALL;
@@ -389,31 +475,31 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'paper') {
-      const sets = [];
-      const usedTexts = [];
-      for (let i = 0; i < normalized.cfg.sets; i++) {
-        const name = String.fromCharCode(65 + i);
-        const prompt = paperPrompt(normalized.cfg, name, usedTexts);
-        const parsed = await generateValid(groqKey, prompt, (p) => { repairMarking(p, normalized.cfg); return validatePaper(p, normalized.cfg); });
-        const built = buildSet(parsed, normalized.cfg, name);
-        built.paper.sections.forEach((s) => s.questions.forEach((q) => usedTexts.push(q.question)));
-        sets.push({ name, paper: built.paper, answerKey: built.answerKey });
-      }
+      const cfg = normalized.cfg;
+      const names = Array.from({ length: cfg.sets }, (_, i) => String.fromCharCode(65 + i));
+      const slots = [];
+      names.forEach((name) => activeTypes(cfg).forEach((t) => slots.push({ set: name, type: t, need: cfg.types[t].count, items: [] })));
+      await fillSlots(groqKey, cfg, slots, []);
+      const sets = names.map((name) => {
+        const parsed = { sections: activeTypes(cfg).map((t) => ({ type: t, questions: slots.find((s) => s.set === name && s.type === t).items })) };
+        const errs = validatePaper(parsed, cfg);
+        if (errs.length) throw Object.assign(new Error('Could not build a valid paper: ' + errs[0]), { code: 'generation' });
+        const built = buildSet(parsed, cfg, name);
+        return { name, paper: built.paper, answerKey: built.answerKey };
+      });
       result = { sets };
     } else {
       const want = normalized.count;
-      const prompt = mcqPrompt(normalized.cfg, want + 3, normalized.avoid);
-      const parsed = await generateValid(groqKey, prompt, (p) => {
-        const got = cleanMcqs(p && p.questions, want, normalized.avoid);
-        return got.length >= want ? [] : ['Not enough unique valid MCQs.'];
-      });
-      const items = cleanMcqs(parsed.questions, want, normalized.avoid);
-      result = { questions: items.map((q) => ({ no: q.no, question: q.question, options: q.options })), answerKey: items.map((q) => ({ no: q.no, answerLetter: q.answerLetter, answer: q.answer, explanation: q.explanation })) };
+      const slot = { set: null, type: 'mcq', need: want, items: [] };
+      await fillSlots(groqKey, normalized.cfg, [slot], normalized.avoid);
+      const items = cleanMcqs(slot.items, want, []);
+      result = { requested: want, questions: items.map((q) => ({ no: q.no, question: q.question, options: q.options })), answerKey: items.map((q) => ({ no: q.no, answerLetter: q.answerLetter, answer: q.answer, explanation: q.explanation })) };
     }
   } catch (e) {
     await refundCredits(creditKey, cost);
     console.error('Teacher generation failed', e && e.message);
-    return res.status(502).json({ error: 'Could not generate a valid result. Please try again, or check the chapters you entered.' });
+    const msg = e && e.code === 'generation' ? e.message : 'Could not generate a valid result. Please try again, or check the chapters you entered.';
+    return res.status(502).json({ error: msg });
   }
   return res.status(200).json(Object.assign({ ok: true, action, syllabusVerified: false, credits: left }, result));
 }
