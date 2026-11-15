@@ -333,7 +333,7 @@ async function askBatch(groqKey, cfg, t, n, avoid, setName, deadline) {
       console.error('Teacher model call failed:', e.message, 'batch', t, size);
       if (e.status === 429) {
         const wait = Math.max(e.retryAfter * 1000, 5000 * (tries + 1));
-        if (Date.now() + wait > deadline) throw Object.assign(new Error('The AI service is busy right now. Please wait a minute and try again.'), { code: 'busy' });
+        if (Date.now() + wait > deadline) { console.error('Teacher stopping early: provider rate limit'); return []; }
         await pause(wait); tries++; continue;
       }
       tries++; await pause(2000); continue;
@@ -429,14 +429,10 @@ async function fillSlots(groqKey, cfg, slots, avoid, deadline) {
     work.forEach((job, i) => accept(job.slot, out[i]));
   }
   if (Object.keys(reasons).length) console.error('Teacher rejected model items:', JSON.stringify(reasons));
-  slots.forEach((slot) => {
-    if (slot.items.length < slot.need && (slot.set || slot.items.length === 0)) {
-      // Paper sets must be exact. A short MCQ list is returned with what is valid, plus a notice.
-      const where = slot.set ? ' for set ' + slot.set : '';
-      throw Object.assign(new Error('Only ' + slot.items.length + ' of ' + slot.need + ' unique, valid ' + TYPE_LABEL[slot.type].toLowerCase() + where + ' could be made. Please try again, or check the chapters you entered.'), { code: 'generation' });
-    }
-    slot.items = slot.items.slice(0, slot.need);
-  });
+  if (!slots.some((slot) => slot.items.length)) {
+    throw Object.assign(new Error('The AI service is busy or returned no valid questions. Please wait a minute and try again.'), { code: 'generation' });
+  }
+  slots.forEach((slot) => { slot.items = slot.items.slice(0, slot.need); });
 }
 
 // ---------- credits and limits (same keys as chat) ----------
@@ -558,14 +554,26 @@ export default async function handler(req, res) {
       const slots = [];
       names.forEach((name) => activeTypes(cfg).forEach((t) => slots.push({ set: name, type: t, need: cfg.types[t].count, items: [] })));
       await fillSlots(groqKey, cfg, slots, [], deadlineAt);
-      const sets = names.map((name) => {
-        const parsed = { sections: activeTypes(cfg).map((t) => ({ type: t, questions: slots.find((s) => s.set === name && s.type === t).items })) };
-        const errs = validatePaper(parsed, cfg);
+      const wanted = activeTypes(cfg).reduce((a, t) => a + cfg.types[t].count, 0);
+      const notices = [];
+      const sets = [];
+      names.forEach((name) => {
+        const secs = activeTypes(cfg)
+          .map((t) => ({ type: t, questions: slots.find((x) => x.set === name && x.type === t).items }))
+          .filter((sec) => sec.questions.length);
+        const made = secs.reduce((a, sec) => a + sec.questions.length, 0);
+        if (!made) { notices.push('Set ' + name + ': no questions could be made.'); return; }
+        if (made < wanted) notices.push('Set ' + name + ': made ' + made + ' of ' + wanted + ' questions.');
+        // The paper is built from what was made, so its marks and totals match its questions.
+        const effCfg = { ...cfg, totalMarks: 0, types: {} };
+        secs.forEach((sec) => { effCfg.types[sec.type] = { count: sec.questions.length, marks: cfg.types[sec.type].marks }; effCfg.totalMarks += sec.questions.length * cfg.types[sec.type].marks; });
+        const parsed = { sections: secs };
+        const errs = validatePaper(parsed, effCfg);
         if (errs.length) throw Object.assign(new Error('Could not build a valid paper: ' + errs[0]), { code: 'generation' });
-        const built = buildSet(parsed, cfg, name);
-        return { name, paper: built.paper, answerKey: built.answerKey };
+        const built = buildSet(parsed, effCfg, name);
+        sets.push({ name, paper: built.paper, answerKey: built.answerKey });
       });
-      return { sets };
+      return { sets, notice: notices.join(' ') };
     } else {
       const want = normalized.count;
       const slot = { set: null, type: 'mcq', need: want, items: [] };
