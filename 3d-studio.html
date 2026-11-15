@@ -78,6 +78,41 @@
   .block{display:flex; flex-direction:column; gap:8px;}
   .note{font-size:12.5px; color:var(--muted); margin:0;}
   .note.warn{color:var(--text); background:var(--accent-soft); padding:8px 10px; border-radius:10px;}
+  [hidden]{display:none !important;}
+  .ai-box{display:flex; flex-direction:column; gap:8px;}
+  .ai-box textarea{width:100%; min-width:0; min-height:84px; resize:vertical; padding:9px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); font:inherit; color:inherit;}
+  .ai-tabs{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .ai-tabs .btn[aria-selected="true"]{background:var(--accent-soft); border-color:var(--accent);}
+  .ai-check{display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--muted);}
+  .ai-check input{margin:3px 0 0; width:18px; height:18px; flex:none; accent-color:var(--accent);}
+  .ai-progress{height:10px; border-radius:99px; background:var(--surface-2); border:1px solid var(--border); overflow:hidden;}
+  .ai-progress span{display:block; height:100%; width:0; background:var(--accent); transition:width .3s ease;}
+  .ai-status{font-size:12.5px; color:var(--muted); margin:0;}
+  .ai-actions{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
+  .ai-actions .btn{padding:8px 6px; min-width:0;}
+  #aiMsg[data-kind="error"]{color:var(--danger);}
+  .ai-chat{display:flex; flex-direction:column; gap:10px; min-width:0;}
+  .ai-log{display:flex; flex-direction:column; gap:8px; min-height:200px; max-height:340px; overflow-y:auto; padding:2px; min-width:0;}
+  .ai-log:empty{display:none;}
+  .bubble{max-width:92%; padding:9px 11px; border-radius:14px; font-size:13.5px; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; min-width:0;}
+  .bubble p{margin:0;}
+  .bubble.user{align-self:flex-end; background:var(--accent-soft); border:1px solid var(--accent);}
+  .bubble.ai{align-self:flex-start; background:var(--surface-2); border:1px solid var(--border);}
+  .bubble.error{align-self:flex-start; background:var(--surface-2); border:1px solid var(--danger); color:var(--danger);}
+  .bubble-actions{display:flex; gap:6px; margin-top:6px;}
+  .bubble-actions .btn{min-height:32px; padding:4px 10px; font-size:12px;}
+  .ai-chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .ai-chips .btn{min-height:36px; padding:6px 10px; font-size:12.5px; border-radius:999px; text-align:left;}
+  .ai-composer{display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); border-radius:14px; padding:8px; background:var(--surface-2);}
+  .ai-composer textarea{border:0; background:transparent; min-height:56px; padding:4px; box-shadow:none;}
+  .ai-composer textarea:focus{outline:none;}
+  .ai-composer-row{display:flex; align-items:center; gap:6px; min-width:0;}
+  .ai-composer-row .ai-attach-btn{flex:none; min-width:44px; padding:6px;}
+  .ai-composer-row .ai-send{margin-left:auto; flex:none;}
+  .ai-attach{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); min-width:0;}
+  .ai-attach span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .ai-attach .btn{min-height:32px; padding:2px 8px;}
+  .ai-clear{align-self:flex-end;}
 
   .objects{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;}
   .objects li{display:flex;}
@@ -228,7 +263,40 @@
 
     <section class="section block" aria-labelledby="aiTitle">
       <h2 id="aiTitle">AI generation</h2>
-      <p class="note warn">Text-to-3D and image-to-3D are not active yet. They will be enabled when the Tripo3D API key is configured on the server. Nothing is generated until then.</p>
+      <p class="note" id="aiAvail">Checking AI generation…</p>
+      <div class="ai-chat" id="aiBox" hidden>
+        <div class="ai-log" id="aiLog" role="log" aria-live="polite" aria-label="Conversation"></div>
+        <div class="ai-chips" id="aiChips" aria-label="Suggested prompts">
+          <button class="btn" type="button" data-suggest="Create a futuristic sports car">Create a futuristic sports car</button>
+          <button class="btn" type="button" data-suggest="Generate a low-poly tree">Generate a low-poly tree</button>
+          <button class="btn" type="button" data-suggest="Create a wooden chair">Create a wooden chair</button>
+          <button class="btn" type="button" data-suggest="How do I use the 3D editor?">How do I use the 3D editor?</button>
+        </div>
+        <div class="ai-composer">
+          <textarea id="aiPrompt" maxlength="1024" aria-label="Message to the AI assistant" placeholder="Describe what to create, e.g. a low-poly tree"></textarea>
+          <div class="ai-attach" id="aiAttachChip" hidden>
+            <span id="aiImageName"></span>
+            <button class="btn" id="aiDetach" type="button" aria-label="Remove image">Remove</button>
+          </div>
+          <div class="ai-composer-row">
+            <button class="btn ai-attach-btn" id="aiAttach" type="button" title="Attach an image (JPG, PNG or WEBP)" aria-label="Attach image">+ Image</button>
+            <input id="aiImage" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <button class="btn ai-send" id="aiGenerate" type="button" disabled>Send</button>
+          </div>
+        </div>
+        <label class="ai-check"><input type="checkbox" id="aiConsent"><span id="aiCostText"></span></label>
+        <div class="ai-box" id="aiProgress" hidden>
+          <div class="ai-progress" id="aiBarWrap" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="aiBar"></span></div>
+          <p class="ai-status" id="aiStatus" aria-live="polite"></p>
+          <div class="ai-actions">
+            <button class="btn" id="aiPause" type="button">Pause</button>
+            <button class="btn" id="aiResume" type="button" hidden>Resume</button>
+            <button class="btn danger" id="aiDiscard" type="button">Discard</button>
+          </div>
+        </div>
+        <button class="btn ai-clear" id="aiClear" type="button">Clear conversation</button>
+        <p class="note" id="aiMsg" role="status" data-kind=""></p>
+      </div>
     </section>
 
     <section class="section block">
@@ -798,6 +866,354 @@
     else if (e.key === 'Escape') selectById(null);
   });
 
+  // ---- AI generation (Tripo3D through server routes; the API key never reaches the browser) ----
+  class AiError extends Error { constructor(status, message) { super(message); this.status = status; } }
+  const AI = { cfg: null, tab: 'text', imageB64: null, attempt: null, taskId: null, meta: null, startedAt: 0, lastPct: 0, timer: null, busy: false };
+  const AI_POLL_MS = 3000;
+  const AI_WATCH_MS = 12 * 60 * 1000;
+  const AI_IMAGE_MAX_BYTES = 2.5 * 1024 * 1024;
+  const AI_PENDING_KEY = 'aviqo3d_pending';
+  const AI_REASON = {
+    disabled: 'AI generation is turned off right now. Manual 3D editing still works.',
+    no_key: 'AI generation is not set up on the server yet. Nothing is generated and nothing is charged. Manual 3D editing still works.',
+    no_store: 'AI generation is temporarily unavailable. You have not been charged.'
+  };
+
+  // The signed-in user is the same localStorage record the Aviqo chat uses.
+  function studioEmail() {
+    try { const u = JSON.parse(localStorage.getItem('aviqo_user') || 'null'); return u && u.email ? String(u.email).toLowerCase() : ''; }
+    catch (e) { return ''; }
+  }
+  function newRequestId() {
+    if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+  function creditsText(n) { return n === 0 ? 'nothing (free)' : n + (n === 1 ? ' credit' : ' credits'); }
+  // Status messages go to the chat as assistant or error bubbles, and to the live status line.
+  function aiNote(text, kind) {
+    const el = $('aiMsg');
+    el.textContent = text || '';
+    el.dataset.kind = kind || '';
+    if (!text) return;
+    if (kind === 'error') addBubble('error', text, { retry: AI.retry });
+    else addBubble('ai', text);
+  }
+
+  const AI_HELP = 'The 3D editor: add a shape from Create, or upload a GLB. Click an object to select it. Use Move, Rotate or Scale on the toolbar, or type exact values in Properties. Ctrl+Z undoes and Ctrl+Shift+Z redoes. To make a model with AI, describe it in the box below and press Send. Editing is free. AI generation uses credits and is charged only when the model is ready.';
+  const AI_HELP_QUESTION = /(how (do|to|can) i (use|edit)|how to use|explain|help me|how does)/i;
+
+  function addBubble(role, text, opts) {
+    const log = $('aiLog');
+    const div = document.createElement('div');
+    div.className = 'bubble ' + role;
+    const p = document.createElement('p');
+    p.textContent = text;
+    div.appendChild(p);
+    if (role === 'ai' || (role === 'error' && opts && opts.retry)) {
+      const row = document.createElement('div');
+      row.className = 'bubble-actions';
+      if (role === 'ai') {
+        const copy = document.createElement('button');
+        copy.type = 'button'; copy.className = 'btn'; copy.textContent = 'Copy';
+        copy.addEventListener('click', () => copyText(text, copy));
+        row.appendChild(copy);
+      } else {
+        const retry = document.createElement('button');
+        retry.type = 'button'; retry.className = 'btn'; retry.textContent = 'Retry';
+        retry.addEventListener('click', opts.retry);
+        row.appendChild(retry);
+      }
+      div.appendChild(row);
+    }
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    $('aiChips').hidden = log.children.length > 0;
+  }
+  function copyText(text, btn) {
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { btn.textContent = 'Copy failed'; });
+    else btn.textContent = 'Copy failed';
+  }
+  function clearChat() {
+    $('aiLog').innerHTML = '';
+    AI.retry = null;
+    $('aiMsg').textContent = ''; $('aiMsg').dataset.kind = '';
+    $('aiChips').hidden = false;
+  }
+  function setAttachName(text) {
+    $('aiAttachChip').hidden = !text;
+    $('aiImageName').textContent = text || '';
+  }
+  function detachImage() {
+    $('aiImage').value = '';
+    AI.imageB64 = null; AI.tab = 'text'; AI.attempt = null;
+    setAttachName('');
+    refreshAi();
+  }
+
+  // Send: handles a help question locally, otherwise starts generation with the same backend as before.
+  function sendMessage() {
+    if (AI.busy || AI.taskId) return;
+    const text = $('aiPrompt').value.trim();
+    if (!text && !AI.imageB64) return aiNote('Type what you want to create, or attach an image.', 'error');
+    if (!AI.imageB64 && AI_HELP_QUESTION.test(text) && !/(create|generate|make|build)/i.test(text)) {
+      addBubble('user', text);
+      addBubble('ai', AI_HELP);
+      $('aiPrompt').value = '';
+      refreshAi();
+      return;
+    }
+    addBubble('user', AI.imageB64 ? (text ? text + ' (with image)' : 'Image attached') : text);
+    AI.retry = () => startGeneration();
+    startGeneration();
+  }
+  function setProgress(pct, text) {
+    const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+    $('aiBar').style.width = p + '%';
+    $('aiBarWrap').setAttribute('aria-valuenow', String(p));
+    $('aiStatus').textContent = text || '';
+  }
+  function loadPending() {
+    try { const p = JSON.parse(localStorage.getItem(AI_PENDING_KEY) || 'null'); return p && p.taskId && p.email ? p : null; }
+    catch (e) { return null; }
+  }
+  function savePending(p) { try { localStorage.setItem(AI_PENDING_KEY, JSON.stringify(p)); } catch (e) { /* private mode: resume is unavailable */ } }
+  function forgetPending() { try { localStorage.removeItem(AI_PENDING_KEY); } catch (e) { /* ignore */ } }
+  function pendingForUser() { const p = loadPending(); return p && p.email === studioEmail() ? p : null; }
+
+  // One place that keeps the AI controls consistent with state.
+  function refreshAi() {
+    const p = pendingForUser();
+    const watching = !!AI.taskId;
+    $('aiProgress').hidden = !p;
+    $('aiPause').hidden = !watching;
+    $('aiResume').hidden = watching || !p;
+    if (AI.cfg && AI.cfg.available) {
+      const n = AI.tab === 'image' ? AI.cfg.costImage : AI.cfg.costText;
+      $('aiCostText').textContent = 'I understand this costs ' + creditsText(n) + ' and it is charged only when the model is ready.';
+    }
+    const hasInput = AI.tab === 'text' ? $('aiPrompt').value.trim().length > 0 : !!AI.imageB64;
+    const blocked = !THREE || !AI.cfg || !AI.cfg.available || !studioEmail() || AI.busy || watching || !!p;
+    $('aiGenerate').disabled = blocked || !hasInput || !$('aiConsent').checked;
+    $('aiGenerate').textContent = AI.busy ? 'Generating…' : 'Send';
+  }
+
+
+  // Any image becomes a JPEG of at most 2048 px and about 2.5 MB, which the server accepts.
+  async function prepareImage(file) {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error('Use a JPG, PNG or WEBP image.');
+    if (file.size > 20 * 1024 * 1024) throw new Error('That image is over 20 MB. Choose a smaller one.');
+    const bitmap = await createImageBitmap(file);
+    try {
+      let scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
+      for (let i = 0; i < 4; i++) {
+        const w = Math.max(1, Math.round(bitmap.width * scale));
+        const h = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(bitmap, 0, 0, w, h);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+        if (!blob) throw new Error('This image could not be read. Try a JPG or PNG.');
+        if (blob.size <= AI_IMAGE_MAX_BYTES) return new Uint8Array(await blob.arrayBuffer());
+        scale *= 0.7;
+      }
+      throw new Error('This image is too detailed to send. Try a smaller one.');
+    } finally { bitmap.close(); }
+  }
+  function toBase64(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+
+  async function startGeneration() {
+    if (AI.busy || AI.taskId) return;
+    const email = studioEmail();
+    if (!email) return aiNote('Sign in on the Aviqo chat first, then come back here.', 'error');
+    if (!THREE) return aiNote('The 3D viewport is not loaded, so AI models cannot be shown. Reload the page. Nothing was charged.', 'error');
+    if (!$('aiConsent').checked) return aiNote('Tick the cost box first.', 'error');
+    const isImage = AI.tab === 'image';
+    const body = { email, kind: isImage ? 'image' : 'text' };
+    let label;
+    if (isImage) {
+      if (!AI.imageB64) return aiNote('Choose an image first.', 'error');
+      body.imageBase64 = AI.imageB64;
+      label = 'image model';
+    } else {
+      const prompt = $('aiPrompt').value.trim();
+      if (!prompt) return aiNote('Describe the object first.', 'error');
+      body.prompt = prompt;
+      label = prompt.slice(0, 40);
+    }
+    // One id per attempt. A retry after a network error reuses it, so it cannot create a second job.
+    if (!AI.attempt) AI.attempt = { requestId: newRequestId() };
+    body.requestId = AI.attempt.requestId;
+
+    AI.busy = true; refreshAi();
+    aiNote('Sending to the 3D generator…');
+    let out = null;
+    try {
+      const res = await fetch('/api/3d-create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new AiError(res.status, data.error || 'Generation could not start.');
+      if (!data.taskId) throw new AiError(502, 'The generator did not return a job. You have not been charged.');
+      out = data;
+    } catch (err) {
+      AI.busy = false;
+      const status = err instanceof AiError ? err.status : 0;
+      // Refusals and provider errors release the id so the user can change the input and retry.
+      // Network or server errors keep it, so a retry cannot create a second job.
+      if ((status >= 400 && status < 500 && status !== 409) || status === 502) AI.attempt = null;
+      aiNote(err instanceof AiError ? err.message : 'Connection problem. Check your internet and try again. You have not been charged.', 'error');
+      refreshAi();
+      return;
+    }
+    AI.attempt = null;
+    $('aiPrompt').value = '';   // cleared only once the job is accepted, so a failed send keeps the text
+    startWatching(out.taskId, { label, email, startedAt: Date.now() });
+  }
+
+  function startWatching(taskId, meta) {
+    AI.taskId = taskId; AI.meta = meta; AI.busy = true; AI.startedAt = Date.now(); AI.lastPct = 0;
+    savePending({ taskId, email: meta.email, label: meta.label, startedAt: meta.startedAt });
+    setProgress(0, 'Queued…');
+    aiNote('Generation is running. You can keep editing the scene meanwhile.');
+    refreshAi();
+    schedule(0);
+  }
+  function schedule(ms) { clearTimeout(AI.timer); AI.timer = setTimeout(poll, ms); }
+
+  // Stops watching. keepJob = true keeps the saved job so it can be resumed; false forgets it.
+  function stopWatching(text, kind, keepJob) {
+    clearTimeout(AI.timer);
+    AI.taskId = null; AI.meta = null; AI.busy = false;
+    if (!keepJob) forgetPending();
+    aiNote(text, kind);
+    refreshAi();
+  }
+  function pauseJob() {
+    stopWatching('Paused. Your job is saved in this browser. Resume it any time. You are charged only if the model completes.', 'info', true);
+  }
+  function discardJob() {
+    stopWatching('Discarded. This job will not be charged any further.', 'info', false);
+  }
+  function resumePending() {
+    const p = pendingForUser();
+    if (!p || AI.taskId) return;
+    if (!THREE) return aiNote('Reload the page to resume once the 3D viewport loads.', 'error');
+    startWatching(p.taskId, { label: p.label || 'model', email: p.email, startedAt: Date.now() });
+  }
+
+  async function poll() {
+    const taskId = AI.taskId;
+    if (!taskId) return;
+    if (Date.now() - AI.startedAt > AI_WATCH_MS) {
+      return stopWatching('Still generating after 12 minutes. Your job is saved in this browser. Resume later to check it again.', 'info', true);
+    }
+    let s;
+    try {
+      const res = await fetch('/api/3d-status?taskId=' + encodeURIComponent(taskId) + '&email=' + encodeURIComponent(AI.meta.email), { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new AiError(res.status, data.error || 'Could not check the job.');
+      s = data;
+    } catch (err) {
+      if (AI.taskId !== taskId) return;
+      const status = err instanceof AiError ? err.status : 0;
+      // 402: the model is ready but credits are short. Keep the job so it can be resumed after topping up.
+      if (status === 402) return stopWatching(err.message, 'error', true);
+      // Other 4xx: the job is unknown or refused, so forget it.
+      if (status >= 400 && status < 500) return stopWatching(err.message, 'error', false);
+      setProgress(AI.lastPct, 'Connection problem. Retrying…');
+      return schedule(AI_POLL_MS * 2);
+    }
+    if (AI.taskId !== taskId) return;
+    if (s.status === 'failed') return stopWatching(s.error || 'Generation failed. You have not been charged.', 'error', false);
+    if (s.ready) return downloadModel(taskId);
+    const pct = s.progress || 0;
+    AI.lastPct = pct;
+    const label = s.status === 'running' ? 'Generating… ' + pct + '%' : (s.status === 'success' ? 'Finishing…' : 'Queued…');
+    setProgress(pct, label);
+    schedule(AI_POLL_MS);
+  }
+
+  async function downloadModel(taskId) {
+    const meta = AI.meta;
+    setProgress(100, 'Downloading your model…');
+    try {
+      const res = await fetch('/api/3d-asset?taskId=' + encodeURIComponent(taskId) + '&email=' + encodeURIComponent(meta.email), { cache: 'no-store' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new AiError(res.status, data.error || 'Could not download the model.');
+      }
+      const bytes = await res.arrayBuffer();
+      const problem = Core.checkGlb(new Uint8Array(bytes.slice(0, 12)), bytes.byteLength);
+      if (problem) throw new AiError(502, 'The generator returned a file that is not a 3D model. ' + problem);
+      const gltf = await new Promise((resolve, reject) => gltfLoader.parse(bytes, '', resolve, reject));
+      if (AI.taskId !== taskId) return;
+      const key = 'g' + (++glbCounter);
+      glbSources.set(key, gltf.scene);
+      const name = ('AI ' + meta.label).slice(0, 40);
+      applyState(Core.addObject(state(), { type: 'glb', name, glbRef: key }).state, 'commit');
+      stopWatching('Added "' + name + '" to the scene. Edit it like any other object.', 'info', false);
+    } catch (err) {
+      if (AI.taskId !== taskId) return;
+      // The job stays saved, so Resume downloads it again without charging twice.
+      const text = err instanceof AiError ? err.message : 'Could not show the model: ' + ((err && err.message) || err) + '. Resume to try again.';
+      stopWatching(text, 'error', true);
+    }
+  }
+
+  async function loadAiConfig() {
+    const note = $('aiAvail');
+    try {
+      const res = await fetch('/api/3d-config', { cache: 'no-store' });
+      if (!res.ok) throw new Error('config ' + res.status);
+      AI.cfg = await res.json();
+    } catch (err) {
+      note.textContent = 'AI generation could not be checked right now. Manual 3D editing still works.';
+      return;
+    }
+    if (!AI.cfg.available) {
+      note.className = 'note warn';
+      note.textContent = AI_REASON[AI.cfg.reason] || AI_REASON.disabled;
+      return;
+    }
+    note.className = 'note';
+    note.textContent = 'Text or image to 3D. Generation costs credits, editing is free. Your prompt or image is sent to our 3D generation provider.';
+    $('aiBox').hidden = false;
+    if (!studioEmail()) aiNote('Sign in on the Aviqo chat to use AI generation.', 'error');
+    else if (!THREE) aiNote('The 3D viewport is not loaded, so AI models cannot be shown. Reload the page.', 'error');
+    resumePending();
+    refreshAi();
+    if (pendingForUser() && !AI.taskId) aiNote('You have a job from earlier. Resume it or discard it.', 'info');
+  }
+
+  document.querySelectorAll('[data-ai-tab]').forEach((b) => b.addEventListener('click', () => setAiTab(b.dataset.aiTab)));
+  $('aiPrompt').addEventListener('input', () => { AI.attempt = null; refreshAi(); });
+  $('aiConsent').addEventListener('change', refreshAi);
+  $('aiGenerate').addEventListener('click', startGeneration);
+  $('aiPause').addEventListener('click', pauseJob);
+  $('aiResume').addEventListener('click', resumePending);
+  $('aiDiscard').addEventListener('click', discardJob);
+  $('aiImage').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    AI.attempt = null; AI.imageB64 = null; refreshAi();
+    if (!file) { $('aiImageName').textContent = 'One clear object on a plain background works best.'; return; }
+    $('aiImageName').textContent = 'Preparing ' + file.name + '…';
+    try {
+      const bytes = await prepareImage(file);
+      AI.imageB64 = toBase64(bytes);
+      $('aiImageName').textContent = file.name + ' is ready.';
+    } catch (err) {
+      $('aiImageName').textContent = 'One clear object on a plain background works best.';
+      aiNote(err.message, 'error');
+      e.target.value = '';
+    }
+    refreshAi();
+  });
+
   // ---- Start ----
   if (THREE) {
     initViewport();
@@ -811,6 +1227,7 @@
     $('emptyHint').querySelector('p').textContent = 'The 3D viewport is unavailable right now. Reload the page to try again.';
   }
   refreshUI();
+  loadAiConfig();
 </script>
 </body>
 </html>
