@@ -2114,49 +2114,18 @@ function creditKey(user, ip) {
 
 // Env values pasted into Vercel often carry spaces, newlines or quotes; strip them so the URL parses.
 function cleanEnv(v) { return String(v || '').trim().replace(/^["']+|["']+$/g, '').trim(); }
-// Credits store. Uses Upstash when it is configured and reachable. Otherwise it falls back to
-// in-memory counters (free, no setup). Limits then apply per server instance and reset on restart.
-const kvMemory = new Map();
-function kvLocal(cmd) {
-  const op = String(cmd[0]).toUpperCase(), key = cmd[1], a = cmd[2], b = cmd[3], c = cmd[4];
-  const now = Date.now();
-  const cur = kvMemory.get(key);
-  const live = cur && (!cur.exp || cur.exp > now) ? cur : null;
-  if (cur && !live) kvMemory.delete(key);
-  switch (op) {
-    case 'GET': return live ? live.v : null;
-    case 'SET': {
-      const exp = b && String(b).toUpperCase() === 'EX' ? now + Number(c) * 1000 : null;
-      kvMemory.set(key, { v: String(a), exp });
-      return 'OK';
-    }
-    case 'DEL': return kvMemory.delete(key) ? 1 : 0;
-    case 'SETNX':
-      if (live) return 0;
-      kvMemory.set(key, { v: String(a), exp: null });
-      return 1;
-    case 'INCRBY':
-    case 'DECRBY': {
-      const n = Number(live ? live.v : 0) + (op === 'INCRBY' ? 1 : -1) * Number(a);
-      kvMemory.set(key, { v: String(n), exp: live ? live.exp : null });
-      return n;
-    }
-    default: throw new Error('Unsupported command ' + op);
-  }
-}
 async function redisCmd(cmd) {
   const url = cleanEnv(process.env.UPSTASH_REDIS_REST_URL);
   const token = cleanEnv(process.env.UPSTASH_REDIS_REST_TOKEN);
-  if (!url || !token) return kvLocal(cmd);
-  try {
-    const r = await fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(cmd) });
-    const d = await r.json().catch(() => null);
-    if (!r.ok || !d || d.error) throw new Error('Credits store error: ' + (d && d.error ? String(d.error).slice(0, 160) : 'HTTP ' + r.status));
-    return d.result;
-  } catch (e) {
-    console.error('Credits store unavailable, using in-memory counters:', e && e.message);
-    return kvLocal(cmd);
-  }
+  if (!url || !token) throw new Error('Credits store is not configured');
+  const r = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cmd)
+  }, 8000);
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !d || d.error) throw new Error('Credits store error');
+  return d.result;
 }
 
 // Gives a new user the starting balance (only once), then returns the balance.
