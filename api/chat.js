@@ -1085,14 +1085,22 @@ async function studyStartLesson(groqKey, topicText) {
     + 'Then output exactly one block, between the markers <<<STUDY_KEY and STUDY_KEY>>>, containing JSON: '
     + '{"chapter": "...", "topic": "...", "questions": [{"question": "...", "level": "easy" or "medium" or "hard", "value": number or null, "unit": "...", "answer": "...", "hint": "...", "solution": "..."}]}. '
     + 'Give 5 questions: the first two "easy", the next two "medium", and the last one "hard". value is the numeric answer when there is one (else null). hint must not give the answer. solution explains the answer in 2 or 3 sentences. All answers must be correct.';
-  const raw = await studyAsk(groqKey, system, 'Topic requested by the student: ' + topicText, 2500);
-  if (!raw) return null;
-  const m = raw.match(STUDY_KEY_BLOCK);
-  if (!m) return null;
-  let key;
-  try { key = JSON.parse(m[1]); } catch (e) { return null; }
-  const qs = Array.isArray(key && key.questions) ? key.questions.filter((q) => q && typeof q.question === 'string' && q.question.trim() && typeof q.answer === 'string') : [];
-  if (qs.length < 1) return null;
+  // Up to two attempts: a rate limit, a cut-off reply or a broken key block is often fixed by a second try.
+  let raw = null;
+  let key = null;
+  let qs = [];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (attempt > 1) await new Promise((r) => setTimeout(r, 2000));
+    raw = await studyAsk(groqKey, system, 'Topic requested by the student: ' + topicText, 3500);
+    if (!raw) { console.error('Study lesson attempt ' + attempt + ': model call failed'); continue; }
+    const m = raw.match(STUDY_KEY_BLOCK);
+    if (!m) { console.error('Study lesson attempt ' + attempt + ': no key block in reply, length ' + raw.length); continue; }
+    try { key = JSON.parse(m[1]); } catch (e) { console.error('Study lesson attempt ' + attempt + ': key block is not valid JSON'); key = null; continue; }
+    qs = Array.isArray(key && key.questions) ? key.questions.filter((q) => q && typeof q.question === 'string' && q.question.trim() && typeof q.answer === 'string') : [];
+    if (qs.length >= 1) break;
+    console.error('Study lesson attempt ' + attempt + ': no usable questions');
+  }
+  if (!key || qs.length < 1) return null;
   const lesson = raw.replace(STUDY_KEY_BLOCK, '').replace(/^\s*(Chapter|Topic):.*$/gim, '').trim();
   const st = {
     chapter: String(key.chapter || 'Chapter not named').slice(0, 120),
