@@ -1781,7 +1781,7 @@
   }
 
   /* --- user messages --- */
-  .cc .msg.user > .bubble{font-size:16px; line-height:1.55; font-weight:400;}
+  .cc .msg.user > .bubble{font-size:16px; line-height:1.55; font-weight:400; padding:9px 15px;}
 
   /* --- assistant messages --- */
   .cc .msg:not(.user) .bubble{font-size:16px; line-height:1.65; font-weight:400;}
@@ -1802,6 +1802,9 @@
   .cc .md-hr{margin:10px 0;}
   .cc .md-table-wrap{margin:8px 0;}
   .cc .md-table{font-size:14px; line-height:1.5;}
+  .cc .bubble code.inline{font-size:14px;}
+  .cc .bubble .md-h code.inline{font-size:.85em;}
+  .cc .bubble .code-block code, .cc .bubble .code-block pre{font-size:13px; line-height:1.55;}
   .cc .md-table th, .cc .md-table td{padding:7px 12px;}
   .cc .katex-display{margin:8px 0;}
   .cc .code-block, .bubble .code-block{margin:8px 0;}
@@ -1817,8 +1820,8 @@
   /* mobile */
   @media (max-width:640px){
     .cc .chat-body{gap:12px;}
-    .cc .msg.user > .bubble{font-size:15px; line-height:1.55; padding:7px 12px;}
-    .cc .msg:not(.user) .bubble{font-size:15px; line-height:1.65;}
+    .cc .msg.user > .bubble{font-size:16px; line-height:1.55; padding:8px 14px;}
+    .cc .msg:not(.user) .bubble{font-size:16px; line-height:1.65;}
     .cc .msg:not(.user) .bubble p{margin:0 0 5px;}
     .cc .bubble .md-h1{margin:12px 0 5px;}
     .cc .bubble .md-h2{margin:10px 0 4px;}
