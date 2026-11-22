@@ -5035,40 +5035,118 @@
       bar.classList.toggle('is-last', m === lastMsg && !hasMedia && !m.classList.contains('cc-shared'));
     });
   }
-  // ---- read aloud: clean the answer, pick a natural voice, and speak it in short parts ----
+  // ---- read aloud: clean the answer, pick the best available voice, and speak it in short, clear parts ----
   function ccSpeakable(text){
     var t = String(text);
-    t = t.replace(/```[\s\S]*?```/g, ' (code is shown in the chat) ');
-    t = t.replace(/\\\(|\\\)|\\\[|\\\]/g, ' ');
-    t = t.replace(/^\s*#{1,6}\s*/gm, '');
-    t = t.replace(/^\s*[-*•]\s+/gm, '');
+    t = t.replace(/```[\s\S]*?```/g, ' The code is shown in the chat. ');
+    t = t.replace(/\\[()[\]]/g, ' ');                                   // LaTeX delimiters
+    t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');                         // images
+    t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');                      // [text](url) -> text
+    t = t.replace(/https?:\/\/\S+/g, ' link ');
+    t = t.replace(/\[\d+(?:[,\s-]+\d+)*\]/g, ' ');                       // [1] [2, 3] citation marks
+    t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, ' '); // emoji
+    t = t.replace(/^\s*#{1,6}\s*(.+)$/gm, '$1.');                        // headings end with a pause
+    t = t.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/gm, '');                // list markers
     t = t.replace(/\*\*|__|`|\*/g, '');
-    t = t.replace(/\|/g, ' ').replace(/-{3,}/g, ' ');
-    t = t.replace(/\\times|\\cdot|×/g, ' times ').replace(/\\div|÷/g, ' divided by ').replace(/[−–]|\\-/g, ' minus ')
-         .replace(/\\%|%/g, ' percent ').replace(/₹/g, ' rupees ').replace(/\\?=/g, ' equals ').replace(/\\?\+/g, ' plus ')
-         .replace(/(\d)\s+-\s+(\d)/g, '$1 minus $2').replace(/\s-\s/g, ' minus ');
-    return t.replace(/\\[a-zA-Z]+/g, ' ').replace(/\s+/g, ' ').trim();
+    t = t.replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, ' ');                   // table separator rows and rules
+    t = t.replace(/^\s*\|\s*|\s*\|\s*$/gm, '');                              // outer pipes of a table row
+    t = t.replace(/\|/g, ', ');                                          // table cells -> short pauses
+    t = t.replace(/\s[\u2013\u2014]\s/g, ', ');                               // spaced dashes -> a natural pause
+    // numbers, ranges and symbols, said the way a person would say them
+    t = t.replace(/(\d)\s*\u2013\s*(\d)/g, '$1 to $2').replace(/(\d)-(\d)/g, '$1 to $2');
+    t = t.replace(/\\times|\\cdot|\u00d7/g, ' times ').replace(/\\div|\u00f7/g, ' divided by ')
+         .replace(/\u2212|\\-/g, ' minus ').replace(/(\d)\s+-\s+(\d)/g, '$1 minus $2');
+    t = t.replace(/~\s*/g, 'about ').replace(/\u2248/g, ' approximately ').replace(/\u2192/g, ' to ')
+         .replace(/\u2265/g, ' at least ').replace(/\u2264/g, ' at most ')
+         .replace(/\\%|%/g, ' percent ').replace(/\u20b9\s?(\d)/g, '$1 rupees ').replace(/\u20b9/g, ' rupees ')
+         .replace(/\$\s?(\d[\d,.]*)/g, '$1 dollars ').replace(/&/g, ' and ')
+         .replace(/\s*=\s*/g, ' equals ').replace(/(?<=[\d\s])\+(?=[\d\s])/g, ' plus ');
+    t = t.replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}^]/g, ' ');
+    // a line break with no punctuation becomes a pause, so headings and list items do not run together
+    t = t.replace(/([^.!?:;,\u0964\s])[ \t]*\n+/g, '$1. ');
+    t = t.replace(/\s+/g, ' ').replace(/([.!?:;])\.+/g, '$1').replace(/,\s*,+/g, ',').replace(/\s+([.,!?;:])/g, '$1');
+    return t.trim();
+  }
+  function ccHardSplit(s, max){
+    var out = [];
+    while(s.length > max){
+      var i = s.lastIndexOf(' ', max);
+      if(i < max * 0.5) i = max;
+      out.push(s.slice(0, i).trim());
+      s = s.slice(i).trim();
+    }
+    if(s) out.push(s);
+    return out;
   }
   function ccSplitForSpeech(t){
     // split after a full stop, ! or ? that is followed by a space (keeps decimals like 0.20 together)
-    var parts = t.split(/(?<=[.!?।])\s+/);
+    var sentences = t.split(/(?<=[.!?\u0964])\s+/);
     var out = [], cur = '';
-    parts.forEach(function(p){
+    function push(x){ x = (x || '').trim(); if(x) out.push(x); }
+    sentences.forEach(function(p){
       p = p.trim();
       if(!p) return;
-      if((cur + ' ' + p).trim().length > 180){ if(cur) out.push(cur); cur = p; }
+      if(p.length > 200){
+        // very long sentence: break at commas, then at spaces, so the voice never runs out of breath or gets cut off
+        push(cur); cur = '';
+        var buf = '';
+        p.split(/(?<=[,;:])\s+/).forEach(function(q){
+          if((buf + ' ' + q).trim().length > 160){ push(buf); buf = q; } else { buf = (buf + ' ' + q).trim(); }
+        });
+        push(buf);
+        return;
+      }
+      // never join Hindi and English sentences into one part: each part is read by one voice
+      if(cur && /[\u0900-\u097F]/.test(cur) !== /[\u0900-\u097F]/.test(p)){ push(cur); cur = p; }
+      else if((cur + ' ' + p).trim().length > 180){ push(cur); cur = p; }
       else { cur = (cur + ' ' + p).trim(); }
     });
-    if(cur) out.push(cur);
-    return out;
+    push(cur);
+    var final = [];
+    out.forEach(function(x){ if(x.length > 220) ccHardSplit(x, 200).forEach(function(y){ final.push(y); }); else final.push(x); });
+    return final;
   }
-  function ccPickVoice(lang){
-    var voices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [];
-    var pool = voices.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(lang) === 0; });
-    if(!pool.length) pool = voices;
-    var pref = pool.find(function(v){ return /natural|google|samantha|aria|jenny|neural/i.test(v.name); });
-    return pref || pool[0] || null;
+  // score a voice for a language: quality first (natural / neural / premium / Google), locale match second
+  function ccVoiceScore(v, lang, tag){
+    var name = v.name || '';
+    var l = String(v.lang || '').toLowerCase().replace('_', '-');
+    var s;
+    if(l === tag.toLowerCase()) s = 40;
+    else if(l.indexOf(lang) === 0) s = 20;
+    else return -1;
+    if(/natural/i.test(name)) s += 100;
+    else if(/neural/i.test(name)) s += 90;
+    else if(/premium|enhanced/i.test(name)) s += 70;
+    else if(/google/i.test(name)) s += 60;
+    else if(/microsoft|apple|samantha|rishi|lekha|veena|kajal/i.test(name)) s += 15;
+    if(/online/i.test(name)) s += 10;
+    if(/compact|espeak|festival|novelty|whisper|zarvox|bad news|good news|bells|cellos|trinoids|boing|bubbles|deranged|hysterical|organ|albert|fred|junior|kathy|ralph/i.test(name)) s -= 200;
+    if(v.localService === false) s += 5;                                  // online voices usually sound better
+    return s;
   }
+  function ccPickVoice(lang, tag, voices){
+    var vs = voices || ((window.speechSynthesis && window.speechSynthesis.getVoices()) || []);
+    var best = null, bestScore = 0;
+    vs.forEach(function(v){
+      var sc = ccVoiceScore(v, lang, tag);
+      if(sc > bestScore){ best = v; bestScore = sc; }
+    });
+    return best;                                                           // null = let the browser use its default for this language
+  }
+  function ccVoicesReady(cb){
+    var vs = window.speechSynthesis.getVoices();
+    if(vs && vs.length){ cb(); return; }
+    var done = false;
+    function fin(){
+      if(done) return;
+      done = true;
+      try{ window.speechSynthesis.removeEventListener('voiceschanged', fin); }catch(e){}
+      cb();
+    }
+    try{ window.speechSynthesis.addEventListener('voiceschanged', fin); }catch(e){}
+    setTimeout(fin, 1200);
+  }
+  if(window.speechSynthesis){ try{ window.speechSynthesis.getVoices(); }catch(e){} }   // start loading voices early
   var ccSpeakQueue = [];
   var ccSpeakBtn = null;
   function ccStopSpeaking(){
@@ -5082,8 +5160,9 @@
     var u = new SpeechSynthesisUtterance(part.text);
     u.lang = part.lang;
     if(part.voice) u.voice = part.voice;
-    u.rate = 1;
+    u.rate = part.lang === 'hi-IN' ? 0.9 : 0.95;                           // slightly slower than default so every word is clear
     u.pitch = 1;
+    u.volume = 1;
     u.onend = ccSpeakNext;
     u.onerror = function(){ ccStopSpeaking(); };
     window.speechSynthesis.speak(u);
@@ -5091,14 +5170,23 @@
   function ccSpeak(btn, text){
     var clean = ccSpeakable(text);
     if(!clean) return;
-    var hindi = /[ऀ-ॿ]/.test(clean);
-    var lang = hindi ? 'hi' : 'en';
-    var voice = ccPickVoice(lang);
-    var tag = hindi ? 'hi-IN' : 'en-IN';
-    ccSpeakQueue = ccSplitForSpeech(clean).map(function(s){ return { text: s, lang: tag, voice: voice }; });
+    // each part is spoken in its own language, so a mixed Hindi + English answer sounds right
+    var entries = ccSplitForSpeech(clean).map(function(s){
+      var hindi = /[\u0900-\u097F]/.test(s);
+      return { text: s, lang: hindi ? 'hi-IN' : 'en-IN', base: hindi ? 'hi' : 'en', voice: null };
+    });
+    ccSpeakQueue = entries;
     ccSpeakBtn = btn;
     btn.classList.add('on');
-    ccSpeakNext();
+    ccVoicesReady(function(){
+      if(ccSpeakQueue !== entries) return;                                  // stopped while the voices were loading
+      var cache = {};
+      entries.forEach(function(e){
+        if(!(e.lang in cache)) cache[e.lang] = ccPickVoice(e.base, e.lang);
+        e.voice = cache[e.lang];
+      });
+      ccSpeakNext();
+    });
   }
 
   // ---- like / dislike: save to the server, and show a short confirmation ----
