@@ -59,7 +59,7 @@ svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-wid
 .teamsel{padding:0 4px}
 .teamsel select{font-weight:600}
 .nav{display:flex;flex-direction:column;gap:1px}
-.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;color:var(--muted);text-decoration:none;font-weight:500}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;color:var(--muted);text-decoration:none;font-weight:500;transition:background .15s ease,color .15s ease}
 .nav a:hover{background:var(--surface-2);color:var(--ink)}
 .nav a.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
 .rail-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
@@ -92,7 +92,7 @@ svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-wid
 .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
 .btn.danger-ghost{background:transparent;border-color:var(--line);color:var(--danger)}
 .btn.sm{padding:5px 10px;font-size:12.5px}
-.icon-btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);width:32px;height:32px;border-radius:9px;display:inline-grid;place-items:center;cursor:pointer}
+.icon-btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);width:32px;height:32px;border-radius:9px;display:inline-grid;place-items:center;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
 .icon-btn:hover{color:var(--ink);background:var(--surface-2)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.nav a:focus-visible,.seg button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0;width:100%}
@@ -162,13 +162,27 @@ label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:12.5p
 .pin{color:var(--accent)}
 
 /* dialog + toast */
-.dlg{border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);padding:20px;width:min(560px,calc(100vw - 32px));max-height:88vh;overflow:auto}
-.dlg::backdrop{background:rgba(20,10,40,.45)}
+.dlg{border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);padding:20px;width:min(560px,calc(100vw - 32px));max-height:88vh;overflow:auto;opacity:0;transform:scale(.96) translateY(6px);transition:opacity .16s ease,transform .16s ease}
+.dlg.show{opacity:1;transform:none}
+.dlg::backdrop{background:rgba(20,10,40,0);transition:background .16s ease}
+.dlg.show::backdrop{background:rgba(20,10,40,.45)}
 .dlg-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px}
 .icon{background:transparent;border:0;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:calc(100vw - 32px);font-size:13px;z-index:30;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-@media (prefers-reduced-motion: reduce){.toast,.btn{transition:none}}
+.toast.ok{background:var(--ok)}
+.toast.err{background:var(--danger)}
+@media (prefers-reduced-motion: reduce){.toast,.btn,.dlg,.dlg::backdrop{transition:none}}
+
+/* view transition */
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.view{animation:viewIn .32s cubic-bezier(.16,1,.3,1) both}
+.stats .stat{animation:viewIn .34s cubic-bezier(.16,1,.3,1) both}
+.stats .stat:nth-child(1){animation-delay:.02s}
+.stats .stat:nth-child(2){animation-delay:.06s}
+.stats .stat:nth-child(3){animation-delay:.10s}
+.stats .stat:nth-child(4){animation-delay:.14s}
+@media (prefers-reduced-motion: reduce){.view,.stats .stat{animation:none}}
 
 /* chart */
 .chart-wrap{overflow-x:auto}
@@ -249,7 +263,7 @@ function loadState(){
 }
 function saveState(){
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch(e){ toast('This browser could not save the change. It will be lost on reload.'); }
+  catch(e){ toast('This browser could not save the change. It will be lost on reload.', 'err'); }
 }
 function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -275,10 +289,10 @@ function log(team, text){
   team.activity.push({ t: Date.now(), text });
   if (team.activity.length > 300) team.activity.splice(0, team.activity.length - 300);
 }
-function toast(msg){
+function toast(msg, kind){
   const el = $('#toast');
   el.textContent = msg;
-  el.classList.add('show');
+  el.className = 'toast show' + (kind ? ' ' + kind : '');
   clearTimeout(toast.t);
   toast.t = setTimeout(() => el.classList.remove('show'), 2800);
 }
@@ -287,8 +301,15 @@ function openDialog(title, html){
   $('#dlgBody').innerHTML = html;
   const d = $('#dlg');
   if (!d.open) d.showModal();
+  requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')));
 }
-function closeDialog(){ const d = $('#dlg'); if (d.open) d.close(); }
+function closeDialog(){
+  const d = $('#dlg');
+  if (!d.open) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { d.classList.remove('show'); d.close(); return; }
+  d.classList.remove('show');
+  setTimeout(() => { if (d.open) d.close(); }, 160);
+}
 function openConfirm(msg, label, fn){
   pendingOk = fn;
   openDialog('Please confirm', `<p>${esc(msg)}</p><div class="row end" style="margin-top:18px"><button type="button" class="btn ghost" data-act="close">Cancel</button><button type="button" class="btn danger" data-act="confirm-ok">${esc(label)}</button></div>`);
@@ -311,21 +332,21 @@ const actions = {
   'new-team'(){ state.activeId = null; saveState(); location.hash = 'overview'; render(); },
   'delete-team'(){
     const t = activeTeam();
-    if (roleOf(t) !== 'owner') return toast('Only the owner can delete the team.');
+    if (roleOf(t) !== 'owner') return toast('Only the owner can delete the team.', 'err');
     openConfirm(`Delete "${t.name}" and everything in it (tasks, projects, messages)? This cannot be undone.`, 'Delete team', () => {
       state.teams = state.teams.filter(x => x.id !== t.id);
       state.activeId = state.teams[0] ? state.teams[0].id : null;
-      saveState(); toast('Team deleted'); location.hash = 'overview'; render();
+      saveState(); toast('Team deleted', 'ok'); location.hash = 'overview'; render();
     });
   },
   'new-task'(el){
-    if (!canEdit(activeTeam())) return toast('Your role cannot add tasks.');
+    if (!canEdit(activeTeam())) return toast('Your role cannot add tasks.', 'err');
     openTaskDialog(null, el && el.dataset.project || '');
   },
   'edit-task'(el){ openTaskDialog(el.dataset.id); },
   'delete-task'(el){
     const t = activeTeam();
-    if (!canEdit(t)) return toast('Your role cannot delete tasks.');
+    if (!canEdit(t)) return toast('Your role cannot delete tasks.', 'err');
     const id = el.dataset.id;
     const task = t.tasks.find(x => x.id === id);
     if (!task) return;
@@ -340,10 +361,10 @@ const actions = {
   'activity-filter'(el){ activityFilter = el.dataset.v; render(); },
   'remove-member'(el){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can remove members.');
+    if (!canManage(t)) return toast('Only owners and admins can remove members.', 'err');
     const m = t.members.find(x => x.id === el.dataset.id);
     if (!m || m.role === 'owner') return;
-    if (roleOf(t) !== 'owner' && m.role === 'admin') return toast('Only the owner can remove an admin.');
+    if (roleOf(t) !== 'owner' && m.role === 'admin') return toast('Only the owner can remove an admin.', 'err');
     const id = m.id;
     openConfirm(`Remove ${m.name} from ${t.name}? They lose access to this team's work.`, 'Remove member', () => {
       t.members = t.members.filter(x => x.id !== id);
@@ -368,10 +389,10 @@ const actions = {
     inv.expires = Date.now() + 7 * DAY;
     log(t, `${who()} extended the invite for ${inv.email}`);
     saveState(); render();
-    toast('Invite extended by 7 days');
+    toast('Invite extended by 7 days', 'ok');
   },
   'new-project'(){
-    if (!canManage(activeTeam())) return toast('Only owners and admins can create projects.');
+    if (!canManage(activeTeam())) return toast('Only owners and admins can create projects.', 'err');
     openDialog('New project', projectForm(null));
   },
   'open-project'(el){ taskProjectFilter = el.dataset.id; location.hash = 'tasks'; render(); },
@@ -383,7 +404,7 @@ const actions = {
   },
   'delete-project'(el){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can delete projects.');
+    if (!canManage(t)) return toast('Only owners and admins can delete projects.', 'err');
     const p = projectOf(t, el.dataset.id);
     if (!p) return;
     const n = t.tasks.filter(x => x.projectId === p.id).length;
@@ -398,7 +419,7 @@ const actions = {
   'use-suggestion'(el){ chatDraft = el.dataset.text || ''; location.hash = 'chat'; render(); },
   'pin-announcement'(el){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can pin announcements.');
+    if (!canManage(t)) return toast('Only owners and admins can pin announcements.', 'err');
     const a = t.announcements.find(x => x.id === el.dataset.id);
     if (!a) return;
     a.pinned = !a.pinned;
@@ -406,12 +427,12 @@ const actions = {
   },
   'delete-announcement'(el){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can remove announcements.');
+    if (!canManage(t)) return toast('Only owners and admins can remove announcements.', 'err');
     t.announcements = t.announcements.filter(x => x.id !== el.dataset.id);
     saveState(); render();
   },
   'new-announcement'(){
-    if (!canManage(activeTeam())) return toast('Only owners and admins can post announcements.');
+    if (!canManage(activeTeam())) return toast('Only owners and admins can post announcements.', 'err');
     openDialog('New announcement', `<form class="stack" data-form="announcement">
       <label>Title<input name="title" required maxlength="100" placeholder="e.g. Office closed Friday"></label>
       <label>Message<textarea name="body" rows="4" required maxlength="600"></textarea></label>
@@ -424,8 +445,8 @@ const actions = {
     if (!t) return;
     const data = JSON.stringify(t, null, 2);
     navigator.clipboard && navigator.clipboard.writeText(data).then(
-      () => toast('Team data copied as JSON.'),
-      () => toast('Could not copy automatically. Select and copy from the dialog instead.')
+      () => toast('Team data copied as JSON.', 'ok'),
+      () => toast('Could not copy automatically. Select and copy from the dialog instead.', 'err')
     );
   },
 };
@@ -440,7 +461,7 @@ const changes = {
     if (!m || m.role === 'owner' || el.value === 'owner') return;
     if (roleOf(t) !== 'owner' && (m.role === 'admin' || el.value === 'admin')) {
       render();
-      return toast('Only the owner can change admin roles.');
+      return toast('Only the owner can change admin roles.', 'err');
     }
     const old = m.role;
     m.role = el.value;
@@ -462,7 +483,7 @@ const changes = {
     const t = activeTeam();
     if (!canManage(t)) return;
     t.settings.defaultInviteRole = el.value;
-    saveState(); toast('Default invite role saved.');
+    saveState(); toast('Default invite role saved.', 'ok');
   },
   'notif-pref'(el){
     const t = activeTeam();
@@ -477,10 +498,10 @@ const val = (f, n) => String((f.elements[n] && f.elements[n].value) || '').trim(
 const forms = {
   'create-team'(f){
     const name = val(f, 'name');
-    if (!name) return toast('Enter a team name.');
+    if (!name) return toast('Enter a team name.', 'err');
     if (!state.me) {
       const yn = val(f, 'yourName');
-      if (!yn) return toast('Enter your name.');
+      if (!yn) return toast('Enter your name.', 'err');
       state.me = { id: uid(), name: yn };
     }
     const team = {
@@ -492,13 +513,13 @@ const forms = {
     log(team, `${state.me.name} created the team`);
     state.teams.push(team);
     state.activeId = team.id;
-    saveState(); toast('Team created'); render();
+    saveState(); toast('Team created', 'ok'); render();
   },
   'edit-team'(f){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can edit the team.');
+    if (!canManage(t)) return toast('Only owners and admins can edit the team.', 'err');
     const name = val(f, 'name');
-    if (!name) return toast('Enter a team name.');
+    if (!name) return toast('Enter a team name.', 'err');
     t.name = name;
     t.description = val(f, 'description');
     log(t, `${who()} updated the team details`);
@@ -506,14 +527,14 @@ const forms = {
   },
   invite(f){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can invite members.');
+    if (!canManage(t)) return toast('Only owners and admins can invite members.', 'err');
     const email = val(f, 'email').toLowerCase();
     const role = val(f, 'role');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Enter a valid email address.');
-    if (!['admin','member','viewer'].includes(role)) return toast('Choose a role.');
-    if (role === 'admin' && roleOf(t) !== 'owner') return toast('Only the owner can invite an admin.');
-    if (t.members.some(m => (m.email || '').toLowerCase() === email)) return toast('That person is already a member.');
-    if (t.invites.some(i => i.email === email)) return toast('An invite for that email is already pending.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Enter a valid email address.', 'err');
+    if (!['admin','member','viewer'].includes(role)) return toast('Choose a role.', 'err');
+    if (role === 'admin' && roleOf(t) !== 'owner') return toast('Only the owner can invite an admin.', 'err');
+    if (t.members.some(m => (m.email || '').toLowerCase() === email)) return toast('That person is already a member.', 'err');
+    if (t.invites.some(i => i.email === email)) return toast('An invite for that email is already pending.', 'err');
     t.invites.push({ id: uid(), email, role, created: Date.now(), expires: Date.now() + 7 * DAY });
     log(t, `${who()} invited ${email} as ${cap(role)}`);
     saveState(); render();
@@ -521,16 +542,16 @@ const forms = {
   },
   task(f){
     const t = activeTeam();
-    if (!canEdit(t)) return toast('Your role cannot edit tasks.');
+    if (!canEdit(t)) return toast('Your role cannot edit tasks.', 'err');
     const title = val(f, 'title');
-    if (!title) return toast('Enter a task title.');
+    if (!title) return toast('Enter a task title.', 'err');
     const status = STATUSES.some(s => s[0] === val(f, 'status')) ? val(f, 'status') : 'todo';
     const priority = PRIORITIES.includes(val(f, 'priority')) ? val(f, 'priority') : 'medium';
     const data = { title, desc: val(f, 'desc'), status, priority, due: val(f, 'due'), assignee: val(f, 'assignee'), projectId: val(f, 'projectId') };
     const id = val(f, 'taskId');
     if (id) {
       const task = t.tasks.find(x => x.id === id);
-      if (!task) return toast('That task no longer exists.');
+      if (!task) return toast('That task no longer exists.', 'err');
       if (data.status === 'done' && task.status !== 'done') data.completedAt = Date.now();
       if (data.status !== 'done') data.completedAt = null;
       Object.assign(task, data);
@@ -543,14 +564,14 @@ const forms = {
   },
   project(f){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can manage projects.');
+    if (!canManage(t)) return toast('Only owners and admins can manage projects.', 'err');
     const name = val(f, 'name');
-    if (!name) return toast('Enter a project name.');
+    if (!name) return toast('Enter a project name.', 'err');
     const id = val(f, 'projectId');
     const data = { name, desc: val(f, 'desc'), color: val(f, 'color') || PROJECT_COLORS[0], status: val(f, 'status') || 'active' };
     if (id) {
       const p = projectOf(t, id);
-      if (!p) return toast('That project no longer exists.');
+      if (!p) return toast('That project no longer exists.', 'err');
       Object.assign(p, data);
       log(t, `${who()} updated the project "${name}"`);
     } else {
@@ -561,10 +582,10 @@ const forms = {
   },
   announcement(f){
     const t = activeTeam();
-    if (!canManage(t)) return toast('Only owners and admins can post announcements.');
+    if (!canManage(t)) return toast('Only owners and admins can post announcements.', 'err');
     const title = val(f, 'title');
     const body = val(f, 'body');
-    if (!title || !body) return toast('Enter a title and a message.');
+    if (!title || !body) return toast('Enter a title and a message.', 'err');
     t.announcements.unshift({ id: uid(), title, body, pinned: f.elements.pinned ? f.elements.pinned.checked : false, author: who(), created: Date.now() });
     log(t, `${who()} posted an announcement: "${title}"`);
     saveState(); closeDialog(); render();
@@ -592,7 +613,7 @@ function teamForm(t){
 function openTaskDialog(id, projectId){
   const t = activeTeam();
   const task = id ? t.tasks.find(x => x.id === id) : null;
-  if (id && !task) return toast('That task no longer exists.');
+  if (id && !task) return toast('That task no longer exists.', 'err');
   const statusVal = task ? task.status : 'todo';
   const prioVal = task ? task.priority : 'medium';
   const projVal = task ? (task.projectId || '') : (projectId || '');
@@ -970,6 +991,7 @@ function render(){
   else body = viewOverview(team);
 
   $('#app').innerHTML = `
+    <div class="view" data-view="${view}">
     <header class="topbar">
       <div><p class="eyebrow">${team ? esc(team.name) : 'Team workspace'}</p><h1>${team ? titles[view] : 'Create your team'}</h1></div>
       <div class="tools">
@@ -978,7 +1000,8 @@ function render(){
         <button type="button" class="icon-btn" data-act="theme" aria-label="Toggle theme">${ICONS.theme}</button>
       </div>
     </header>
-    ${body}`;
+    ${body}
+    </div>`;
   $('#railFoot').innerHTML = state.me
     ? `<div class="row"><span class="avatar">${esc(initials(state.me.name))}</span><div><b style="color:var(--ink);display:block;font-size:12.5px">${esc(state.me.name)}</b><span class="small">Saved in this browser</span></div></div>`
     : '';
