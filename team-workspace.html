@@ -1034,8 +1034,13 @@ document.addEventListener('submit', e => {
   const f = e.target;
   if (!f.dataset || !f.dataset.form) return;
   e.preventDefault();
+  // Guard against a double click/tap re-submitting the same form before its dialog
+  // finishes closing (the close animation briefly keeps the old form in the DOM).
+  if (f.dataset.submitting === '1') return;
+  f.dataset.submitting = '1';
   const fn = forms[f.dataset.form];
   if (fn) fn(f);
+  if (f.isConnected) delete f.dataset.submitting;
 });
 addEventListener('hashchange', render);
 render();
