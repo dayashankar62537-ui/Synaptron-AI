@@ -5035,35 +5035,103 @@
       bar.classList.toggle('is-last', m === lastMsg && !hasMedia && !m.classList.contains('cc-shared'));
     });
   }
-  // ---- read aloud: clean the answer, pick the best available voice, and speak it in short, clear parts ----
+  // ---- read aloud: speak the answer in the same language it is written in, with the best available voice ----
+  var CC_LANG = {
+    en:{tag:'en-IN',name:'English'}, hi:{tag:'hi-IN',name:'Hindi'}, pa:{tag:'pa-IN',name:'Punjabi'},
+    bn:{tag:'bn-IN',name:'Bengali'}, gu:{tag:'gu-IN',name:'Gujarati'}, ta:{tag:'ta-IN',name:'Tamil'},
+    te:{tag:'te-IN',name:'Telugu'}, kn:{tag:'kn-IN',name:'Kannada'}, ml:{tag:'ml-IN',name:'Malayalam'},
+    ur:{tag:'ur-PK',name:'Urdu'}, ar:{tag:'ar-SA',name:'Arabic'}, zh:{tag:'zh-CN',name:'Chinese'},
+    ja:{tag:'ja-JP',name:'Japanese'}, ko:{tag:'ko-KR',name:'Korean'}, ru:{tag:'ru-RU',name:'Russian'},
+    th:{tag:'th-TH',name:'Thai'}, es:{tag:'es-ES',name:'Spanish'}, fr:{tag:'fr-FR',name:'French'},
+    de:{tag:'de-DE',name:'German'}, pt:{tag:'pt-BR',name:'Portuguese'}, it:{tag:'it-IT',name:'Italian'}
+  };
+  // writing systems: the one with the most letters in a sentence decides its language
+  var CC_SCRIPTS = [
+    [/[\u0900-\u097F]/g,'hi'], [/[\u0A00-\u0A7F]/g,'pa'], [/[\u0980-\u09FF]/g,'bn'], [/[\u0A80-\u0AFF]/g,'gu'],
+    [/[\u0B80-\u0BFF]/g,'ta'], [/[\u0C00-\u0C7F]/g,'te'], [/[\u0C80-\u0CFF]/g,'kn'], [/[\u0D00-\u0D7F]/g,'ml'],
+    [/[\u0600-\u06FF]/g,'ar'], [/[\u4E00-\u9FFF]/g,'zh'], [/[\u3040-\u30FF]/g,'ja'], [/[\uAC00-\uD7AF]/g,'ko'],
+    [/[\u0400-\u04FF]/g,'ru'], [/[\u0E00-\u0E7F]/g,'th']
+  ];
+  function ccSet(str){ var o = {}; str.split(' ').forEach(function(w){ o[w] = 1; }); return o; }
+  var CC_STOP = {
+    en: ccSet('the and is are of to in that it for with as this was on be by at or from you can have will how what which your not they their'),
+    es: ccSet('el los las que una por con para del como pero m\u00e1s tambi\u00e9n muy est\u00e1 son qu\u00e9 c\u00f3mo sobre entre cuando desde donde esto esta ese'),
+    fr: ccSet('les des du et est une que qui dans pour pas sur avec il elle vous nous sont aux mais \u00eatre fait cette comme'),
+    de: ccSet('das und ist nicht ein eine mit von auf f\u00fcr dem sich auch ich wir sind wird werden oder aber wie'),
+    pt: ccSet('que n\u00e3o uma com para por mais como foi s\u00e3o voc\u00ea mas est\u00e1 tamb\u00e9m isso ele ela'),
+    it: ccSet('il gli che non sono della delle degli come pi\u00f9 anche questo quello \u00e8 una per')
+  };
+  function ccLangOf(s){
+    var best = null, bestN = 0, counts = {};
+    CC_SCRIPTS.forEach(function(x){
+      var m = s.match(x[0]);
+      if(m){ counts[x[1]] = m.length; if(m.length > bestN){ best = x[1]; bestN = m.length; } }
+    });
+    if(counts.ja) best = 'ja';                                             // kana present: Japanese, not Chinese
+    if(best === 'ar' && /[\u0679\u0688\u0691\u06BA\u06BE\u06C1\u06D2]/.test(s)) best = 'ur';
+    var latin = (s.match(/[A-Za-z\u00C0-\u024F]/g) || []).length;
+    if(best && bestN >= latin) return best;
+    if(!latin) return null;                                                // only digits or punctuation: no language of its own
+    var words = s.toLowerCase().match(/[a-z\u00e0-\u00ff]+/g) || [];
+    var score = {};
+    Object.keys(CC_STOP).forEach(function(k){
+      var n = 0;
+      words.forEach(function(w){ if(CC_STOP[k][w]) n++; });
+      score[k] = n;
+    });
+    var top = 'en', topN = score.en;
+    ['es','fr','de','pt','it'].forEach(function(k){
+      if((score[k] >= 3 || (score[k] >= 2 && topN === 0)) && score[k] > topN * 1.5){ top = k; topN = score[k]; }
+    });
+    return top;                                                            // Roman Hindi (Hinglish) stays English: an Indian English voice reads it best
+  }
+  // how symbols are said in each language (languages without a table keep the symbol and the voice says it its own way)
+  var CC_WORDS = {
+    en:{range:'{a} to {b}',minus:'minus',times:'times',div:'divided by',about:'about',percent:'percent',rupees:'rupees',dollars:'dollars',and:'and',equals:'equals',plus:'plus',link:'link',code:'The code is shown in the chat.'},
+    hi:{range:'{a} \u0938\u0947 {b} \u0924\u0915',minus:'\u0918\u091f\u093e',times:'\u0917\u0941\u0923\u093e',div:'\u092d\u093e\u0917',about:'\u0932\u0917\u092d\u0917',percent:'\u092a\u094d\u0930\u0924\u093f\u0936\u0924',rupees:'\u0930\u0941\u092a\u092f\u0947',dollars:'\u0921\u0949\u0932\u0930',and:'\u0914\u0930',equals:'\u092c\u0930\u093e\u092c\u0930',plus:'\u091c\u094b\u0921\u093c',link:'\u0932\u093f\u0902\u0915',code:'\u0915\u094b\u0921 \u091a\u0948\u091f \u092e\u0947\u0902 \u0926\u093f\u0916\u093e\u092f\u093e \u0917\u092f\u093e \u0939\u0948\u0964'},
+    pa:{range:'{a} \u0a24\u0a4b\u0a02 {b} \u0a24\u0a71\u0a15',minus:'\u0a18\u0a1f\u0a3e',times:'\u0a17\u0a41\u0a23\u0a3e',div:'\u0a2d\u0a3e\u0a17',about:'\u0a32\u0a17\u0a2d\u0a17',percent:'\u0a2a\u0a4d\u0a30\u0a24\u0a40\u0a36\u0a24',rupees:'\u0a30\u0a41\u0a2a\u0a0f',dollars:'\u0a21\u0a3e\u0a32\u0a30',and:'\u0a05\u0a24\u0a47',equals:'\u0a2c\u0a30\u0a3e\u0a2c\u0a30',plus:'\u0a1c\u0a4b\u0a5c',link:'\u0a32\u0a3f\u0a70\u0a15',code:'\u0a15\u0a4b\u0a21 \u0a1a\u0a48\u0a1f \u0a35\u0a3f\u0a71\u0a1a \u0a26\u0a3f\u0a16\u0a3e\u0a07\u0a06 \u0a17\u0a3f\u0a06 \u0a39\u0a48\u0964'},
+    es:{range:'{a} a {b}',minus:'menos',times:'por',div:'dividido por',about:'aproximadamente',percent:'por ciento',rupees:'rupias',dollars:'d\u00f3lares',and:'y',equals:'igual a',plus:'m\u00e1s',link:'enlace',code:'El c\u00f3digo se muestra en el chat.'},
+    fr:{range:'{a} \u00e0 {b}',minus:'moins',times:'fois',div:'divis\u00e9 par',about:'environ',percent:'pour cent',rupees:'roupies',dollars:'dollars',and:'et',equals:'\u00e9gale',plus:'plus',link:'lien',code:'Le code est affich\u00e9 dans le chat.'},
+    de:{range:'{a} bis {b}',minus:'minus',times:'mal',div:'geteilt durch',about:'etwa',percent:'Prozent',rupees:'Rupien',dollars:'Dollar',and:'und',equals:'gleich',plus:'plus',link:'Link',code:'Der Code wird im Chat angezeigt.'}
+  };
+  function ccLocalize(s, lang){
+    var W = CC_WORDS[lang];
+    var say = function(k, keep){ return W ? ' ' + W[k] + ' ' : keep; };
+    var range = function(m, a, b){ return W ? ' ' + W.range.replace('{a}', a).replace('{b}', b) + ' ' : a + ' ' + b; };
+    s = s.replace(/\uE000/g, W ? W.code : ' ').replace(/\uE001/g, say('link', ' '));
+    s = s.replace(/(\d[\d,.]*)\s*\u2013\s*(\d[\d,.]*)/g, range).replace(/(\d[\d,.]*)-(\d[\d,.]*)/g, range);
+    s = s.replace(/\\times|\\cdot|\u00d7/g, say('times', ' x ')).replace(/\\div|\u00f7/g, say('div', ' / '))
+         .replace(/\u2212|\\-/g, say('minus', ' - '))
+         .replace(/(\d)\s+-\s+(\d)/g, function(m, a, b){ return a + say('minus', ' - ') + b; });
+    s = s.replace(/~\s*/g, say('about', ' ')).replace(/\u2248/g, say('about', ' ')).replace(/\u2192/g, ', ')
+         .replace(/\\?%/g, say('percent', '%'))
+         .replace(/\u20b9\s?(\d[\d,.]*)/g, function(m, d){ return W ? d + say('rupees', '') : m; })
+         .replace(/\$\s?(\d[\d,.]*)/g, function(m, d){ return W ? d + say('dollars', '') : m; })
+         .replace(/&/g, say('and', ' & '))
+         .replace(/\s*=\s*/g, say('equals', ' = '))
+         .replace(/(?<=[\d\s])\+(?=[\d\s])/g, say('plus', ' + '));
+    s = s.replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}^]/g, ' ');
+    return s.replace(/\s+/g, ' ').replace(/\s+([.,!?;:\u0964])/g, '$1').replace(/([.!?\u0964])\.+/g, '$1').trim();
+  }
+  // structure only (markdown, tables, links, emoji); words for symbols are added per sentence, in that sentence's language
   function ccSpeakable(text){
     var t = String(text);
-    t = t.replace(/```[\s\S]*?```/g, ' The code is shown in the chat. ');
-    t = t.replace(/\\[()[\]]/g, ' ');                                   // LaTeX delimiters
-    t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');                         // images
-    t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');                      // [text](url) -> text
-    t = t.replace(/https?:\/\/\S+/g, ' link ');
-    t = t.replace(/\[\d+(?:[,\s-]+\d+)*\]/g, ' ');                       // [1] [2, 3] citation marks
+    t = t.replace(/```[\s\S]*?```/g, ' \uE000. ');                         // code block -> a short spoken note
+    t = t.replace(/\\[()[\]]/g, ' ');                                      // LaTeX delimiters
+    t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');                           // images
+    t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');                         // [text](url) -> text
+    t = t.replace(/https?:\/\/\S+/g, ' \uE001 ');                          // bare links -> the word "link"
+    t = t.replace(/\[\d+(?:[,\s-]+\d+)*\]/g, ' ');                         // [1] [2, 3] citation marks
     t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, ' '); // emoji
-    t = t.replace(/^\s*#{1,6}\s*(.+)$/gm, '$1.');                        // headings end with a pause
-    t = t.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/gm, '');                // list markers
+    t = t.replace(/^\s*#{1,6}\s*(.+)$/gm, '$1.');                          // headings end with a pause
+    t = t.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/gm, '');                  // list markers
     t = t.replace(/\*\*|__|`|\*/g, '');
-    t = t.replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, ' ');                   // table separator rows and rules
-    t = t.replace(/^\s*\|\s*|\s*\|\s*$/gm, '');                              // outer pipes of a table row
-    t = t.replace(/\|/g, ', ');                                          // table cells -> short pauses
-    t = t.replace(/\s[\u2013\u2014]\s/g, ', ');                               // spaced dashes -> a natural pause
-    // numbers, ranges and symbols, said the way a person would say them
-    t = t.replace(/(\d)\s*\u2013\s*(\d)/g, '$1 to $2').replace(/(\d)-(\d)/g, '$1 to $2');
-    t = t.replace(/\\times|\\cdot|\u00d7/g, ' times ').replace(/\\div|\u00f7/g, ' divided by ')
-         .replace(/\u2212|\\-/g, ' minus ').replace(/(\d)\s+-\s+(\d)/g, '$1 minus $2');
-    t = t.replace(/~\s*/g, 'about ').replace(/\u2248/g, ' approximately ').replace(/\u2192/g, ' to ')
-         .replace(/\u2265/g, ' at least ').replace(/\u2264/g, ' at most ')
-         .replace(/\\%|%/g, ' percent ').replace(/\u20b9\s?(\d)/g, '$1 rupees ').replace(/\u20b9/g, ' rupees ')
-         .replace(/\$\s?(\d[\d,.]*)/g, '$1 dollars ').replace(/&/g, ' and ')
-         .replace(/\s*=\s*/g, ' equals ').replace(/(?<=[\d\s])\+(?=[\d\s])/g, ' plus ');
-    t = t.replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}^]/g, ' ');
+    t = t.replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, ' ');                     // table separator rows and rules
+    t = t.replace(/^\s*\|\s*|\s*\|\s*$/gm, '');                            // outer pipes of a table row
+    t = t.replace(/\|/g, ', ');                                            // table cells -> short pauses
+    t = t.replace(/(?<!\d)\s[\u2013\u2014]\s(?!\d)/g, ', ');               // spaced dashes -> a natural pause
     // a line break with no punctuation becomes a pause, so headings and list items do not run together
-    t = t.replace(/([^.!?:;,\u0964\s])[ \t]*\n+/g, '$1. ');
+    t = t.replace(/([^.!?:;,\u0964\u06D4\u061F\u3002\uFF01\uFF1F\s])[ \t]*\n+/g, '$1. ');
     t = t.replace(/\s+/g, ' ').replace(/([.!?:;])\.+/g, '$1').replace(/,\s*,+/g, ',').replace(/\s+([.,!?;:])/g, '$1');
     return t.trim();
   }
@@ -5079,8 +5147,8 @@
     return out;
   }
   function ccSplitForSpeech(t){
-    // split after a full stop, ! or ? that is followed by a space (keeps decimals like 0.20 together)
-    var sentences = t.split(/(?<=[.!?\u0964])\s+/);
+    // split after . ! ? or the Hindi/Urdu/Chinese/Japanese full stops (keeps decimals like 0.20 together)
+    var sentences = t.split(/(?<=[.!?\u0964\u06D4\u061F])\s+|(?<=[\u3002\uFF01\uFF1F])\s*/);
     var out = [], cur = '';
     function push(x){ x = (x || '').trim(); if(x) out.push(x); }
     sentences.forEach(function(p){
@@ -5096,8 +5164,9 @@
         push(buf);
         return;
       }
-      // never join Hindi and English sentences into one part: each part is read by one voice
-      if(cur && /[\u0900-\u097F]/.test(cur) !== /[\u0900-\u097F]/.test(p)){ push(cur); cur = p; }
+      // never join sentences of different languages into one part: each part is read by one voice
+      var a = cur && ccLangOf(cur), b = ccLangOf(p);
+      if(cur && a && b && a !== b){ push(cur); cur = p; }
       else if((cur + ' ' + p).trim().length > 180){ push(cur); cur = p; }
       else { cur = (cur + ' ' + p).trim(); }
     });
@@ -5121,7 +5190,7 @@
     else if(/microsoft|apple|samantha|rishi|lekha|veena|kajal/i.test(name)) s += 15;
     if(/online/i.test(name)) s += 10;
     if(/compact|espeak|festival|novelty|whisper|zarvox|bad news|good news|bells|cellos|trinoids|boing|bubbles|deranged|hysterical|organ|albert|fred|junior|kathy|ralph/i.test(name)) s -= 200;
-    if(v.localService === false) s += 5;                                  // online voices usually sound better
+    if(v.localService === false) s += 5;                                    // online voices usually sound better
     return s;
   }
   function ccPickVoice(lang, tag, voices){
@@ -5131,7 +5200,7 @@
       var sc = ccVoiceScore(v, lang, tag);
       if(sc > bestScore){ best = v; bestScore = sc; }
     });
-    return best;                                                           // null = let the browser use its default for this language
+    return best;                                                             // null = no voice for this language on this device
   }
   function ccVoicesReady(cb){
     var vs = window.speechSynthesis.getVoices();
@@ -5160,7 +5229,7 @@
     var u = new SpeechSynthesisUtterance(part.text);
     u.lang = part.lang;
     if(part.voice) u.voice = part.voice;
-    u.rate = part.lang === 'hi-IN' ? 0.9 : 0.95;                           // slightly slower than default so every word is clear
+    u.rate = part.base === 'en' ? 0.95 : 0.92;                              // slightly slower than default so every word is clear
     u.pitch = 1;
     u.volume = 1;
     u.onend = ccSpeakNext;
@@ -5170,21 +5239,26 @@
   function ccSpeak(btn, text){
     var clean = ccSpeakable(text);
     if(!clean) return;
-    // each part is spoken in its own language, so a mixed Hindi + English answer sounds right
+    var prev = ccLangOf(clean) || 'en';
     var entries = ccSplitForSpeech(clean).map(function(s){
-      var hindi = /[\u0900-\u097F]/.test(s);
-      return { text: s, lang: hindi ? 'hi-IN' : 'en-IN', base: hindi ? 'hi' : 'en', voice: null };
-    });
+      var base = ccLangOf(s) || prev;                                       // digits-only parts follow the language before them
+      prev = base;
+      return { text: ccLocalize(s, base), lang: (CC_LANG[base] || CC_LANG.en).tag, base: base, voice: null };
+    }).filter(function(e){ return /[^\s.,!?;:\u0964]/.test(e.text); });
+    if(!entries.length) return;
     ccSpeakQueue = entries;
     ccSpeakBtn = btn;
     btn.classList.add('on');
     ccVoicesReady(function(){
       if(ccSpeakQueue !== entries) return;                                  // stopped while the voices were loading
-      var cache = {};
+      var cache = {}, missing = {};
       entries.forEach(function(e){
         if(!(e.lang in cache)) cache[e.lang] = ccPickVoice(e.base, e.lang);
         e.voice = cache[e.lang];
+        if(!e.voice && e.base !== 'en') missing[e.base] = true;
       });
+      var names = Object.keys(missing).map(function(k){ return CC_LANG[k].name; });
+      if(names.length) ccToast('No ' + names.join(' / ') + ' voice found on this device. Install one in your system speech settings for correct pronunciation.');
       ccSpeakNext();
     });
   }
