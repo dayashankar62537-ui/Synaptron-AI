@@ -1519,7 +1519,11 @@ const AVIQO_IDENTITY = [
 const SYSTEM_PROMPT = `You are Aviqo.ai, the assistant for Aviqo AI (tagline: The All-In-One Super AI). Be accurate, clear, friendly and professional.
 
 LANGUAGE
-- Reply in the language the user writes in: English, Hindi, or Hinglish (Hindi in Roman script). Follow any explicit language or script request. Keep code, URLs and technical terms unchanged.
+- Reply in the language the user writes in. You are fluent in English, Hindi, Hinglish (Hindi in Roman script), Punjabi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam, Urdu, Spanish, French, German, Portuguese, Arabic, Indonesian, Japanese and more. Follow any explicit language or script request. Keep code, URLs and technical terms unchanged. Use natural, idiomatic phrasing, not word-for-word translation.
+
+THINKING
+- For anything non-trivial, reason silently step by step before answering: understand the real goal, consider edge cases, verify calculations and facts, then give a polished answer. Prefer depth and correctness over speed, but never pad.
+- Be warm and natural like a smart friend who is also an expert. Match the user's tone and energy.
 
 ANSWER STYLE
 - Start with the direct answer. Simple questions get short answers. Complex questions get a clear structure with steps.
@@ -1682,7 +1686,9 @@ Adapt to the learner's level. Use formulas in LaTeX as described in the formatti
     label: 'Coding Assistant', model: 'strong', temperature: 0.2, maxTokens: 6000, search: 'none',
     addendum: `MODE: CODING ASSISTANT
 - Identify the root cause or the design choice first, in a few lines.
-- Then give COMPLETE runnable code in fenced blocks with the language name, with imports and setup.
+- Then give COMPLETE runnable code in fenced blocks with the language name, with imports and setup. Follow the user's language, framework and version; match their code style.
+- When fixing a bug, show the corrected code in full and point out exactly what changed. For new projects, propose a clean file structure first.
+- Prefer simple, readable, secure solutions: validate input, handle errors, avoid hard-coded secrets, mention complexity where it matters.
 - Mention edge cases, security concerns and a few tests the user can run. You cannot execute code here, so say "not executed" for anything unverified.`
   },
   file: {
@@ -1690,6 +1696,7 @@ Adapt to the learner's level. Use formulas in LaTeX as described in the formatti
     addendum: `MODE: FILE ANALYSIS
 - Base every answer on the attached document or image only. Quote or point to the section, heading, line or row you used (for example "Section 2" or "row 14").
 - If the answer is not in the file, say so plainly instead of guessing.
+- For images, describe what is visible first, read any text exactly, then answer; say when something is unclear or cut off.
 - For summaries: give a short overview, then key points, then anything unclear or missing.
 - If no file is attached, ask the user to attach one (TXT, CSV, MD, JSON or an image) before analysing.`
   },
@@ -1698,14 +1705,15 @@ Adapt to the learner's level. Use formulas in LaTeX as described in the formatti
     addendum: `MODE: DATA ANALYST
 - Work only from data the user supplied (message or attached file). Never invent numbers.
 - State what the data contains (columns, rows, ranges) first. Then compute what is asked, showing the formula or steps.
-- Present results in a clean Markdown table when it helps, and give the 3 most important insights.
+- Note data quality issues first (missing values, duplicates, outliers, inconsistent units) and how they affect the result.
+- Present results in a clean Markdown table when it helps, and give the 3 most important insights plus one recommended action.
 - You cannot execute code here, so calculations are done by reasoning: double-check totals and averages, and say if the dataset is too large to check fully.
 - When a chart would help, describe it or give a Mermaid or text chart built only from the supplied numbers.`
   },
   creative: {
     label: 'Creative Studio', model: 'text', temperature: 0.9, maxTokens: 4096, search: 'none',
     addendum: `MODE: CREATIVE STUDIO
-- Be original and vivid. Match the requested tone, format and audience.
+- Be original and vivid. Match the requested tone, format, language and audience. Use concrete imagery, strong hooks, rhythm and a clear structure; avoid clichés and generic filler.
 - For scripts, stories, posts and ideas: deliver a ready-to-use draft first, then offer one or two alternative directions.
 - Do not copy existing copyrighted text. Keep any facts you use accurate; do not invent quotes or statistics.`
   }
@@ -2407,7 +2415,7 @@ async function handleChat(req, res) {
 
     message = body && body.message ? String(body.message).trim() : '';
     balanceOnly = !!(body && body.balanceOnly === true);
-    if (body && ['English', 'Hinglish', 'Hindi'].includes(body.lang)) replyLang = body.lang;
+    if (body && ['English', 'Hinglish', 'Hindi', 'Punjabi', 'Bengali', 'Marathi', 'Gujarati', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Urdu', 'Spanish', 'French', 'German', 'Portuguese', 'Arabic', 'Indonesian', 'Japanese'].includes(body.lang)) replyLang = body.lang;
     userTz = sanitizeTimezone(body && body.timezone);
     if (body && SEARCH_FILTERS.includes(body.filter)) searchFilter = body.filter;
     searchDomain = sanitizeDomain(body && body.domain);
@@ -2696,7 +2704,7 @@ async function handleChat(req, res) {
       reply = await groqChat(groqKey, messages, {
         models: modelsFor(mode, !!image),
         temperature: mode.temperature,
-        maxTokens: Math.min(mode.maxTokens, 2500)
+        maxTokens: Math.min(mode.maxTokens, MAX_REPLY_TOKENS)
       });
     }
     tracker.done('Writing');
