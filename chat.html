@@ -1841,6 +1841,11 @@
 .cc .cc-composer textarea{font-size:16px;line-height:1.5}
 @media (max-width:640px){.cc .msg:not(.user) .bubble{font-size:15.5px}}
 </style>
+<style id="aviqo-automode">
+/* Mode picker hidden: Aviqo picks the mode from each question. The bar only appears for Study restart and Creative tools. */
+#ccModebar > label[for="ccMode"], #ccModebar > #ccMode, #ccModebar > #ccModeHint{display:none!important}
+#ccModebar:not(.has-extra){display:none!important}
+</style>
 </head>
 <body class="cc">
 <div id="imgLb" class="img-lb" hidden role="dialog" aria-modal="true" aria-label="Image preview">
@@ -2037,7 +2042,7 @@
           <button id="attachRemove" type="button" aria-label="Remove photo">✕</button>
         </div>
 
-        <div class="cc-modebar">
+        <div class="cc-modebar" id="ccModebar">
           <label for="ccMode">Mode</label>
           <select id="ccMode" class="cc-mode-select" aria-label="AI mode">
             <option value="quick">Quick Answer</option>
@@ -3830,6 +3835,25 @@
     scrollBottom();
   }
 
+  // ---- Automatic mode detection: the user no longer picks a mode ----
+  function autoPickMode(text, hasImage, hasFile){
+    const t = (text || '').toLowerCase();
+    if(currentMode === 'teacher') return 'teacher';
+    if(hasImage || hasFile) return 'file';
+    if(detectImageIntent(text, 'quick')) return 'quick';
+    const has = function(re){ return re.test(t); };
+    if(has(/```|\b(code|coding|bug|debug|function|script|python|javascript|java|html|css|sql|react|node|api|flask|django|error|exception|compile|regex|algorithm|program)\b|\bcode (likh|bana)/)) return 'coding';
+    if(has(/\b(deep research|detailed report|research report|market (analysis|outlook|size)|in-depth|full report)\b/)) return 'deep';
+    if(has(/\b(peer[- ]reviewed|journal|research papers?|studies show|according to (studies|research)|literature review|scholarly)\b|\bstudies (ke|se|mein)\b/)) return 'academic';
+    if(has(/\b(latest|today|aaj|abhi|current(ly)?|news|breaking|price of|rate|weather|score|live|who is the (ceo|pm|president)|kab hai|release date|2026)\b/)) return 'web';
+    if(has(/\b(average|mean|median|mode of|std|variance|dataset|csv|insights?|trend|percent(age)?|total of|sum of)\b/) && /\d[\d,. ]*[,;]\s*\d/.test(t)) return 'data';
+    if(has(/\b(story|poem|kahani|kavita|caption|slogan|reel|script|lyrics|blog|essay|ad copy|tagline|post likh|likho|write a)\b/)) return 'creative';
+    if(has(/\b(plan|strategy|business|budget|kya karun|how (can|do) i (improve|grow|fix)|solve|problem|sales (kam|badh)|startup|roadmap|nikalo|calculate|find the (value|height|range|speed|force))\b/)) return 'solver';
+    if(has(/\b(samjhao|explain|teach|lesson|chapter|class \d+|practice questions?|quiz|homework|theorem|concept|sikhao|padhao)\b/)) return 'study';
+    if(currentMode === 'study') return 'study';
+    return 'quick';
+  }
+
   function handleSend(text){
     if(activeRequest) return;   // one request at a time: a second send is ignored
     const hasImage = !!pendingImage;
@@ -3844,6 +3868,7 @@
     autoGrow();
     if(imageToSend || fileToSend){ clearAttachment(); }
     if(creditsLeft !== null && creditsLeft <= 0){ addUpgradeMsg(); return; }
+    { const picked = autoPickMode(trimmed, !!imageToSend, !!fileToSend); if(picked !== currentMode) setMode(picked); }
     // image / video generation is only offered in Quick Answer and Creative Studio
     const mediaOk = currentMode === 'quick' || currentMode === 'creative';
 
@@ -4269,6 +4294,7 @@
     const srBtn = document.getElementById('studyRestart');
     if(srBtn) srBtn.hidden = m !== 'study';
     renderCards();
+    const mb = document.getElementById('ccModebar'); if(mb) mb.classList.toggle('has-extra', m === 'study' || m === 'creative');
     setTeacherView(m === 'teacher');
     try{ localStorage.setItem('aviqo_mode', m); }catch(e){}
   }
