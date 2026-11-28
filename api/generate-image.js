@@ -1,6 +1,6 @@
 // Aviqo AI - image generation through Cloudflare Workers AI (FLUX schnell).
 // Save as api/generate-image.js. The browser sends { prompt, aspect, user: { email } }
-// and gets back { image: "data:image/png;base64,..." }. Keys stay on the server.
+// and gets back { image: "data:image/jpeg;base64,..." }. Keys stay on the server.
 //
 // Vercel Environment Variables (Production):
 //   CLOUDFLARE_API_TOKEN   - Cloudflare API token with Workers AI Edit permission
@@ -13,6 +13,13 @@
 //   - Paid users: a key plan:<email> with value "paid" skips the credit and daily limits.
 //   - If the credits store is down, images are allowed (fail open) and nothing is charged.
 //   - Credits are refunded whenever the image is not produced (provider error, timeout, crash).
+//
+// File size: the model returns a lossless PNG, which is far larger than what ChatGPT-style
+// tools send back. After a successful generation this re-encodes it as a JPEG (same pixel
+// size, no visible quality loss at this quality setting) so the file the browser receives is
+// much smaller. This step needs the "sharp" package: run `npm install sharp` in the project
+// (it is already preinstalled on Vercel's build image, so no extra config is usually needed).
+// If "sharp" is not installed, the original, larger PNG is still sent so nothing breaks.
 
 // Vercel default timeout is too short for an image model. Keep this above BUDGET_MS.
 export const config = { maxDuration: 60 };
@@ -24,9 +31,10 @@ const BUDGET_MS = 50000;    // whole request, leaves room under maxDuration
 const IMAGE_COST = 2;
 const DAILY_IMAGE_LIMIT = 5;
 const FREE_CREDITS = 10;
+const JPEG_QUALITY = 76;    // ~ChatGPT-sized output; same resolution, much smaller file
 
 // Model capabilities. The provider documents only prompt and steps for FLUX.1 schnell, so the
-// width/height we send are requested per image and CHECKED against the returned PNG header.
+// width/height we send are requested per image and CHECKED against the image sharp decodes back.
 // A resolution level is enabled only when its scale is a number here (null = not supported).
 const MODEL_CAPS = {
   label: 'FLUX.1 schnell',
@@ -134,6 +142,32 @@ function pngSize(dataUrl) {
   const buf = Buffer.from(m[1].slice(0, 64), 'base64');
   if (buf.length < 24 || buf.readUInt32BE(0) !== 0x89504e47 || buf.toString('ascii', 12, 16) !== 'IHDR') return null;
   return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+}
+
+// Re-encodes the PNG as a smaller JPEG at the same pixel size (quality loss is not visible at
+// JPEG_QUALITY, but the file this sends to the browser is far smaller than the source PNG).
+// Returns { image, w, h } on success, or null if "sharp" is unavailable or decoding fails -
+// the caller then falls back to sending the original PNG so nothing breaks.
+async function compressImage(dataUrl) {
+  const m = /^data:image\/png;base64,(.+)$/.exec(String(dataUrl || ''));
+  if (!m) return null;
+  let sharp;
+  try {
+    sharp = (await import('sharp')).default;
+  } catch (e) {
+    console.error('Image compression skipped: the "sharp" package is not installed. Run `npm install sharp`.');
+    return null;
+  }
+  try {
+    const input = Buffer.from(m[1], 'base64');
+    const img = sharp(input);
+    const meta = await img.metadata();
+    const out = await img.jpeg({ quality: JPEG_QUALITY, mozjpeg: true }).toBuffer();
+    return { image: 'data:image/jpeg;base64,' + out.toString('base64'), w: meta.width || null, h: meta.height || null };
+  } catch (e) {
+    console.error('Image compression failed, sending the original file', e && e.message);
+    return null;
+  }
 }
 
 // What the UI may offer for this model. Sent by GET /api/generate-image.
@@ -331,11 +365,18 @@ async function handleImage(req, res, state) {
     try { await countImage(who.id); counted = true; } catch (e) { console.error('Daily count failed'); }
   }
 
-  // The size is confirmed only when the returned PNG has exactly the requested width and height.
-  const actual = pngSize(result.image);
+  // The size is confirmed from the PNG we got back from the provider.
+  const providerSize = pngSize(result.image);
+
+  // Shrink the file for the browser (same pixel size, much smaller bytes). Falls back to the
+  // original PNG if "sharp" is not installed or compression fails for any reason.
+  const compressed = await compressImage(result.image);
+  const finalImage = compressed ? compressed.image : result.image;
+  const actual = compressed ? { w: compressed.w, h: compressed.h } : providerSize;
+
   const sizeApplied = !!size && !fellBack && !!actual && actual.w === size[0] && actual.h === size[1];
   return res.status(200).json({
-    image: result.image,
+    image: finalImage,
     model: MODEL,
     counted,
     aspect,
@@ -343,7 +384,8 @@ async function handleImage(req, res, state) {
     requested: { aspect, resolution, width: size ? size[0] : null, height: size ? size[1] : null },
     width: actual ? actual.w : null,
     height: actual ? actual.h : null,
-    sizeApplied
+    sizeApplied,
+    compressed: !!compressed
   });
 }
 
