@@ -1833,6 +1833,14 @@
      Hidden (not deleted) so the mic/voice JS that looks these elements up keeps working. */
   .cc .chat-voice #chatLive, .cc .chat-voice #micLang{display:none !important;}
 </style>
+<style id="aviqo-claude-polish">
+/* Claude-like polish (chat page only) */
+.cc .msg:not(.user) .bubble{line-height:1.7;font-size:16px}
+.cc .msg.user > .bubble{font-size:15px;line-height:1.55;padding:10px 16px;border-radius:18px}
+.cc .bubble pre,.cc .code-block{border-radius:12px}
+.cc .cc-composer textarea{font-size:16px;line-height:1.5}
+@media (max-width:640px){.cc .msg:not(.user) .bubble{font-size:15.5px}}
+</style>
 </head>
 <body class="cc">
 <div id="imgLb" class="img-lb" hidden role="dialog" aria-modal="true" aria-label="Image preview">
@@ -1958,7 +1966,7 @@
       <div class="acct-row"><span>Default mode</span>
         <select id="setModeSel"></select></div>
       <div class="acct-row"><span>Reply language</span>
-        <select id="setLang"><option value="auto">Match my message</option><option value="English">English</option><option value="Hinglish">Hinglish</option><option value="Hindi">Hindi (Devanagari)</option></select></div>
+        <select id="setLang"><option value="auto">Match my message</option><option value="English">English</option><option value="Hinglish">Hinglish</option><option value="Hindi">Hindi (Devanagari)</option><option value="Punjabi">Punjabi</option><option value="Bengali">Bengali</option><option value="Marathi">Marathi</option><option value="Gujarati">Gujarati</option><option value="Tamil">Tamil</option><option value="Telugu">Telugu</option><option value="Kannada">Kannada</option><option value="Malayalam">Malayalam</option><option value="Urdu">Urdu</option><option value="Spanish">Spanish</option><option value="French">French</option><option value="German">German</option><option value="Portuguese">Portuguese</option><option value="Arabic">Arabic</option><option value="Indonesian">Indonesian</option><option value="Japanese">Japanese</option></select></div>
       <div class="acct-row"><span>Chats saved on this browser</span>
         <button class="acct-btn danger" id="setClear" type="button">Clear chats</button></div>
       <div class="acct-actions"><button class="acct-btn" id="setClose" type="button">Done</button></div>
@@ -2296,7 +2304,7 @@
   const CREDIT_MAX = 10;
 
   function replyLang(){
-    try{ var v = localStorage.getItem('aviqo_lang'); return ['English','Hinglish','Hindi'].indexOf(v) >= 0 ? v : null; }
+    try{ var v = localStorage.getItem('aviqo_lang'); return ['English','Hinglish','Hindi','Punjabi','Bengali','Marathi','Gujarati','Tamil','Telugu','Kannada','Malayalam','Urdu','Spanish','French','German','Portuguese','Arabic','Indonesian','Japanese'].indexOf(v) >= 0 ? v : null; }
     catch(e){ return null; }
   }
 
